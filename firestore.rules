@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidPunctualityLogEntry(data) {
+      return data.keys().hasAll([
+        'id',
+        'ownerId',
+        'timestamp',
+        'date',
+        'yearMonth',
+        'isoYear',
+        'isoWeek',
+        'yearWeek',
+        'stopId',
+        'stopCode',
+        'stopName',
+        'town',
+        'line',
+        'operator',
+        'destination',
+        'journeyId',
+        'plannedTime',
+        'actualTime',
+        'delayMinutes',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id',
+        'ownerId',
+        'timestamp',
+        'date',
+        'yearMonth',
+        'isoYear',
+        'isoWeek',
+        'yearWeek',
+        'stopId',
+        'stopCode',
+        'stopName',
+        'town',
+        'line',
+        'operator',
+        'destination',
+        'journeyId',
+        'plannedTime',
+        'actualTime',
+        'delayMinutes',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.ownerId == request.auth.uid &&
+      data.timestamp is string && data.timestamp.size() >= 1 && data.timestamp.size() <= 64 &&
+      data.date is string && data.date.size() == 10 && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
+      data.yearMonth is string && data.yearMonth.size() == 7 && data.yearMonth.matches('^\\d{4}-\\d{2}$') &&
+      data.isoYear is number && data.isoYear >= 2020 && data.isoYear <= 2100 &&
+      data.isoWeek is number && data.isoWeek >= 1 && data.isoWeek <= 53 &&
+      data.yearWeek is string && data.yearWeek.size() == 8 && data.yearWeek.matches('^\\d{4}-W\\d{2}$') &&
+      data.stopId is string && data.stopId.size() >= 1 && data.stopId.size() <= 64 &&
+      data.stopCode is string && data.stopCode.size() >= 1 && data.stopCode.size() <= 64 &&
+      data.stopName is string && data.stopName.size() >= 1 && data.stopName.size() <= 120 &&
+      data.town is string && data.town.size() >= 1 && data.town.size() <= 80 &&
+      data.line is string && data.line.size() >= 1 && data.line.size() <= 16 &&
+      data.operator is string && data.operator.size() >= 1 && data.operator.size() <= 64 &&
+      data.destination is string && data.destination.size() >= 1 && data.destination.size() <= 120 &&
+      data.journeyId is string && data.journeyId.size() >= 1 && data.journeyId.size() <= 80 &&
+      data.plannedTime is string && data.plannedTime.size() >= 1 && data.plannedTime.size() <= 16 &&
+      data.actualTime is string && data.actualTime.size() >= 1 && data.actualTime.size() <= 32 &&
+      data.delayMinutes is number && data.delayMinutes >= -120 && data.delayMinutes <= 600 &&
+      data.status is string && data.status.size() >= 5 && data.status.size() <= 16 && data.status in ['ontime', 'delayed', 'early', 'cancelled'] &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    match /punctualityLogs/{logId} {
+      allow get: if isSignedIn() && isValidId(logId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() &&
+        isValidId(logId) &&
+        isValidPunctualityLogEntry(incoming()) &&
+        incoming().id == logId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isSignedIn() &&
+        isValidId(logId) &&
+        isValidPunctualityLogEntry(incoming()) &&
+        existing().ownerId == request.auth.uid &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['timestamp', 'actualTime', 'delayMinutes', 'status', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(logId) && existing().ownerId == request.auth.uid;
+    }
+  }
+}

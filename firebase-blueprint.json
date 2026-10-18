@@ -1,0 +1,173 @@
+{
+  "entities": {
+    "PunctualityLogEntry": {
+      "title": "PunctualityLogEntry",
+      "description": "Recorded bus stop arrival/departure punctuality, delay, early passage, or cancellation event in Gemeente Steenwijkerland.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Unique identifier for the logged stop passage"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID of the authenticated user who owns or synced the log entry"
+        },
+        "timestamp": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "ISO timestamp string when the observation was logged"
+        },
+        "date": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "Date of service (YYYY-MM-DD)"
+        },
+        "yearMonth": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 7,
+          "pattern": "^\\d{4}-\\d{2}$",
+          "description": "Year and month (YYYY-MM)"
+        },
+        "isoYear": {
+          "type": "number",
+          "description": "ISO week-numbering year (2020..2100)"
+        },
+        "isoWeek": {
+          "type": "number",
+          "description": "ISO week number (1..53)"
+        },
+        "yearWeek": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 8,
+          "pattern": "^\\d{4}-W\\d{2}$",
+          "description": "Year and ISO week (YYYY-Www)"
+        },
+        "stopId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Internal stop identifier"
+        },
+        "stopCode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Official DRGL stop code (e.g. NL:S:16301010)"
+        },
+        "stopName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Bus stop name (Haltenaam)"
+        },
+        "town": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Town or village name (Plaats)"
+        },
+        "line": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "description": "Bus line number (e.g. 26, 70, 214)"
+        },
+        "operator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Transit operator (Qbuzz, RRReis)"
+        },
+        "destination": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Trip destination"
+        },
+        "journeyId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "DRGL journey identifier"
+        },
+        "plannedTime": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "description": "Scheduled departure/arrival time (HH:mm)"
+        },
+        "actualTime": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Actual departure/arrival time or Uitgevallen"
+        },
+        "delayMinutes": {
+          "type": "number",
+          "description": "Delay in minutes (>0 late, <0 early, 0 on time)"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ontime", "delayed", "early", "cancelled"],
+          "minLength": 5,
+          "maxLength": 16,
+          "description": "Passage status"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when record was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when record was last updated"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "timestamp",
+        "date",
+        "yearMonth",
+        "isoYear",
+        "isoWeek",
+        "yearWeek",
+        "stopId",
+        "stopCode",
+        "stopName",
+        "town",
+        "line",
+        "operator",
+        "destination",
+        "journeyId",
+        "plannedTime",
+        "actualTime",
+        "delayMinutes",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/punctualityLogs/{logId}": {
+      "schema": {
+        "$ref": "PunctualityLogEntry"
+      },
+      "description": "Stores historical punctuality, delay, early passage, and cancellation observations per bus stop and bus line."
+    }
+  }
+}

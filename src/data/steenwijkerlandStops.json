@@ -1,0 +1,4730 @@
+[
+  {
+    "id": "swk-halte-1",
+    "stopCode": "NL:S:25680030",
+    "name": "Blauwe Hand",
+    "town": "Wanneperveen",
+    "lat": 52.6944971,
+    "lng": 6.0778028,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-2",
+    "stopCode": "NL:S:25680030",
+    "name": "Blauwe Hand",
+    "town": "Wanneperveen",
+    "lat": 52.6946091,
+    "lng": 6.0777266,
+    "lines": [
+      "70",
+      "679",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Steenwijk Station ⇒ Blauwe Hand"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Blauwe Hand ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 270: Steenwijk Station ⇒ Blauwe Hand | Bus 270: Blauwe Hand ⇒ Steenwijk Station | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-3",
+    "stopCode": "NL:S:16301010",
+    "name": "Treinstation Steenwijk (Spoorpad)",
+    "town": "Steenwijk",
+    "lat": 52.7912138,
+    "lng": 6.1164584,
+    "lines": [
+      "600",
+      "800",
+      "9000"
+    ],
+    "routeDetails": [
+      {
+        "line": "600",
+        "color": "#dc3545",
+        "description": "600: Den Haag Centraal - Leeuwarden"
+      },
+      {
+        "line": "800",
+        "color": "#dc3545",
+        "description": "800: Schiphol Airport - Leeuwarden"
+      },
+      {
+        "line": "9000",
+        "color": "#dc3545",
+        "description": "9000: Lelystad Centrum - Leeuwarden"
+      }
+    ],
+    "direction": "600: Den Haag Centraal - Leeuwarden | 800: Schiphol Airport - Leeuwarden | 9000: Lelystad Centrum - Leeuwarden"
+  },
+  {
+    "id": "swk-halte-4",
+    "stopCode": "NL:S:16301010",
+    "name": "Treinstation Steenwijk (Spoorpad)",
+    "town": "Steenwijk",
+    "lat": 52.791135,
+    "lng": 6.1164222,
+    "lines": [
+      "9000",
+      "600",
+      "800"
+    ],
+    "routeDetails": [
+      {
+        "line": "9000",
+        "color": "#dc3545",
+        "description": "9000: Leeuwarden - Lelystad Centrum"
+      },
+      {
+        "line": "600",
+        "color": "#dc3545",
+        "description": "600: Leeuwarden - Den Haag Centraal"
+      },
+      {
+        "line": "800",
+        "color": "#dc3545",
+        "description": "800: Leeuwarden - Schiphol Airport"
+      }
+    ],
+    "direction": "9000: Leeuwarden - Lelystad Centrum | 600: Leeuwarden - Den Haag Centraal | 800: Leeuwarden - Schiphol Airport"
+  },
+  {
+    "id": "swk-halte-5",
+    "stopCode": "NL:S:24550420",
+    "name": "'t Schar",
+    "town": "Steenwijk",
+    "lat": 52.7938297,
+    "lng": 6.1299666,
+    "lines": [
+      "26"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-6",
+    "stopCode": "NL:S:24550420",
+    "name": "'t Schar",
+    "town": "Steenwijk",
+    "lat": 52.793689,
+    "lng": 6.1301335,
+    "lines": [
+      "26"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-7",
+    "stopCode": "NL:S:24670100",
+    "name": "Bultweg",
+    "town": "De Bult",
+    "lat": 52.8117002,
+    "lng": 6.1347044,
+    "lines": [
+      "20",
+      "217",
+      "18"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Assen Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 20: Assen Station ⇒ Steenwijk Station | Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station | Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-8",
+    "stopCode": "NL:S:16301500",
+    "name": "Oostermeenthe",
+    "town": "Steenwijk",
+    "lat": 52.7935635,
+    "lng": 6.122573,
+    "lines": [
+      "20",
+      "217",
+      "18"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Assen Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 20: Assen Station ⇒ Steenwijk Station | Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station | Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-9",
+    "stopCode": "NL:S:16301500",
+    "name": "Oostermeenthe",
+    "town": "Steenwijk",
+    "lat": 52.7948262,
+    "lng": 6.1234357,
+    "lines": [
+      "20",
+      "217",
+      "18"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Steenwijk Station ⇒ Assen Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation"
+      }
+    ],
+    "direction": "Bus 20: Steenwijk Station ⇒ Assen Station | Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station | Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation"
+  },
+  {
+    "id": "swk-halte-10",
+    "stopCode": "NL:S:24550220",
+    "name": "Westercluft",
+    "town": "Steenwijk",
+    "lat": 52.7940193,
+    "lng": 6.1248814,
+    "lines": [
+      "26"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-11",
+    "stopCode": "NL:S:24550220",
+    "name": "Westercluft",
+    "town": "Steenwijk",
+    "lat": 52.7943763,
+    "lng": 6.1256854,
+    "lines": [
+      "26"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-12",
+    "stopCode": "NL:S:24670400",
+    "name": "Hooilanden",
+    "town": "Eesveen",
+    "lat": 52.8029042,
+    "lng": 6.1272874,
+    "lines": [
+      "20",
+      "217",
+      "18"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Assen Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 20: Assen Station ⇒ Steenwijk Station | Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station | Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-13",
+    "stopCode": "NL:S:16300010",
+    "name": "Gemeentehuis",
+    "town": "Steenwijk",
+    "lat": 52.781729,
+    "lng": 6.1160721,
+    "lines": [
+      "70",
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-14",
+    "stopCode": "NL:S:16300010",
+    "name": "Gemeentehuis",
+    "town": "Steenwijk",
+    "lat": 52.7820115,
+    "lng": 6.1163662,
+    "lines": [
+      "214",
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-15",
+    "stopCode": "NL:S:24550030",
+    "name": "Zuidveenseweg (Zuidveen)",
+    "town": "Zuidveen",
+    "lat": 52.779462,
+    "lng": 6.1114637,
+    "lines": [
+      "214",
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-16",
+    "stopCode": "NL:S:24550050",
+    "name": "Groot Verlaat",
+    "town": "Steenwijk",
+    "lat": 52.7754297,
+    "lng": 6.0950786,
+    "lines": [
+      "70",
+      "214",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Steenwijk Station ⇒ Blauwe Hand"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 270: Steenwijk Station ⇒ Blauwe Hand | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-17",
+    "stopCode": "NL:S:16301010",
+    "name": "Busstation Station (Stationsplein)",
+    "town": "Steenwijk",
+    "lat": 52.7905646,
+    "lng": 6.1179957,
+    "lines": [
+      "20",
+      "70",
+      "217",
+      "18",
+      "26",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Steenwijk Station ⇒ Assen Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation"
+      },
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 20: Steenwijk Station ⇒ Assen Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station | Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station | Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station | Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation | Bus 26: Meppel Station ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-18",
+    "stopCode": "NL:S:24670400",
+    "name": "Hooilanden",
+    "town": "Eesveen",
+    "lat": 52.8025174,
+    "lng": 6.1272842,
+    "lines": [
+      "20",
+      "217",
+      "18"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Steenwijk Station ⇒ Assen Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation"
+      }
+    ],
+    "direction": "Bus 20: Steenwijk Station ⇒ Assen Station | Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station | Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation"
+  },
+  {
+    "id": "swk-halte-19",
+    "stopCode": "NL:S:24670100",
+    "name": "Bultweg",
+    "town": "De Bult",
+    "lat": 52.8128488,
+    "lng": 6.1360094,
+    "lines": [
+      "20",
+      "217",
+      "18"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Steenwijk Station ⇒ Assen Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation"
+      }
+    ],
+    "direction": "Bus 20: Steenwijk Station ⇒ Assen Station | Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station | Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation"
+  },
+  {
+    "id": "swk-halte-20",
+    "stopCode": "NL:S:24670200",
+    "name": "De Eese",
+    "town": "Eesveen",
+    "lat": 52.8229277,
+    "lng": 6.1415272,
+    "lines": [
+      "20",
+      "217",
+      "18"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Assen Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 20: Assen Station ⇒ Steenwijk Station | Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station | Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-21",
+    "stopCode": "NL:S:24670200",
+    "name": "De Eese",
+    "town": "Eesveen",
+    "lat": 52.8232862,
+    "lng": 6.142071,
+    "lines": [
+      "20",
+      "217",
+      "18"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Steenwijk Station ⇒ Assen Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation"
+      }
+    ],
+    "direction": "Bus 20: Steenwijk Station ⇒ Assen Station | Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station | Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation"
+  },
+  {
+    "id": "swk-halte-22",
+    "stopCode": "NL:S:24670300",
+    "name": "Gierwal",
+    "town": "Eesveen",
+    "lat": 52.8269413,
+    "lng": 6.1455808,
+    "lines": [
+      "20",
+      "217",
+      "18"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Assen Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 20: Assen Station ⇒ Steenwijk Station | Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station | Bus 18: Oosterwolde Busstation ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-23",
+    "stopCode": "NL:S:24670300",
+    "name": "Gierwal",
+    "town": "Eesveen",
+    "lat": 52.827573,
+    "lng": 6.14703,
+    "lines": [
+      "20",
+      "217",
+      "18"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Steenwijk Station ⇒ Assen Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station"
+      },
+      {
+        "line": "18",
+        "color": "#dc3545",
+        "description": "Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation"
+      }
+    ],
+    "direction": "Bus 20: Steenwijk Station ⇒ Assen Station | Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station | Bus 18: Steenwijk Station ⇒ Oosterwolde Busstation"
+  },
+  {
+    "id": "swk-halte-24",
+    "stopCode": "NL:S:24550360",
+    "name": "Kallenkoterallee",
+    "town": "Steenwijk",
+    "lat": 52.7853892,
+    "lng": 6.132103,
+    "lines": [
+      "26"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-25",
+    "stopCode": "NL:S:24550360",
+    "name": "Kallenkoterallee",
+    "town": "Steenwijk",
+    "lat": 52.7852238,
+    "lng": 6.1323826,
+    "lines": [
+      "26"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-26",
+    "stopCode": "NL:S:24550122",
+    "name": "Bedelaarspad",
+    "town": "Steenwijk",
+    "lat": 52.7796819,
+    "lng": 6.1495183,
+    "lines": [
+      "26",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 26: Meppel Station ⇒ Steenwijk Station | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-27",
+    "stopCode": "NL:S:24550122",
+    "name": "Bedelaarspad",
+    "town": "Steenwijk",
+    "lat": 52.7799061,
+    "lng": 6.1482362,
+    "lines": [
+      "26",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 26: Steenwijk Station ⇒ Meppel Station | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-28",
+    "stopCode": "NL:S:24550090",
+    "name": "Onnaseveld",
+    "town": "Steenwijk",
+    "lat": 52.7759932,
+    "lng": 6.1625026,
+    "lines": [
+      "26",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 26: Steenwijk Station ⇒ Meppel Station | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-29",
+    "stopCode": "NL:S:24550090",
+    "name": "Onnaseveld",
+    "town": "Steenwijk",
+    "lat": 52.7762184,
+    "lng": 6.1619776,
+    "lines": [
+      "26",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 26: Meppel Station ⇒ Steenwijk Station | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-30",
+    "stopCode": "NL:S:24650070",
+    "name": "Rotonde (Ruiterweg)",
+    "town": "Steenwijk",
+    "lat": 52.7746785,
+    "lng": 6.1682226,
+    "lines": [
+      "26",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 26: Steenwijk Station ⇒ Meppel Station | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-31",
+    "stopCode": "NL:S:24650070",
+    "name": "Rotonde (Ruiterweg)",
+    "town": "Steenwijk",
+    "lat": 52.7748109,
+    "lng": 6.1677663,
+    "lines": [
+      "26",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 26: Meppel Station ⇒ Steenwijk Station | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-32",
+    "stopCode": "NL:S:24550400",
+    "name": "Oostercluft",
+    "town": "Steenwijk",
+    "lat": 52.7908334,
+    "lng": 6.1363305,
+    "lines": [
+      "26"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-33",
+    "stopCode": "NL:S:24550380",
+    "name": "Gagelsweg",
+    "town": "Steenwijk",
+    "lat": 52.787804,
+    "lng": 6.13291,
+    "lines": [
+      "26"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-34",
+    "stopCode": "NL:S:24550380",
+    "name": "Gagelsweg",
+    "town": "Steenwijk",
+    "lat": 52.7874074,
+    "lng": 6.132382,
+    "lines": [
+      "26"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-35",
+    "stopCode": "NL:S:24550400",
+    "name": "Oostercluft",
+    "town": "Steenwijk",
+    "lat": 52.7906071,
+    "lng": 6.1360729,
+    "lines": [
+      "26"
+    ],
+    "routeDetails": [
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-36",
+    "stopCode": "NL:S:25180030",
+    "name": "Uiterdijkenweg",
+    "town": "Blokzijl",
+    "lat": 52.7234777,
+    "lng": 5.9394785,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-37",
+    "stopCode": "NL:S:25380030",
+    "name": "Smalleweg",
+    "town": "Scheerwolde",
+    "lat": 52.7559613,
+    "lng": 6.0398847,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      }
+    ],
+    "direction": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+  },
+  {
+    "id": "swk-halte-38",
+    "stopCode": "NL:S:46531010",
+    "name": "Verlengde Duinweg",
+    "town": "Sint Jansklooster",
+    "lat": 52.6854521,
+    "lng": 5.9822462,
+    "lines": [
+      "679",
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan | Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+  },
+  {
+    "id": "swk-halte-39",
+    "stopCode": "NL:S:25280010",
+    "name": "Boomkwekerij",
+    "town": "Scheerwolde",
+    "lat": 52.7497546,
+    "lng": 6.0219356,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      }
+    ],
+    "direction": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+  },
+  {
+    "id": "swk-halte-40",
+    "stopCode": "NL:S:25780030",
+    "name": "Kerkweg",
+    "town": "Giethoorn",
+    "lat": 52.7414343,
+    "lng": 6.0778192,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-41",
+    "stopCode": "NL:S:46531010",
+    "name": "Verlengde Duinweg",
+    "town": "Sint Jansklooster",
+    "lat": 52.6854428,
+    "lng": 5.9832883,
+    "lines": [
+      "71",
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      },
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station | Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-42",
+    "stopCode": "NL:S:25470070",
+    "name": "De Krieger (N331)",
+    "town": "Sint Jansklooster",
+    "lat": 52.6543489,
+    "lng": 6.0097048,
+    "lines": [
+      "71",
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station | Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station | Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-43",
+    "stopCode": "NL:S:25780030",
+    "name": "Kerkweg",
+    "town": "Giethoorn",
+    "lat": 52.7413538,
+    "lng": 6.0776729,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-44",
+    "stopCode": "NL:S:24450030",
+    "name": "Oldemarktseweg (Marijenkampen)",
+    "town": "Marijenkampen",
+    "lat": 52.8144639,
+    "lng": 6.0723745,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-45",
+    "stopCode": "NL:S:25280070",
+    "name": "Steenwijkerweg N333 (Wetering)",
+    "town": "Wetering",
+    "lat": 52.7444406,
+    "lng": 5.9940237,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      }
+    ],
+    "direction": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+  },
+  {
+    "id": "swk-halte-46",
+    "stopCode": "NL:S:46641030",
+    "name": "Groene Kruis",
+    "town": "Giethoorn",
+    "lat": 52.7392057,
+    "lng": 6.0774576,
+    "lines": [
+      "70",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Blauwe Hand ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 270: Blauwe Hand ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-47",
+    "stopCode": "NL:S:24451800",
+    "name": "Steenwijkerweg (Willemsoord)",
+    "town": "Willemsoord",
+    "lat": 52.8244841,
+    "lng": 6.0623809,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-48",
+    "stopCode": "NL:S:24550030",
+    "name": "Zuidveenseweg (Zuidveen)",
+    "town": "Zuidveen",
+    "lat": 52.7790789,
+    "lng": 6.1089498,
+    "lines": [
+      "70",
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-49",
+    "stopCode": "NL:S:46660150",
+    "name": "Roege Hoeve",
+    "town": "Wanneperveen",
+    "lat": 52.7012787,
+    "lng": 6.1166905,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-50",
+    "stopCode": "NL:S:46602010",
+    "name": "Belterweg",
+    "town": "Belt-Schutsloot",
+    "lat": 52.6740832,
+    "lng": 6.0924456,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-51",
+    "stopCode": "NL:S:25450810",
+    "name": "Kooystraat",
+    "town": "Ossenzijl",
+    "lat": 52.8081059,
+    "lng": 5.917461,
+    "lines": [
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-52",
+    "stopCode": "NL:S:46630130",
+    "name": "Giethoorn Zuid",
+    "town": "Giethoorn",
+    "lat": 52.708738,
+    "lng": 6.0743384,
+    "lines": [
+      "70",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Steenwijk Station ⇒ Blauwe Hand"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 270: Steenwijk Station ⇒ Blauwe Hand | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-53",
+    "stopCode": "NL:S:46660070",
+    "name": "Perceel 44 (Dinxterveen)",
+    "town": "Wanneperveen",
+    "lat": 52.7068088,
+    "lng": 6.1365457,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-54",
+    "stopCode": "NL:S:46511030",
+    "name": "Zieltje (Oppen Swolle)",
+    "town": "Sint Jansklooster",
+    "lat": 52.6421716,
+    "lng": 6.0238792,
+    "lines": [
+      "71",
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station | Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station | Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-55",
+    "stopCode": "NL:S:24450050",
+    "name": "Eikenlaan",
+    "town": "Willemsoord",
+    "lat": 52.8311739,
+    "lng": 6.0556886,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-56",
+    "stopCode": "NL:S:25780010",
+    "name": "Dominee T.O. Hylkemaweg",
+    "town": "Giethoorn",
+    "lat": 52.7219846,
+    "lng": 6.0777752,
+    "lines": [
+      "70",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Blauwe Hand ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 270: Blauwe Hand ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-57",
+    "stopCode": "NL:S:46531050",
+    "name": "Zwembad",
+    "town": "Vollenhove",
+    "lat": 52.6833981,
+    "lng": 5.9498627,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      }
+    ],
+    "direction": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+  },
+  {
+    "id": "swk-halte-58",
+    "stopCode": "NL:S:25380010",
+    "name": "Jan van Nassauweg",
+    "town": "Scheerwolde",
+    "lat": 52.7654391,
+    "lng": 6.0519188,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      }
+    ],
+    "direction": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+  },
+  {
+    "id": "swk-halte-59",
+    "stopCode": "NL:S:46630170",
+    "name": "Hervormde Kerk",
+    "town": "Wanneperveen",
+    "lat": 52.6991207,
+    "lng": 6.1097819,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-60",
+    "stopCode": "NL:S:25450810",
+    "name": "Kooystraat",
+    "town": "Ossenzijl",
+    "lat": 52.8080792,
+    "lng": 5.9170115,
+    "lines": [
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+      }
+    ],
+    "direction": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+  },
+  {
+    "id": "swk-halte-61",
+    "stopCode": "NL:S:46660050",
+    "name": "Gasthuisdijk (Dinxterveen)",
+    "town": "Wanneperveen",
+    "lat": 52.7081032,
+    "lng": 6.1416708,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-62",
+    "stopCode": "NL:S:46660130",
+    "name": "Wethouder Vosstraat",
+    "town": "Wanneperveen",
+    "lat": 52.7025048,
+    "lng": 6.120373,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-63",
+    "stopCode": "NL:S:25380010",
+    "name": "Jan van Nassauweg",
+    "town": "Scheerwolde",
+    "lat": 52.7658637,
+    "lng": 6.0534302,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-64",
+    "stopCode": "NL:S:16300050",
+    "name": "Matthijs Kiersstraat",
+    "town": "Steenwijk",
+    "lat": 52.787563,
+    "lng": 6.1110354,
+    "lines": [
+      "70",
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-65",
+    "stopCode": "NL:S:46531030",
+    "name": "Weyert",
+    "town": "Vollenhove",
+    "lat": 52.6828678,
+    "lng": 5.9634715,
+    "lines": [
+      "71",
+      "679",
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      },
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station | Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station | Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-66",
+    "stopCode": "NL:S:24510020",
+    "name": "Frieseweg",
+    "town": "Oldemarkt",
+    "lat": 52.8190556,
+    "lng": 5.9761909,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-67",
+    "stopCode": "NL:S:46660050",
+    "name": "Gasthuisdijk (Dinxterveen)",
+    "town": "Wanneperveen",
+    "lat": 52.7083459,
+    "lng": 6.1418075,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-68",
+    "stopCode": "NL:S:24552350",
+    "name": "Watertoren (Thij)",
+    "town": "Steenwijkerwold",
+    "lat": 52.7994588,
+    "lng": 6.0808597,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-69",
+    "stopCode": "NL:S:46660150",
+    "name": "Roege Hoeve",
+    "town": "Wanneperveen",
+    "lat": 52.7011978,
+    "lng": 6.116753,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-70",
+    "stopCode": "NL:S:46630210",
+    "name": "Hotel Belterwiede",
+    "town": "Wanneperveen",
+    "lat": 52.6958136,
+    "lng": 6.0977892,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-71",
+    "stopCode": "NL:S:25280090",
+    "name": "Veldhuisweg (N333)",
+    "town": "Baarlo",
+    "lat": 52.7374158,
+    "lng": 5.9697488,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-72",
+    "stopCode": "NL:S:24610010",
+    "name": "Venebosweg",
+    "town": "Ossenzijl",
+    "lat": 52.8098629,
+    "lng": 5.921124,
+    "lines": [
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+      }
+    ],
+    "direction": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+  },
+  {
+    "id": "swk-halte-73",
+    "stopCode": "NL:S:46522010",
+    "name": "Barsbeek (Heetveld)",
+    "town": "Sint Jansklooster",
+    "lat": 52.6551094,
+    "lng": 6.0131472,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-74",
+    "stopCode": "NL:S:46630210",
+    "name": "Hotel Belterwiede",
+    "town": "Wanneperveen",
+    "lat": 52.6959284,
+    "lng": 6.0979736,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-75",
+    "stopCode": "NL:S:25370010",
+    "name": "Heetveld",
+    "town": "Sint Jansklooster",
+    "lat": 52.6620781,
+    "lng": 6.0108021,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-76",
+    "stopCode": "NL:S:25470070",
+    "name": "De Krieger (N331)",
+    "town": "Sint Jansklooster",
+    "lat": 52.655437,
+    "lng": 6.0105445,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      }
+    ],
+    "direction": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+  },
+  {
+    "id": "swk-halte-77",
+    "stopCode": "NL:S:25280070",
+    "name": "Steenwijkerweg N333 (Wetering)",
+    "town": "Wetering",
+    "lat": 52.7442369,
+    "lng": 5.9935287,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-78",
+    "stopCode": "NL:S:25370070",
+    "name": "Prot. Chr. Basisschool (Heetveld)",
+    "town": "Sint Jansklooster",
+    "lat": 52.6645723,
+    "lng": 6.0112104,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      }
+    ],
+    "direction": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+  },
+  {
+    "id": "swk-halte-79",
+    "stopCode": "NL:S:46660070",
+    "name": "Perceel 44 (Dinxterveen)",
+    "town": "Wanneperveen",
+    "lat": 52.7069222,
+    "lng": 6.1366347,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-80",
+    "stopCode": "NL:S:24451400",
+    "name": "'t Centrum",
+    "town": "Steenwijkerwold",
+    "lat": 52.8044605,
+    "lng": 6.0655378,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-81",
+    "stopCode": "NL:S:25270010",
+    "name": "Clarenberglaan",
+    "town": "Vollenhove",
+    "lat": 52.6823324,
+    "lng": 5.9571767,
+    "lines": [
+      "171",
+      "679",
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      },
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station | Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan | Bus 71: Zwolle Station ⇒ Emmeloord Busstation | Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-82",
+    "stopCode": "NL:S:46630170",
+    "name": "Hervormde Kerk",
+    "town": "Wanneperveen",
+    "lat": 52.6989112,
+    "lng": 6.1094361,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-83",
+    "stopCode": "NL:S:16300030",
+    "name": "Vendelweg",
+    "town": "Steenwijk",
+    "lat": 52.7844949,
+    "lng": 6.1141579,
+    "lines": [
+      "70",
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-84",
+    "stopCode": "NL:S:46660090",
+    "name": "Urkerpad",
+    "town": "Wanneperveen",
+    "lat": 52.7059728,
+    "lng": 6.133138,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-85",
+    "stopCode": "NL:S:46650010",
+    "name": "Lindehof",
+    "town": "Giethoorn",
+    "lat": 52.7467518,
+    "lng": 6.0797361,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-86",
+    "stopCode": "NL:S:24510020",
+    "name": "Frieseweg",
+    "town": "Oldemarkt",
+    "lat": 52.8190144,
+    "lng": 5.97607,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-87",
+    "stopCode": "NL:S:24510040",
+    "name": "Koningin Julianaweg",
+    "town": "Oldemarkt",
+    "lat": 52.8172875,
+    "lng": 5.9777302,
+    "lines": [
+      "70",
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-88",
+    "stopCode": "NL:S:46630230",
+    "name": "Perceel 252 (Veneweg)",
+    "town": "Wanneperveen",
+    "lat": 52.6951691,
+    "lng": 6.0928736,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-89",
+    "stopCode": "NL:S:24610010",
+    "name": "Venebosweg",
+    "town": "Ossenzijl",
+    "lat": 52.8096976,
+    "lng": 5.9211767,
+    "lines": [
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-90",
+    "stopCode": "NL:S:25280050",
+    "name": "Beenderribben (N333)",
+    "town": "Wetering",
+    "lat": 52.7449505,
+    "lng": 6.0037538,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-91",
+    "stopCode": "NL:S:24510060",
+    "name": "Parochiehuis",
+    "town": "Oldemarkt",
+    "lat": 52.820597,
+    "lng": 5.9809247,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-92",
+    "stopCode": "NL:S:25280010",
+    "name": "Boomkwekerij",
+    "town": "Scheerwolde",
+    "lat": 52.7501848,
+    "lng": 6.0236973,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-93",
+    "stopCode": "NL:S:46641030",
+    "name": "Groene Kruis",
+    "town": "Giethoorn",
+    "lat": 52.7381516,
+    "lng": 6.0774684,
+    "lines": [
+      "70",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Steenwijk Station ⇒ Blauwe Hand"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 270: Steenwijk Station ⇒ Blauwe Hand | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-94",
+    "stopCode": "NL:S:24510060",
+    "name": "Parochiehuis",
+    "town": "Oldemarkt",
+    "lat": 52.8208565,
+    "lng": 5.9817328,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-95",
+    "stopCode": "NL:S:25470070",
+    "name": "De Krieger (N331)",
+    "town": "Sint Jansklooster",
+    "lat": 52.6558887,
+    "lng": 6.0085763,
+    "lines": [
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan | Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-96",
+    "stopCode": "NL:S:25370070",
+    "name": "Prot. Chr. Basisschool (Heetveld)",
+    "town": "Sint Jansklooster",
+    "lat": 52.6645398,
+    "lng": 6.011049,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-97",
+    "stopCode": "NL:S:46630190",
+    "name": "Veldweg",
+    "town": "Wanneperveen",
+    "lat": 52.6969868,
+    "lng": 6.1028095,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-98",
+    "stopCode": "NL:S:16300030",
+    "name": "Vendelweg",
+    "town": "Steenwijk",
+    "lat": 52.78467,
+    "lng": 6.1140714,
+    "lines": [
+      "214",
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-99",
+    "stopCode": "NL:S:46511030",
+    "name": "Zieltje (Oppen Swolle)",
+    "town": "Sint Jansklooster",
+    "lat": 52.6421222,
+    "lng": 6.0241432,
+    "lines": [
+      "71",
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation | Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan | Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-100",
+    "stopCode": "NL:S:46650030",
+    "name": "Brug (Noord)",
+    "town": "Giethoorn",
+    "lat": 52.755022,
+    "lng": 6.0826169,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-101",
+    "stopCode": "NL:S:46531050",
+    "name": "Zwembad",
+    "town": "Vollenhove",
+    "lat": 52.6830664,
+    "lng": 5.9518822,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-102",
+    "stopCode": "NL:S:25370010",
+    "name": "Heetveld",
+    "town": "Sint Jansklooster",
+    "lat": 52.6622379,
+    "lng": 6.010893,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      }
+    ],
+    "direction": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+  },
+  {
+    "id": "swk-halte-103",
+    "stopCode": "NL:S:25780050",
+    "name": "Hotel Harmonie",
+    "town": "Giethoorn",
+    "lat": 52.7512943,
+    "lng": 6.0811408,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-104",
+    "stopCode": "NL:S:16300050",
+    "name": "Matthijs Kiersstraat",
+    "town": "Steenwijk",
+    "lat": 52.787791,
+    "lng": 6.1104019,
+    "lines": [
+      "214",
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-105",
+    "stopCode": "NL:S:46531030",
+    "name": "Weyert",
+    "town": "Vollenhove",
+    "lat": 52.68291,
+    "lng": 5.9628677,
+    "lines": [
+      "679",
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan | Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+  },
+  {
+    "id": "swk-halte-106",
+    "stopCode": "NL:S:46630230",
+    "name": "Perceel 252 (Veneweg)",
+    "town": "Wanneperveen",
+    "lat": 52.6951163,
+    "lng": 6.0936757,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-107",
+    "stopCode": "NL:S:25680030",
+    "name": "Blauwe Hand",
+    "town": "Wanneperveen",
+    "lat": 52.6946366,
+    "lng": 6.077836,
+    "lines": [
+      "70",
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-108",
+    "stopCode": "NL:S:25380030",
+    "name": "Smalleweg",
+    "town": "Scheerwolde",
+    "lat": 52.756467,
+    "lng": 6.0410563,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-109",
+    "stopCode": "NL:S:24590100",
+    "name": "Burchtstraat",
+    "town": "Kuinre",
+    "lat": 52.7858799,
+    "lng": 5.8417204,
+    "lines": [
+      "76",
+      "146",
+      "675"
+    ],
+    "routeDetails": [
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+      },
+      {
+        "line": "146",
+        "color": "#dc3545",
+        "description": "Bus 146: Kuinre Burchtstraat ⇒ Dronten Station"
+      },
+      {
+        "line": "146",
+        "color": "#dc3545",
+        "description": "Bus 146: Emmeloord Busstation ⇒ Kuinre Burchtstraat"
+      },
+      {
+        "line": "675",
+        "color": "#dc3545",
+        "description": "Bus 675: Kuinre Burchtstraat ⇒ Emmeloord Begraafplaats"
+      }
+    ],
+    "direction": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation | Bus 146: Kuinre Burchtstraat ⇒ Dronten Station | Bus 146: Emmeloord Busstation ⇒ Kuinre Burchtstraat | Bus 675: Kuinre Burchtstraat ⇒ Emmeloord Begraafplaats"
+  },
+  {
+    "id": "swk-halte-110",
+    "stopCode": "NL:S:46660170",
+    "name": "'t Haagje",
+    "town": "Wanneperveen",
+    "lat": 52.7040834,
+    "lng": 6.1254428,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-111",
+    "stopCode": "NL:S:46522010",
+    "name": "Barsbeek (Heetveld)",
+    "town": "Sint Jansklooster",
+    "lat": 52.6549853,
+    "lng": 6.0135737,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      }
+    ],
+    "direction": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+  },
+  {
+    "id": "swk-halte-112",
+    "stopCode": "NL:S:46660030",
+    "name": "Nieuwedijk (Dinxterveen)",
+    "town": "Wanneperveen",
+    "lat": 52.7103126,
+    "lng": 6.1445575,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-113",
+    "stopCode": "NL:S:46660170",
+    "name": "'t Haagje",
+    "town": "Wanneperveen",
+    "lat": 52.7036355,
+    "lng": 6.1238117,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-114",
+    "stopCode": "NL:S:24550160",
+    "name": "Dolderbrug",
+    "town": "Steenwijk",
+    "lat": 52.7898062,
+    "lng": 6.1030719,
+    "lines": [
+      "70",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Steenwijk Station ⇒ Blauwe Hand"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 270: Steenwijk Station ⇒ Blauwe Hand | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-115",
+    "stopCode": "NL:S:46650050",
+    "name": "Perceel 9 (Beulakerweg)",
+    "town": "Giethoorn",
+    "lat": 52.7609882,
+    "lng": 6.0848548,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-116",
+    "stopCode": "NL:S:46630190",
+    "name": "Veldweg",
+    "town": "Wanneperveen",
+    "lat": 52.6969861,
+    "lng": 6.1030819,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-117",
+    "stopCode": "NL:S:46660090",
+    "name": "Urkerpad",
+    "town": "Wanneperveen",
+    "lat": 52.7059239,
+    "lng": 6.1324821,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-118",
+    "stopCode": "NL:S:46650050",
+    "name": "Perceel 9 (Beulakerweg)",
+    "town": "Giethoorn",
+    "lat": 52.7608034,
+    "lng": 6.0846649,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-119",
+    "stopCode": "NL:S:24552330",
+    "name": "Oldemarktseweg",
+    "town": "Tuk",
+    "lat": 52.7979875,
+    "lng": 6.0927172,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-120",
+    "stopCode": "NL:S:46660110",
+    "name": "Perceel 80 (Veneweg)",
+    "town": "Wanneperveen",
+    "lat": 52.705186,
+    "lng": 6.129304,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-121",
+    "stopCode": "NL:S:46650030",
+    "name": "Brug (Noord)",
+    "town": "Giethoorn",
+    "lat": 52.7548573,
+    "lng": 6.0824216,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-122",
+    "stopCode": "NL:S:24451800",
+    "name": "Steenwijkerweg (Willemsoord)",
+    "town": "Willemsoord",
+    "lat": 52.8248858,
+    "lng": 6.0621229,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-123",
+    "stopCode": "NL:S:46630110",
+    "name": "Strandje",
+    "town": "Belt-Schutsloot",
+    "lat": 52.686182,
+    "lng": 6.080863,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-124",
+    "stopCode": "NL:S:24510040",
+    "name": "Koningin Julianaweg",
+    "town": "Oldemarkt",
+    "lat": 52.8173791,
+    "lng": 5.97783,
+    "lines": [
+      "70",
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-125",
+    "stopCode": "NL:S:46630130",
+    "name": "Giethoorn Zuid",
+    "town": "Giethoorn",
+    "lat": 52.7090464,
+    "lng": 6.0746466,
+    "lines": [
+      "70",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Blauwe Hand ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 270: Blauwe Hand ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-126",
+    "stopCode": "NL:S:24450050",
+    "name": "Eikenlaan",
+    "town": "Willemsoord",
+    "lat": 52.8314937,
+    "lng": 6.0555681,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-127",
+    "stopCode": "NL:S:25780010",
+    "name": "Dominee T.O. Hylkemaweg",
+    "town": "Giethoorn",
+    "lat": 52.7217307,
+    "lng": 6.077539,
+    "lines": [
+      "70",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Steenwijk Station ⇒ Blauwe Hand"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 270: Steenwijk Station ⇒ Blauwe Hand | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-128",
+    "stopCode": "NL:S:24510070",
+    "name": "Kruisstraat",
+    "town": "Oldemarkt",
+    "lat": 52.8204602,
+    "lng": 5.9656185,
+    "lines": [
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+      }
+    ],
+    "direction": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+  },
+  {
+    "id": "swk-halte-129",
+    "stopCode": "NL:S:46630150",
+    "name": "Hollands Venetië",
+    "town": "Giethoorn",
+    "lat": 52.7157142,
+    "lng": 6.077095,
+    "lines": [
+      "70",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Blauwe Hand ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 270: Blauwe Hand ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-130",
+    "stopCode": "NL:S:24552370",
+    "name": "Thij (Oldemarktseweg)",
+    "town": "Steenwijkerwold",
+    "lat": 52.8015676,
+    "lng": 6.0696467,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-131",
+    "stopCode": "NL:S:46602010",
+    "name": "Belterweg",
+    "town": "Belt-Schutsloot",
+    "lat": 52.6754331,
+    "lng": 6.0919422,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-132",
+    "stopCode": "NL:S:46522070",
+    "name": "Barsbeek 36",
+    "town": "Sint Jansklooster",
+    "lat": 52.6724565,
+    "lng": 6.0164856,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-133",
+    "stopCode": "NL:S:24552350",
+    "name": "Watertoren (Thij)",
+    "town": "Steenwijkerwold",
+    "lat": 52.7992905,
+    "lng": 6.0817256,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-134",
+    "stopCode": "NL:S:25280050",
+    "name": "Beenderribben (N333)",
+    "town": "Wetering",
+    "lat": 52.7448557,
+    "lng": 6.0020143,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      }
+    ],
+    "direction": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+  },
+  {
+    "id": "swk-halte-135",
+    "stopCode": "NL:S:46522090",
+    "name": "Kadoelen",
+    "town": "Sint Jansklooster",
+    "lat": 52.6691835,
+    "lng": 6.0140042,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      }
+    ],
+    "direction": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+  },
+  {
+    "id": "swk-halte-136",
+    "stopCode": "NL:S:46660030",
+    "name": "Nieuwedijk (Dinxterveen)",
+    "town": "Wanneperveen",
+    "lat": 52.7100386,
+    "lng": 6.1440511,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-137",
+    "stopCode": "NL:S:25280090",
+    "name": "Veldhuisweg (N333)",
+    "town": "Baarlo",
+    "lat": 52.7370883,
+    "lng": 5.9682172,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      }
+    ],
+    "direction": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+  },
+  {
+    "id": "swk-halte-138",
+    "stopCode": "NL:S:24550160",
+    "name": "Dolderbrug",
+    "town": "Steenwijk",
+    "lat": 52.789363,
+    "lng": 6.1033852,
+    "lines": [
+      "70",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Blauwe Hand ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 270: Blauwe Hand ⇒ Steenwijk Station | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-139",
+    "stopCode": "NL:S:46522090",
+    "name": "Kadoelen",
+    "town": "Sint Jansklooster",
+    "lat": 52.6691917,
+    "lng": 6.0138808,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-140",
+    "stopCode": "NL:S:24552330",
+    "name": "Oldemarktseweg",
+    "town": "Tuk",
+    "lat": 52.7975647,
+    "lng": 6.0939686,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-141",
+    "stopCode": "NL:S:46660110",
+    "name": "Perceel 80 (Veneweg)",
+    "town": "Wanneperveen",
+    "lat": 52.705248,
+    "lng": 6.1299464,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-142",
+    "stopCode": "NL:S:46630110",
+    "name": "Strandje",
+    "town": "Belt-Schutsloot",
+    "lat": 52.6857249,
+    "lng": 6.0816671,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-143",
+    "stopCode": "NL:S:25270010",
+    "name": "Clarenberglaan",
+    "town": "Vollenhove",
+    "lat": 52.6823787,
+    "lng": 5.9574281,
+    "lines": [
+      "71",
+      "679",
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      },
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station | Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station | Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan | Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-144",
+    "stopCode": "NL:S:24510070",
+    "name": "Kruisstraat",
+    "town": "Oldemarkt",
+    "lat": 52.8203692,
+    "lng": 5.9656532,
+    "lines": [
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-145",
+    "stopCode": "NL:S:46630150",
+    "name": "Hollands Venetië",
+    "town": "Giethoorn",
+    "lat": 52.7157817,
+    "lng": 6.0769044,
+    "lines": [
+      "70",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Steenwijk Station ⇒ Blauwe Hand"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 270: Steenwijk Station ⇒ Blauwe Hand | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-146",
+    "stopCode": "NL:S:24552310",
+    "name": "Gemeentewerken",
+    "town": "Tuk",
+    "lat": 52.7947655,
+    "lng": 6.0976387,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-147",
+    "stopCode": "NL:S:24552370",
+    "name": "Thij (Oldemarktseweg)",
+    "town": "Steenwijkerwold",
+    "lat": 52.8014688,
+    "lng": 6.0696279,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-148",
+    "stopCode": "NL:S:46650010",
+    "name": "Lindehof",
+    "town": "Giethoorn",
+    "lat": 52.7463378,
+    "lng": 6.0794662,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-149",
+    "stopCode": "NL:S:24550050",
+    "name": "Groot Verlaat",
+    "town": "Steenwijk",
+    "lat": 52.7757724,
+    "lng": 6.0969083,
+    "lines": [
+      "214",
+      "70",
+      "270"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Blauwe Hand ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 270: Blauwe Hand ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-150",
+    "stopCode": "NL:S:46522070",
+    "name": "Barsbeek 36",
+    "town": "Sint Jansklooster",
+    "lat": 52.672454,
+    "lng": 6.0166034,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      }
+    ],
+    "direction": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+  },
+  {
+    "id": "swk-halte-151",
+    "stopCode": "NL:S:24552310",
+    "name": "Gemeentewerken",
+    "town": "Tuk",
+    "lat": 52.7950632,
+    "lng": 6.097568,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-152",
+    "stopCode": "NL:S:46660130",
+    "name": "Wethouder Vosstraat",
+    "town": "Wanneperveen",
+    "lat": 52.7024382,
+    "lng": 6.1204448,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-153",
+    "stopCode": "NL:S:46522110",
+    "name": "Dennenbos",
+    "town": "Sint Jansklooster",
+    "lat": 52.6598879,
+    "lng": 6.0009824,
+    "lines": [
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station | Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-154",
+    "stopCode": "NL:S:46522110",
+    "name": "Dennenbos",
+    "town": "Sint Jansklooster",
+    "lat": 52.6603335,
+    "lng": 5.9994709,
+    "lines": [
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan | Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-155",
+    "stopCode": "NL:S:46522170",
+    "name": "Zuurbeek",
+    "town": "Sint Jansklooster",
+    "lat": 52.6756885,
+    "lng": 5.9714696,
+    "lines": [
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station | Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-156",
+    "stopCode": "NL:S:46522130",
+    "name": "Oldenhof Kadoelerweg",
+    "town": "Sint Jansklooster",
+    "lat": 52.6620662,
+    "lng": 5.9914701,
+    "lines": [
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station | Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-157",
+    "stopCode": "NL:S:46522150",
+    "name": "Halleweg",
+    "town": "Sint Jansklooster",
+    "lat": 52.6697925,
+    "lng": 5.9761418,
+    "lines": [
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station | Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-158",
+    "stopCode": "NL:S:46522170",
+    "name": "Zuurbeek",
+    "town": "Sint Jansklooster",
+    "lat": 52.6764872,
+    "lng": 5.9710446,
+    "lines": [
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan | Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-159",
+    "stopCode": "NL:S:46522130",
+    "name": "Oldenhof Kadoelerweg",
+    "town": "Sint Jansklooster",
+    "lat": 52.6631948,
+    "lng": 5.9899712,
+    "lines": [
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan | Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-160",
+    "stopCode": "NL:S:46522150",
+    "name": "Halleweg",
+    "town": "Sint Jansklooster",
+    "lat": 52.670077,
+    "lng": 5.9758326,
+    "lines": [
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan | Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-161",
+    "stopCode": "NL:S:25270010",
+    "name": "Clarenberglaan",
+    "town": "Vollenhove",
+    "lat": 52.6822978,
+    "lng": 5.9572457,
+    "lines": [
+      "171",
+      "679",
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      },
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      }
+    ],
+    "direction": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station | Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan | Bus 71: Zwolle Station ⇒ Emmeloord Busstation | Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+  },
+  {
+    "id": "swk-halte-162",
+    "stopCode": "NL:S:24451400",
+    "name": "'t Centrum",
+    "town": "Steenwijkerwold",
+    "lat": 52.804272,
+    "lng": 6.0657918,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-163",
+    "stopCode": "NL:S:25780050",
+    "name": "Hotel Harmonie",
+    "town": "Giethoorn",
+    "lat": 52.7512414,
+    "lng": 6.0812498,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-164",
+    "stopCode": "NL:S:25680030",
+    "name": "Blauwe Hand",
+    "town": "Wanneperveen",
+    "lat": 52.6944658,
+    "lng": 6.0777058,
+    "lines": [
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-165",
+    "stopCode": "NL:S:16301010",
+    "name": "Busstation Station (Stationsplein)",
+    "town": "Steenwijk",
+    "lat": 52.7905305,
+    "lng": 6.1180688,
+    "lines": [
+      "20",
+      "26",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Assen Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 20: Assen Station ⇒ Steenwijk Station | Bus 26: Steenwijk Station ⇒ Meppel Station | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-166",
+    "stopCode": "NL:S:16301010",
+    "name": "Busstation Station (Stationsplein)",
+    "town": "Steenwijk",
+    "lat": 52.7905815,
+    "lng": 6.1180052,
+    "lines": [
+      "20",
+      "70",
+      "217",
+      "26",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Steenwijk Station ⇒ Assen Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station"
+      },
+      {
+        "line": "217",
+        "color": "#dc3545",
+        "description": "Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Meppel Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 20: Steenwijk Station ⇒ Assen Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 217 (flexBuzz): Steenwijk Station ⇒ Wolvega Station | Bus 217 (flexBuzz): Wolvega Station ⇒ Steenwijk Station | Bus 26: Meppel Station ⇒ Steenwijk Station | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-167",
+    "stopCode": "NL:S:16301010",
+    "name": "Busstation Station (Stationsplein)",
+    "town": "Steenwijk",
+    "lat": 52.7906322,
+    "lng": 6.1179973,
+    "lines": [
+      "70",
+      "214",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-168",
+    "stopCode": "NL:S:24510040",
+    "name": "Koningin Julianaweg",
+    "town": "Oldemarkt",
+    "lat": 52.8173553,
+    "lng": 5.9777657,
+    "lines": [
+      "70",
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-169",
+    "stopCode": "NL:S:16301010",
+    "name": "Busstation Station (Stationsplein)",
+    "town": "Steenwijk",
+    "lat": 52.7905122,
+    "lng": 6.1180572,
+    "lines": [
+      "20",
+      "26",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "20",
+        "color": "#dc3545",
+        "description": "Bus 20: Assen Station ⇒ Steenwijk Station"
+      },
+      {
+        "line": "26",
+        "color": "#dc3545",
+        "description": "Bus 26: Steenwijk Station ⇒ Meppel Station"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 20: Assen Station ⇒ Steenwijk Station | Bus 26: Steenwijk Station ⇒ Meppel Station | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-170",
+    "stopCode": "NL:S:16301010",
+    "name": "Busstation Station (Stationsplein)",
+    "town": "Steenwijk",
+    "lat": 52.7906126,
+    "lng": 6.1179925,
+    "lines": [
+      "70",
+      "214",
+      "270",
+      "524"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Steenwijk Station ⇒ Blauwe Hand"
+      },
+      {
+        "line": "270",
+        "color": "#dc3545",
+        "description": "Bus 270: Blauwe Hand ⇒ Steenwijk Station"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "524",
+        "color": "#ea580c",
+        "description": "Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 270: Steenwijk Station ⇒ Blauwe Hand | Bus 270: Blauwe Hand ⇒ Steenwijk Station | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Buurtbus 524: Steenwijk Station ⇔ Darp ⇔ Havelte"
+  },
+  {
+    "id": "swk-halte-171",
+    "stopCode": "NL:S:25680010",
+    "name": "Beukers Sluis",
+    "town": "Wanneperveen",
+    "lat": 52.6638119,
+    "lng": 6.0997686,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-172",
+    "stopCode": "NL:S:46520010",
+    "name": "Flevoweg",
+    "town": "Sint Jansklooster",
+    "lat": 52.6816518,
+    "lng": 6.0029149,
+    "lines": [
+      "679",
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      }
+    ],
+    "direction": "Bus 679: Meppel Station ⇒ Vollenhove Clarenberglaan | Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+  },
+  {
+    "id": "swk-halte-173",
+    "stopCode": "NL:S:46520010",
+    "name": "Flevoweg",
+    "town": "Sint Jansklooster",
+    "lat": 52.6816118,
+    "lng": 6.002497,
+    "lines": [
+      "71",
+      "679"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      },
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station | Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+  },
+  {
+    "id": "swk-halte-174",
+    "stopCode": "NL:S:46520030",
+    "name": "Veneweg",
+    "town": "Sint Jansklooster",
+    "lat": 52.6773905,
+    "lng": 6.0133936,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-175",
+    "stopCode": "NL:S:24510090",
+    "name": "De Boterberg",
+    "town": "Oldemarkt",
+    "lat": 52.8215887,
+    "lng": 5.9615814,
+    "lines": [
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-176",
+    "stopCode": "NL:S:24510090",
+    "name": "De Boterberg",
+    "town": "Oldemarkt",
+    "lat": 52.8219858,
+    "lng": 5.9605241,
+    "lines": [
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+      }
+    ],
+    "direction": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+  },
+  {
+    "id": "swk-halte-177",
+    "stopCode": "NL:S:46520030",
+    "name": "Veneweg",
+    "town": "Sint Jansklooster",
+    "lat": 52.6772728,
+    "lng": 6.0133811,
+    "lines": [
+      "71"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+      }
+    ],
+    "direction": "Bus 71: Zwolle Station ⇒ Emmeloord Busstation"
+  },
+  {
+    "id": "swk-halte-178",
+    "stopCode": "NL:S:24450030",
+    "name": "Oldemarktseweg (Marijenkampen)",
+    "town": "Marijenkampen",
+    "lat": 52.8142206,
+    "lng": 6.0724343,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-179",
+    "stopCode": "NL:S:25680010",
+    "name": "Beukers Sluis",
+    "town": "Wanneperveen",
+    "lat": 52.6624447,
+    "lng": 6.1002077,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-180",
+    "stopCode": "NL:S:24590100",
+    "name": "Burchtstraat",
+    "town": "Kuinre",
+    "lat": 52.7858607,
+    "lng": 5.8417508,
+    "lines": [
+      "76",
+      "146",
+      "675"
+    ],
+    "routeDetails": [
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+      },
+      {
+        "line": "146",
+        "color": "#dc3545",
+        "description": "Bus 146: Kuinre Burchtstraat ⇒ Dronten Station"
+      },
+      {
+        "line": "146",
+        "color": "#dc3545",
+        "description": "Bus 146: Emmeloord Busstation ⇒ Kuinre Burchtstraat"
+      },
+      {
+        "line": "675",
+        "color": "#dc3545",
+        "description": "Bus 675: Kuinre Burchtstraat ⇒ Emmeloord Begraafplaats"
+      }
+    ],
+    "direction": "Bus 76: Marknesse Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation | Bus 146: Kuinre Burchtstraat ⇒ Dronten Station | Bus 146: Emmeloord Busstation ⇒ Kuinre Burchtstraat | Bus 675: Kuinre Burchtstraat ⇒ Emmeloord Begraafplaats"
+  },
+  {
+    "id": "swk-halte-181",
+    "stopCode": "NL:S:25180010",
+    "name": "Busstation Blokzijl",
+    "town": "Blokzijl",
+    "lat": 52.7280042,
+    "lng": 5.9570957,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+      }
+    ],
+    "direction": "Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Lelystad Station Centrum ⇒ Steenwijk Station"
+  },
+  {
+    "id": "swk-halte-182",
+    "stopCode": "NL:S:25270010",
+    "name": "Clarenberglaan",
+    "town": "Vollenhove",
+    "lat": 52.6824046,
+    "lng": 5.9573726,
+    "lines": [
+      "71",
+      "679",
+      "171"
+    ],
+    "routeDetails": [
+      {
+        "line": "71",
+        "color": "#dc3545",
+        "description": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station"
+      },
+      {
+        "line": "679",
+        "color": "#dc3545",
+        "description": "Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan"
+      },
+      {
+        "line": "171",
+        "color": "#dc3545",
+        "description": "Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+      }
+    ],
+    "direction": "Bus 71: Emmeloord Busstation ⇒ Zwolle Station | Bus 679: Vollenhove Clarenberglaan ⇒ Meppel Station | Bus 171: Zwolle Station ⇒ Vollenhove Clarenberglaan | Bus 171: Vollenhove Clarenberglaan ⇒ Zwolle Station"
+  },
+  {
+    "id": "swk-halte-183",
+    "stopCode": "NL:S:25780050",
+    "name": "Hotel Harmonie",
+    "town": "Giethoorn",
+    "lat": 52.7512459,
+    "lng": 6.0811939,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+  },
+  {
+    "id": "swk-halte-184",
+    "stopCode": "NL:S:25780050",
+    "name": "Hotel Harmonie",
+    "town": "Giethoorn",
+    "lat": 52.7512861,
+    "lng": 6.0812078,
+    "lines": [
+      "70"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-185",
+    "stopCode": "NL:S:24510040",
+    "name": "Koningin Julianaweg",
+    "town": "Oldemarkt",
+    "lat": 52.8173196,
+    "lng": 5.9778003,
+    "lines": [
+      "70",
+      "76"
+    ],
+    "routeDetails": [
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg"
+      },
+      {
+        "line": "76",
+        "color": "#dc3545",
+        "description": "Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation"
+      },
+      {
+        "line": "70",
+        "color": "#dc3545",
+        "description": "Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+      }
+    ],
+    "direction": "Bus 70: Zwartsluis Busstation ⇒ Oldemarkt Koningin Julianaweg | Bus 76: Oldemarkt Koningin Julianaweg ⇒ Marknesse Busstation | Bus 70: Oldemarkt Koningin Julianaweg ⇒ Zwartsluis Busstation"
+  },
+  {
+    "id": "swk-halte-186",
+    "stopCode": "NL:S:25180010",
+    "name": "Busstation Blokzijl",
+    "town": "Blokzijl",
+    "lat": 52.7280062,
+    "lng": 5.9570395,
+    "lines": [
+      "214"
+    ],
+    "routeDetails": [
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      },
+      {
+        "line": "214",
+        "color": "#dc3545",
+        "description": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+      }
+    ],
+    "direction": "Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum | Bus 214: Steenwijk Station ⇒ Lelystad Station Centrum"
+  }
+]

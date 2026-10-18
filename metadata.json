@@ -1,0 +1,6 @@
+{
+  "name": "Actuele Busposities Steenwijkerland",
+  "description": "Live en actuele busposities en vertrektijden gebaseerd op DRGL.nl binnen de gemeente Steenwijkerland.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
