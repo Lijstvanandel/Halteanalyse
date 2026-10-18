@@ -24,6 +24,7 @@ import {
   TripPassStatus,
   getISOWeekInfo,
   exportRawLogsToCSV,
+  sanitizeLogId,
 } from './src/utils/punctuality';
 import { BusPosition } from './src/types/bus';
 
@@ -90,7 +91,9 @@ function logStopDepartures(stopCode: string, departures: DRGLDeparture[]) {
   let changed = false;
   for (const dep of departures) {
     const cleanJourney = dep.journeyUrl.replace(/^\/journey\//, '').replace(/\/+$/, '');
-    const id = `${weekInfo.dateStr}_${cleanJourney}_${primaryStop.town}_${primaryStop.name}`;
+    const id = sanitizeLogId(
+      `${weekInfo.dateStr}_${cleanJourney}_${primaryStop.town}_${primaryStop.name}`
+    );
 
     let status: TripPassStatus = 'ontime';
     let delayMinutes = dep.delayMinutes || 0;
@@ -194,7 +197,9 @@ function ensureInitialTodayLogs() {
         }
 
         const journeyId = `${operator.toUpperCase()}:${line}:${1001 + t * 2}`;
-        const id = `${weekInfo.dateStr}_${journeyId}_${stop.town}_${stop.name}`;
+        const id = sanitizeLogId(
+          `${weekInfo.dateStr}_${journeyId}_${stop.town}_${stop.name}`
+        );
         const actualTime =
           status === 'cancelled'
             ? 'Uitgevallen'
@@ -230,20 +235,26 @@ function ensureInitialTodayLogs() {
   savePunctualityStore();
 }
 
-// Active background poll of key DRGL stops in Steenwijkerland
-const MONITORED_STOP_CODES = [
-  'NL:S:16301010', // Steenwijk Station
-  'NL:S:24550220', // Steenwijk Westercluft (Lijn 26)
-  'NL:S:24550360', // Steenwijk Kallenkoterallee (Lijn 26)
-  'NL:S:25780010', // Giethoorn Dominee T.O. Hylkemaweg
-  'NL:S:25180010', // Blokzijl Busstation
-  'NL:S:25270010', // Vollenhove Clarenberglaan
-  'NL:S:24510040', // Oldemarkt Koningin Julianaweg
-  'NL:S:25280070', // Wetering N333
-];
+// All unique DRGL stop codes in Gemeente Steenwijkerland for 24/7 background polling
+const ALL_UNIQUE_STOP_CODES = Array.from(
+  new Set(
+    STEENWIJKERLAND_STOPS.map((s) => s.stopCode).filter((c): c is string => Boolean(c))
+  )
+);
+let scanCursor = 0;
 
-async function runLiveDRGLPunctualityScan() {
-  for (const stopCode of MONITORED_STOP_CODES) {
+async function runLiveDRGLPunctualityScan(batchSize = 10) {
+  if (ALL_UNIQUE_STOP_CODES.length === 0) return;
+
+  // Always include Steenwijk Station + a rotating batch of stops across the municipality
+  const batch = new Set<string>(['NL:S:16301010']);
+  for (let i = 0; i < batchSize; i++) {
+    const code = ALL_UNIQUE_STOP_CODES[(scanCursor + i) % ALL_UNIQUE_STOP_CODES.length];
+    if (code) batch.add(code);
+  }
+  scanCursor = (scanCursor + batchSize) % ALL_UNIQUE_STOP_CODES.length;
+
+  for (const stopCode of batch) {
     try {
       const resp = await fetch(`https://drgl.nl/stop/${stopCode}/departurespanel`, {
         headers: {
