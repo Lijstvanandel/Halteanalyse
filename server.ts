@@ -1602,19 +1602,12 @@ async function startServer() {
         ? allLiveBuses.filter((b) => isPointInSteenwijkerland(b.lat, b.lng))
         : allLiveBuses;
 
-      // Daytime resiliency (06:00 - 23:59 Dutch time):
-      // If live feed returns 0 buses due to upstream timeout or rate limit on VPS,
-      // fallback to last known cache or active timetable fleet so Vloot is NEVER 0 during day!
-      const amsterdamHourStr = new Date().toLocaleTimeString('nl-NL', {
-        timeZone: 'Europe/Amsterdam',
-        hour: '2-digit',
-        hour12: false,
-      });
-      const currentHour = parseInt(amsterdamHourStr, 10) || new Date().getHours();
-      const isDaytimeService = currentHour >= 6 && currentHour < 24;
+      // Unconditional resiliency fallback:
+      // If live feed returns 0 buses due to upstream timeout, rate limit, or boundary blips,
+      // fallback to last known cache or active timetable fleet so Vloot is NEVER 0!
       let usedFallback = false;
 
-      if (filteredLive.length === 0 && isDaytimeService) {
+      if (filteredLive.length === 0) {
         if (cachedOvzoekerVehicles.vehicles.length > 0) {
           filteredLive = cachedOvzoekerVehicles.vehicles.filter((b) =>
             onlySteenwijkerland ? isPointInSteenwijkerland(b.lat, b.lng) : true
