@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { BusPosition, BusStop } from './types/bus';
 import { MapComponent } from './components/MapComponent';
 import { TopNavbar } from './components/TopNavbar';
@@ -7,8 +7,14 @@ import { DRGLJourneyView } from './components/DRGLJourneyView';
 import { BusDetailModal } from './components/BusDetailModal';
 import { SidebarBusList } from './components/SidebarBusList';
 import { PunctualityDashboard } from './components/PunctualityDashboard';
+import { DeelfietsDashboard } from './components/DeelfietsDashboard';
 import { DRGLDeparture, DRGLJourneyData } from './utils/drgl';
 import { PunctualityLogEntry, sanitizeLogId } from './utils/punctuality';
+import {
+  DeelfietsLocation,
+  DeelfietsLogEntry,
+  STEENWIJKERLAND_DEELFIETS_HUBS,
+} from './utils/deelfiets';
 import { STEENWIJKERLAND_BOUNDS, STEENWIJKERLAND_STOPS } from './data/steenwijkerland';
 import {
   auth,
@@ -19,13 +25,14 @@ import {
   subscribeUserPunctualityLogs,
   User,
 } from './firebase';
-import { PanelLeftClose, PanelLeftOpen, Moon, Sparkles, BarChart3 } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Moon, Sparkles, BarChart3, Bike } from 'lucide-react';
 
 const LOCAL_STORAGE_LOGS_KEY = 'swk_punctuality_logs_v1';
 
 export default function App() {
   const [buses, setBuses] = useState<BusPosition[]>([]);
-  const [selectedBus, setSelectedBus] = useState<BusPosition | null>(null);
+  const [selectedBusId, setSelectedBusId] = useState<string | null>(null);
+  const selectedBusFallbackRef = useRef<BusPosition | null>(null);
   const [followedBusId, setFollowedBusId] = useState<string | null>(null);
   const [showHaltes, setShowHaltes] = useState<boolean>(true);
   const [showRoutes, setShowRoutes] = useState<boolean>(true);
@@ -33,6 +40,20 @@ export default function App() {
   const [showDepartureBoard, setShowDepartureBoard] = useState<boolean>(true);
   const [feedMode, setFeedMode] = useState<'live' | 'demo'>('live');
   const [statusMessage, setStatusMessage] = useState<string>('');
+
+  // Derive selectedBus from selectedBusId so closing sets selectedBusId = null and is never overwritten by polling
+  const selectedBus = useMemo<BusPosition | null>(() => {
+    if (!selectedBusId) {
+      selectedBusFallbackRef.current = null;
+      return null;
+    }
+    const found = buses.find((b) => b.id === selectedBusId);
+    if (found) {
+      selectedBusFallbackRef.current = found;
+      return found;
+    }
+    return selectedBusFallbackRef.current;
+  }, [buses, selectedBusId]);
 
   // Firebase Auth & Cloud Sync State
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
@@ -50,6 +71,23 @@ export default function App() {
   const [isPunctualityModalOpen, setIsPunctualityModalOpen] = useState<boolean>(false);
   const [punctualityStopFilter, setPunctualityStopFilter] = useState<string>('');
   const [isScanningPunctuality, setIsScanningPunctuality] = useState<boolean>(false);
+
+  // Deelfiets Nederland State (17 locaties binnen Steenwijkerland)
+  const [deelfietsLocations, setDeelfietsLocations] = useState<DeelfietsLocation[]>(() =>
+    STEENWIJKERLAND_DEELFIETS_HUBS.map((hub) => ({
+      ...hub,
+      lastUpdated: 'Zojuist',
+    }))
+  );
+  const [deelfietsLogs, setDeelfietsLogs] = useState<DeelfietsLogEntry[]>([]);
+  const [showDeelfietsen, setShowDeelfietsen] = useState<boolean>(true);
+  const [isDeelfietsModalOpen, setIsDeelfietsModalOpen] = useState<boolean>(false);
+  const [deelfietsLocationFilter, setDeelfietsLocationFilter] = useState<string>('');
+  const [isScanningDeelfiets, setIsScanningDeelfiets] = useState<boolean>(false);
+
+  const totalAvailableDeelfietsen = useMemo(() => {
+    return deelfietsLocations.reduce((acc, loc) => acc + (loc.available || 0), 0);
+  }, [deelfietsLocations]);
 
   // DRGL State
   const [selectedStopCode, setSelectedStopCode] = useState<string>('NL:S:16301010');
@@ -160,6 +198,44 @@ export default function App() {
     }
   }, []);
 
+  // 1b. Fetch Deelfiets Nederland live hubs & persistent logs
+  const fetchDeelfietsData = useCallback(async () => {
+    try {
+      const res = await fetch('/api/deelfiets/locations');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.locations) && data.locations.length > 0) {
+          setDeelfietsLocations(data.locations);
+        }
+        if (Array.isArray(data.logs)) {
+          setDeelfietsLogs(data.logs);
+        }
+      }
+    } catch (e) {
+      console.warn('Deelfiets fetch error:', e);
+    }
+  }, []);
+
+  const triggerLiveDeelfietsScan = useCallback(async () => {
+    setIsScanningDeelfiets(true);
+    try {
+      const res = await fetch('/api/deelfiets/scan', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.locations) && data.locations.length > 0) {
+          setDeelfietsLocations(data.locations);
+        }
+        if (Array.isArray(data.logs)) {
+          setDeelfietsLogs(data.logs);
+        }
+      }
+    } catch (e) {
+      console.warn('Deelfiets live scan error:', e);
+    } finally {
+      setIsScanningDeelfiets(false);
+    }
+  }, []);
+
   // 1. Fetch DRGL Departures
   const fetchDepartures = useCallback(async (stopCode: string) => {
     setIsDeparturesLoading(true);
@@ -195,35 +271,40 @@ export default function App() {
         if (data.statusMessage) {
           setStatusMessage(data.statusMessage);
         }
-        if (selectedBus) {
-          const updated = (data.buses || []).find((b: BusPosition) => b.id === selectedBus.id);
-          if (updated) setSelectedBus(updated);
-        }
       }
     } catch (e) {
       console.warn('Bus fetch error:', e);
     } finally {
       setIsSyncing(false);
     }
-  }, [selectedBus, feedMode]);
+  }, [feedMode]);
 
   // Periodic polling
   useEffect(() => {
     fetchDepartures(selectedStopCode);
     fetchBusPositions();
     fetchPunctualityLogs();
+    fetchDeelfietsData();
 
     const busInterval = setInterval(fetchBusPositions, 3000);
     const depInterval = setInterval(() => {
       fetchDepartures(selectedStopCode);
       fetchPunctualityLogs();
     }, 20000);
+    const deelfietsInterval = setInterval(fetchDeelfietsData, 30000);
 
     return () => {
       clearInterval(busInterval);
       clearInterval(depInterval);
+      clearInterval(deelfietsInterval);
     };
-  }, [selectedStopCode, fetchDepartures, fetchBusPositions, fetchPunctualityLogs]);
+  }, [
+    selectedStopCode,
+    fetchDepartures,
+    fetchBusPositions,
+    fetchPunctualityLogs,
+    fetchDeelfietsData,
+  ]);
 
   // Handle selecting a departure from DRGL board
   const handleSelectDeparture = async (dep: DRGLDeparture) => {
@@ -240,7 +321,8 @@ export default function App() {
 
           const matchingBus = buses.find((b) => b.line === dep.lineCode);
           if (matchingBus) {
-            setSelectedBus(matchingBus);
+            selectedBusFallbackRef.current = matchingBus;
+            setSelectedBusId(matchingBus.id);
           }
         }
       }
@@ -251,36 +333,39 @@ export default function App() {
     }
   };
 
-  const handleSelectBus = (bus: BusPosition | null) => {
-    setSelectedBus(bus);
+  const handleSelectBus = useCallback((bus: BusPosition | null) => {
     if (!bus) {
+      selectedBusFallbackRef.current = null;
+      setSelectedBusId(null);
       setFollowedBusId(null);
     } else {
-      const matchingDep = departures.find((d) => d.lineCode === bus.line);
-      if (matchingDep) {
-        handleSelectDeparture(matchingDep);
-      }
+      selectedBusFallbackRef.current = bus;
+      setSelectedBusId(bus.id);
+      setSelectedJourneyData(null);
     }
-  };
+  }, []);
 
-  const handleToggleFollow = () => {
-    if (!selectedBus) return;
-    setFollowedBusId(followedBusId === selectedBus.id ? null : selectedBus.id);
-  };
+  const handleToggleFollow = useCallback(() => {
+    if (!selectedBusId) return;
+    setFollowedBusId((prev) => (prev === selectedBusId ? null : selectedBusId));
+  }, [selectedBusId]);
 
-  const handleOpenStopStats = (stop: BusStop) => {
+  const handleOpenStopStats = useCallback((stop: BusStop) => {
     setPunctualityStopFilter(stop.name);
     setIsPunctualityModalOpen(true);
-  };
+  }, []);
 
   // Keyboard shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setSelectedBus(null);
+        selectedBusFallbackRef.current = null;
+        setSelectedBusId(null);
+        setFollowedBusId(null);
         setSelectedJourneyData(null);
         setIsFleetDrawerOpen(false);
         setIsPunctualityModalOpen(false);
+        setIsDeelfietsModalOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -300,6 +385,11 @@ export default function App() {
           setPunctualityStopFilter('');
           setIsPunctualityModalOpen(true);
         }}
+        onOpenDeelfietsModal={() => {
+          setDeelfietsLocationFilter('');
+          setIsDeelfietsModalOpen(true);
+        }}
+        deelfietsAvailableCount={totalAvailableDeelfietsen}
         loggedCount={punctualityLogs.length}
         dataSource={dataSource}
         isSyncing={isSyncing}
@@ -307,6 +397,7 @@ export default function App() {
           fetchBusPositions();
           fetchDepartures(selectedStopCode);
           triggerLivePunctualityScan();
+          fetchDeelfietsData();
         }}
         feedMode={feedMode}
         onToggleFeedMode={(mode) => setFeedMode(mode)}
@@ -350,6 +441,14 @@ export default function App() {
             }}
             onOpenStopStats={handleOpenStopStats}
             punctualityLogs={punctualityLogs}
+            deelfietsLocations={deelfietsLocations}
+            deelfietsLogs={deelfietsLogs}
+            showDeelfietsen={showDeelfietsen}
+            onToggleDeelfietsen={setShowDeelfietsen}
+            onOpenDeelfietsStats={(loc) => {
+              setDeelfietsLocationFilter(loc.name);
+              setIsDeelfietsModalOpen(true);
+            }}
             showHaltes={showHaltes}
             onToggleHaltes={setShowHaltes}
             showRoutes={showRoutes}
@@ -415,6 +514,18 @@ export default function App() {
               <BarChart3 className="w-4 h-4 text-[#FFCC00]" />
               <span>Vertraging & Uitval Statistieken (.CSV)</span>
             </button>
+
+            <button
+              onClick={() => {
+                setDeelfietsLocationFilter('');
+                setIsDeelfietsModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00B1FF] text-white text-xs font-bold shadow-lg hover:bg-sky-600 transition-colors cursor-pointer"
+              title="Deelfiets Nederland locaties in Steenwijkerland: gemiddelden en totalen per dag, week en maand"
+            >
+              <Bike className="w-4 h-4 text-white" />
+              <span>Deelfietsen ({totalAvailableDeelfietsen} vrij) (.CSV)</span>
+            </button>
           </div>
         </section>
 
@@ -463,6 +574,17 @@ export default function App() {
           isCloudSyncing={isCloudSyncing}
           onCloudSync={handleCloudSyncNow}
           onSignOut={signOutFirebase}
+        />
+
+        {/* Deelfiets Nederland Dashboard Modal (Alle locaties Steenwijkerland + Dag/Week/Maand statistieken) */}
+        <DeelfietsDashboard
+          isOpen={isDeelfietsModalOpen}
+          onClose={() => setIsDeelfietsModalOpen(false)}
+          locations={deelfietsLocations}
+          logs={deelfietsLogs}
+          initialLocationFilter={deelfietsLocationFilter}
+          onTriggerLiveScan={triggerLiveDeelfietsScan}
+          isScanning={isScanningDeelfiets}
         />
       </main>
     </div>

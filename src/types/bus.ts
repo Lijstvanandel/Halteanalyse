@@ -13,6 +13,12 @@ export interface BusPosition {
   speedKmH: number;
   heading: number; // 0-360 degrees
   delayMinutes: number; // e.g. 0, 2, -1
+  delaySeconds?: number; // exact delay in seconds from ovzoeker.nl (+ late, - early)
+  ritnummer?: string; // e.g. "1011"
+  omloopnummer?: string; // e.g. "4667"
+  realtimeTripId?: string; // e.g. "EBS:4070:1011"
+  ovzoekerId?: string; // e.g. "EBS:2801", "QBUZZ:1026"
+  permalink?: string; // e.g. "https://ovzoeker.nl/voertuig/EBS:2801"
   color: string; // icon file reference e.g. "ebs.png"
   busType: 'Elektrisch' | 'Diesel' | 'Hybride';
   model: string; // e.g. "BYD eBus B12 12m", "Mercedes Citaro C2 LE"

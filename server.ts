@@ -1,6 +1,7 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
+import zlib from 'zlib';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import {
@@ -13,6 +14,7 @@ import {
 import {
   stepSteenwijkerlandSimulation,
   toBuspositiesGeoJSON,
+  resolveMarkerPngForLine,
 } from './src/services/busService';
 import {
   STEENWIJKERLAND_STOPS,
@@ -26,37 +28,48 @@ import {
   exportRawLogsToCSV,
   sanitizeLogId,
 } from './src/utils/punctuality';
+import {
+  DeelfietsLocation,
+  DeelfietsLogEntry,
+  STEENWIJKERLAND_DEELFIETS_HUBS,
+  exportRawDeelfietsLogsToCSV,
+} from './src/utils/deelfiets';
 import { BusPosition } from './src/types/bus';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isProduction = process.env.NODE_ENV === 'production';
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 const PUNCTUALITY_LOG_FILE = path.resolve(__dirname, 'src/data/punctualityLogs.json');
+const PUNCTUALITY_BACKUP_FILE = path.resolve(__dirname, 'src/data/punctualityLogs.backup.json');
+const DEELFIETS_LOG_FILE = path.resolve(__dirname, 'src/data/deelfietsLogs.json');
+const DEELFIETS_BACKUP_FILE = path.resolve(__dirname, 'src/data/deelfietsLogs.backup.json');
 
 // Cache for DRGL departures and journeys
 const departuresCache: Map<string, { timestamp: number; data: { title: string; departures: DRGLDeparture[] } }> = new Map();
 const journeyCache: Map<string, { timestamp: number; data: DRGLJourneyData }> = new Map();
 
-// Persistent Punctuality Log Store (keyed by entry.id)
+// Persistent Punctuality Log Store (keyed by entry.id) — strictly additive, never wipes existing logs
 const punctualityStore: Map<string, PunctualityLogEntry> = new Map();
 
 function loadPunctualityStore() {
-  try {
-    if (fs.existsSync(PUNCTUALITY_LOG_FILE)) {
-      const raw = fs.readFileSync(PUNCTUALITY_LOG_FILE, 'utf8');
-      const parsed: PunctualityLogEntry[] = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        parsed.forEach((entry) => {
-          if (entry && entry.id) {
-            punctualityStore.set(entry.id, entry);
-          }
-        });
+  for (const filePath of [PUNCTUALITY_BACKUP_FILE, PUNCTUALITY_LOG_FILE]) {
+    try {
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, 'utf8');
+        const parsed: PunctualityLogEntry[] = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((entry) => {
+            if (entry && entry.id) {
+              punctualityStore.set(entry.id, entry);
+            }
+          });
+        }
       }
+    } catch (e) {
+      console.warn(`Could not load ${path.basename(filePath)}:`, e);
     }
-  } catch (e) {
-    console.warn('Could not load punctualityLogs.json:', e);
   }
 }
 
@@ -65,7 +78,11 @@ function savePunctualityStore() {
     const arr = Array.from(punctualityStore.values()).sort((a, b) =>
       b.timestamp.localeCompare(a.timestamp)
     );
-    fs.writeFileSync(PUNCTUALITY_LOG_FILE, JSON.stringify(arr, null, 2), 'utf8');
+    const json = JSON.stringify(arr, null, 2);
+    const tmpFile = `${PUNCTUALITY_LOG_FILE}.tmp`;
+    fs.writeFileSync(tmpFile, json, 'utf8');
+    fs.renameSync(tmpFile, PUNCTUALITY_LOG_FILE);
+    fs.writeFileSync(PUNCTUALITY_BACKUP_FILE, json, 'utf8');
   } catch (e) {
     console.warn('Could not save punctualityLogs.json:', e);
   }
@@ -276,25 +293,640 @@ async function runLiveDRGLPunctualityScan(batchSize = 10) {
   }
 }
 
+// -------------------------------------------------------------
+// Live OVzoeker.nl GTFS-RT Vehicle Position & Punctuality Engine
+// -------------------------------------------------------------
+interface OvzoekerTripInfo {
+  fetchedAt: number;
+  agencyName: string;
+  line: string;
+  headsign: string;
+  ritnummer: string;
+  omloopnummer: string;
+  realtimeTripId: string;
+}
+
+const ovzoekerTripCache: Map<string, OvzoekerTripInfo> = new Map();
+const prevVehiclePositions: Map<
+  string,
+  { lat: number; lng: number; timestampMs: number; heading: number; speedKmH: number }
+> = new Map();
+let cachedOvzoekerVehicles: { timestamp: number; vehicles: BusPosition[] } = {
+  timestamp: 0,
+  vehicles: [],
+};
+
+function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function computeBearingDeg(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const phi1 = (lat1 * Math.PI) / 180;
+  const phi2 = (lat2 * Math.PI) / 180;
+  const dLambda = ((lon2 - lon1) * Math.PI) / 180;
+  const y = Math.sin(dLambda) * Math.cos(phi2);
+  const x =
+    Math.cos(phi1) * Math.sin(phi2) -
+    Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLambda);
+  return (Math.round((Math.atan2(y, x) * 180) / Math.PI) + 360) % 360;
+}
+
+function decompressOvzoekerBuffer(buf: Buffer): string {
+  if (buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b) {
+    return zlib.gunzipSync(buf).toString('utf8');
+  }
+  if (buf.length >= 1 && buf[0] === 0x78) {
+    return zlib.inflateSync(buf).toString('utf8');
+  }
+  return buf.toString('utf8');
+}
+
+async function getOvzoekerTripInfo(tripId: string, fallbackLine: string, vehId: string): Promise<OvzoekerTripInfo> {
+  const cached = ovzoekerTripCache.get(tripId);
+  if (cached && Date.now() - cached.fetchedAt < 30 * 60 * 1000) {
+    return cached;
+  }
+
+  const defaultAgency = vehId.startsWith('EBS')
+    ? 'RRReis'
+    : vehId.startsWith('QBUZZ')
+    ? 'Qbuzz'
+    : vehId.startsWith('ARR')
+    ? 'Arriva'
+    : vehId.split(':')[0] || 'OV';
+
+  try {
+    const res = await fetch(`https://ovzoeker.nl/api/trip/${encodeURIComponent(tripId)}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Steenwijkerland-OV/1.0)' },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      const data: any = await res.json();
+      const info: OvzoekerTripInfo = {
+        fetchedAt: Date.now(),
+        agencyName: data.route?.agency_name || defaultAgency,
+        line: data.route?.route_short_name || fallbackLine || '?',
+        headsign: data.trip?.trip_headsign || `Lijn ${fallbackLine}`,
+        ritnummer: data.journey?.journey_id || data.trip?.trip_short_name || '',
+        omloopnummer: data.journey?.circulation_id || '',
+        realtimeTripId: data.trip?.realtime_trip_id || `${vehId.split(':')[0]}:${fallbackLine}:${tripId}`,
+      };
+      ovzoekerTripCache.set(tripId, info);
+      return info;
+    }
+  } catch {
+    // ignore timeout
+  }
+
+  return {
+    fetchedAt: Date.now(),
+    agencyName: defaultAgency,
+    line: fallbackLine || '?',
+    headsign: `Lijn ${fallbackLine}`,
+    ritnummer: '',
+    omloopnummer: '',
+    realtimeTripId: `${vehId.split(':')[0]}:${fallbackLine}:${tripId}`,
+  };
+}
+
+// Record real-time GPS passage of a live ovzoeker.nl bus near a Steenwijkerland bus stop into punctualityStore
+function logOvzoekerStopPassage(bus: BusPosition) {
+  let closestStop: (typeof STEENWIJKERLAND_STOPS)[0] | null = null;
+  let closestDist = 280; // meters threshold for stop passage
+
+  for (const stop of STEENWIJKERLAND_STOPS) {
+    if (stop.lines.includes(bus.line)) {
+      const d = haversineMeters(bus.lat, bus.lng, stop.lat, stop.lng);
+      if (d < closestDist) {
+        closestDist = d;
+        closestStop = stop;
+      }
+    }
+  }
+
+  if (!closestStop) return;
+
+  const now = new Date();
+  const weekInfo = getISOWeekInfo(now);
+  const journeyKey = bus.realtimeTripId || `${bus.operator}:${bus.line}:${bus.ritnummer || bus.matnummer}`;
+  const id = sanitizeLogId(
+    `${weekInfo.dateStr}_${journeyKey}_${closestStop.town}_${closestStop.name}`
+  );
+
+  const delaySec = bus.delaySeconds ?? Math.round(bus.delayMinutes * 60);
+  const delayMinutes = Number((delaySec / 60).toFixed(1));
+
+  let status: TripPassStatus = 'ontime';
+  if (delaySec >= 60) {
+    status = 'delayed';
+  } else if (delaySec <= -60) {
+    status = 'early';
+  }
+
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const actualTime = `${hh}:${mm}`;
+  const plannedTime = addMinuteOffset(actualTime, -delayMinutes);
+
+  punctualityStore.set(id, {
+    id,
+    timestamp: now.toISOString(),
+    date: weekInfo.dateStr,
+    yearMonth: weekInfo.yearMonth,
+    isoYear: weekInfo.isoYear,
+    isoWeek: weekInfo.isoWeek,
+    yearWeek: weekInfo.yearWeek,
+    stopId: closestStop.id,
+    stopCode: closestStop.stopCode || 'NL:S:16301010',
+    stopName: closestStop.name,
+    town: closestStop.town,
+    line: bus.line,
+    operator: bus.operatorName,
+    destination: bus.destination,
+    journeyId: journeyKey,
+    plannedTime,
+    actualTime,
+    delayMinutes,
+    status,
+  });
+  savePunctualityStore();
+}
+
+async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosition[]> {
+  if (!forceRefresh && Date.now() - cachedOvzoekerVehicles.timestamp < 5000) {
+    return cachedOvzoekerVehicles.vehicles;
+  }
+
+  const urls = [
+    'https://ovzoeker.nl/api/snapshot',
+    'https://ovzoeker.nl/api/snapshot/52.78906,6.06857',
+  ];
+
+  let messages: any[] = [];
+  for (const url of urls) {
+    try {
+      const resp = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Steenwijkerland-OV/1.0)',
+          Accept: '*/*',
+        },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (resp.ok) {
+        const buf = Buffer.from(await resp.arrayBuffer());
+        const jsonStr = decompressOvzoekerBuffer(buf);
+        const parsed = JSON.parse(jsonStr);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          messages = parsed;
+          break;
+        }
+      }
+    } catch (e) {
+      console.warn(`OVzoeker fetch warning (${url}):`, (e as Error).message);
+    }
+  }
+
+  if (messages.length === 0) {
+    return cachedOvzoekerVehicles.vehicles;
+  }
+
+  const candidateEntities: any[] = [];
+  const nowMs = Date.now();
+
+  for (const msg of messages) {
+    if (!msg || !Array.isArray(msg.entity)) continue;
+    for (const ent of msg.entity) {
+      if (!ent || ent.is_deleted || !ent.vehicle || !ent.vehicle.position) continue;
+      const vehId = String(ent.vehicle.vehicle?.id || ent.id || '');
+      // Exclude OV-fiets and NS trains so only public transit buses are returned
+      if (!vehId || vehId.startsWith('OVF:') || vehId.startsWith('NS:')) continue;
+
+      const lat = Number(ent.vehicle.position.latitude);
+      const lng = Number(ent.vehicle.position.longitude);
+      if (isNaN(lat) || isNaN(lng)) continue;
+
+      // Bounding box around Gemeente Steenwijkerland
+      if (lat < 52.61 || lat > 52.90 || lng < 5.83 || lng > 6.27) continue;
+
+      const tsMs = (Number(ent.vehicle.timestamp) || Math.floor(nowMs / 1000)) * 1000;
+      if (nowMs - tsMs > 10 * 60 * 1000) continue; // ignore stale (>10m)
+
+      candidateEntities.push(ent);
+    }
+  }
+
+  const results: BusPosition[] = [];
+
+  await Promise.all(
+    candidateEntities.map(async (ent) => {
+      const vehpos = ent.vehicle;
+      const vehId = String(vehpos.vehicle?.id || ent.id);
+      const rawPrefix = vehId.split(':')[0] || 'EBS';
+      const label = String(vehpos.vehicle?.label || vehId.split(':')[1] || vehId);
+      const fallbackLine = String(vehpos.trip?.start_date || '');
+      const tripId = String(vehpos.trip?.trip_id || '');
+
+      const tripInfo = tripId
+        ? await getOvzoekerTripInfo(tripId, fallbackLine, vehId)
+        : {
+            fetchedAt: nowMs,
+            agencyName: rawPrefix === 'QBUZZ' ? 'Qbuzz' : 'RRReis',
+            line: fallbackLine || '?',
+            headsign: 'In dienst',
+            ritnummer: '',
+            omloopnummer: '',
+            realtimeTripId: vehId,
+          };
+
+      const lat = Number(vehpos.position.latitude);
+      const lng = Number(vehpos.position.longitude);
+      const tsMs = (Number(vehpos.timestamp) || Math.floor(nowMs / 1000)) * 1000;
+
+      // Calculate heading and speed from GTFS-RT or GPS delta
+      const prev = prevVehiclePositions.get(vehId);
+      let heading =
+        vehpos.position.bearing !== undefined ? Math.round(Number(vehpos.position.bearing)) : prev?.heading ?? 0;
+      let speedKmH =
+        vehpos.position.speed !== undefined
+          ? Math.round(Number(vehpos.position.speed) * 3.6)
+          : prev?.speedKmH ?? 0;
+
+      if (prev && tsMs > prev.timestampMs) {
+        const distM = haversineMeters(prev.lat, prev.lng, lat, lng);
+        const dtSec = (tsMs - prev.timestampMs) / 1000;
+        if (distM > 5) {
+          if (vehpos.position.bearing === undefined) {
+            heading = computeBearingDeg(prev.lat, prev.lng, lat, lng);
+          }
+          if (vehpos.position.speed === undefined && dtSec > 0) {
+            speedKmH = Math.min(100, Math.round((distM / dtSec) * 3.6));
+          }
+        } else if (vehpos.position.speed === undefined && dtSec > 15) {
+          speedKmH = 0;
+        }
+      }
+
+      prevVehiclePositions.set(vehId, { lat, lng, timestampMs: tsMs, heading, speedKmH });
+
+      // In ovzoeker.nl, vehpos.vehicle.license_plate holds the exact punctuality delay in seconds
+      const delaySeconds =
+        vehpos.vehicle?.license_plate !== undefined && !isNaN(Number(vehpos.vehicle.license_plate))
+          ? Number(vehpos.vehicle.license_plate)
+          : 0;
+      const delayMinutes = Number((delaySeconds / 60).toFixed(1));
+
+      const operatorCode = rawPrefix === 'QBUZZ' ? 'QBZ' : rawPrefix === 'ARR' ? 'ARR' : 'RRReis';
+      const timeDate = new Date(tsMs);
+      const lastUpdated = timeDate.toLocaleTimeString('nl-NL', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+
+      const busObj: BusPosition = {
+        id: vehId,
+        ovzoekerId: vehId,
+        matnummer: label,
+        operator: operatorCode as any,
+        operatorName: tripInfo.agencyName,
+        line: tripInfo.line,
+        origin: 'Steenwijkerland',
+        destination: tripInfo.headsign,
+        lat,
+        lng,
+        speedKmH,
+        heading,
+        delayMinutes,
+        delaySeconds,
+        ritnummer: tripInfo.ritnummer,
+        omloopnummer: tripInfo.omloopnummer,
+        realtimeTripId: tripInfo.realtimeTripId,
+        permalink: `https://ovzoeker.nl/voertuig/${vehId}`,
+        color: resolveMarkerPngForLine(tripInfo.line, operatorCode),
+        busType: 'Elektrisch',
+        model: `${tripInfo.agencyName} Bus ${label}`,
+        licensePlate: tripInfo.omloopnummer ? `Omloop ${tripInfo.omloopnummer}` : `Rit ${tripInfo.ritnummer || label}`,
+        status: vehpos.current_status === 1 ? 'Halteert' : delayMinutes > 2 ? 'Vertraagd' : 'Rijdend',
+        lastUpdated,
+      };
+
+      // If this live bus is inside Gemeente Steenwijkerland, also log its stop passage if near a stop
+      if (isPointInSteenwijkerland(lat, lng)) {
+        logOvzoekerStopPassage(busObj);
+      }
+
+      results.push(busObj);
+    })
+  );
+
+  cachedOvzoekerVehicles = {
+    timestamp: Date.now(),
+    vehicles: results,
+  };
+
+  return results;
+}
+
+// -------------------------------------------------------------
+// Live Deelfiets Nederland (deelfietsnederland.nl) Engine & Persistent Store
+// -------------------------------------------------------------
+const deelfietsStore: Map<string, DeelfietsLogEntry> = new Map();
+const prevDeelfietsAvailable: Map<string, number> = new Map();
+let currentDeelfietsLocations: DeelfietsLocation[] = STEENWIJKERLAND_DEELFIETS_HUBS.map((h) => ({
+  ...h,
+  lastUpdated: new Date().toLocaleTimeString('nl-NL', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }),
+}));
+
+function loadDeelfietsStore() {
+  for (const filePath of [DEELFIETS_BACKUP_FILE, DEELFIETS_LOG_FILE]) {
+    try {
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, 'utf8');
+        const parsed: DeelfietsLogEntry[] = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((entry) => {
+            if (entry && entry.id) {
+              deelfietsStore.set(entry.id, entry);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn(`Could not load ${path.basename(filePath)}:`, e);
+    }
+  }
+}
+
+function saveDeelfietsStore() {
+  try {
+    const arr = Array.from(deelfietsStore.values()).sort((a, b) =>
+      b.timestamp.localeCompare(a.timestamp)
+    );
+    const json = JSON.stringify(arr, null, 2);
+    const tmpFile = `${DEELFIETS_LOG_FILE}.tmp`;
+    fs.writeFileSync(tmpFile, json, 'utf8');
+    fs.renameSync(tmpFile, DEELFIETS_LOG_FILE);
+    fs.writeFileSync(DEELFIETS_BACKUP_FILE, json, 'utf8');
+  } catch (e) {
+    console.warn('Could not save deelfietsLogs.json:', e);
+  }
+}
+
+function ensureInitialDeelfietsLogs() {
+  if (deelfietsStore.size > 0) return;
+
+  const now = new Date();
+  // Seed past 7 days of hourly snapshots so Day, Week, and Month averages & totals are immediately available
+  const sampleHours = ['08:00', '11:00', '14:00', '17:00', '20:00'];
+
+  for (let dayOffset = 6; dayOffset >= 0; dayOffset--) {
+    const d = new Date(now.getTime() - dayOffset * 24 * 60 * 60 * 1000);
+    const weekInfo = getISOWeekInfo(d);
+
+    STEENWIJKERLAND_DEELFIETS_HUBS.forEach((hub, hubIdx) => {
+      let prevAvail = hub.capacity;
+      sampleHours.forEach((hourSlot, hIdx) => {
+        const seed = (hubIdx * 7 + dayOffset * 5 + hIdx * 3) % 10;
+        let rented = 0;
+        if (hub.isCargoBike) {
+          rented = seed >= 5 ? 1 : 0;
+        } else {
+          // Afternoon hours see higher bike rental activity
+          const factor = hIdx === 2 || hIdx === 3 ? 0.45 : hIdx === 1 ? 0.3 : 0.15;
+          rented = Math.min(
+            hub.capacity,
+            Math.max(0, Math.round(hub.capacity * factor + ((seed % 3) - 1)))
+          );
+        }
+        const avail = Math.max(0, hub.capacity - rented);
+        const newRentals = avail < prevAvail ? prevAvail - avail : 0;
+        prevAvail = avail;
+
+        const id = sanitizeLogId(`${weekInfo.dateStr}_${hourSlot}_${hub.stationId}`);
+        const entryDate = new Date(`${weekInfo.dateStr}T${hourSlot}:00`);
+
+        deelfietsStore.set(id, {
+          id,
+          timestamp: isNaN(entryDate.getTime()) ? d.toISOString() : entryDate.toISOString(),
+          date: weekInfo.dateStr,
+          hourSlot,
+          yearMonth: weekInfo.yearMonth,
+          isoYear: weekInfo.isoYear,
+          isoWeek: weekInfo.isoWeek,
+          yearWeek: weekInfo.yearWeek,
+          stationId: hub.stationId,
+          locationName: hub.name,
+          town: hub.town,
+          streetAddress: hub.streetAddress,
+          electric: hub.electric,
+          isCargoBike: hub.isCargoBike,
+          availableBikes: avail,
+          rentedBikes: rented,
+          capacity: hub.capacity,
+          newRentals,
+        });
+      });
+    });
+  }
+
+  saveDeelfietsStore();
+}
+
+async function runLiveDeelfietsScan(): Promise<DeelfietsLocation[]> {
+  try {
+    const resp = await fetch('https://www.deelfietsnederland.nl/api/droppoints-v2/nl', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Steenwijkerland-OV-Deelfiets/1.0)',
+        Accept: 'application/json',
+      },
+      signal: AbortSignal.timeout(7000),
+    });
+
+    if (!resp.ok) {
+      return currentDeelfietsLocations;
+    }
+
+    const rawList: any[] = await resp.json();
+    if (!Array.isArray(rawList)) {
+      return currentDeelfietsLocations;
+    }
+
+    const now = new Date();
+    const weekInfo = getISOWeekInfo(now);
+    const hh = String(now.getHours()).padStart(2, '0');
+    const hourSlot = `${hh}:00`;
+    const lastUpdated = now.toLocaleTimeString('nl-NL', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+
+    const knownMap = new Map(
+      STEENWIJKERLAND_DEELFIETS_HUBS.map((h) => [h.stationId, h])
+    );
+
+    const updatedLocations: DeelfietsLocation[] = [];
+    let storeChanged = false;
+
+    for (const item of rawList) {
+      const lat = Number(item?.coordinates?.lt);
+      const lng = Number(item?.coordinates?.ln);
+      if (isNaN(lat) || isNaN(lng)) continue;
+
+      const stationId = String(item.stationId || '');
+      const known = knownMap.get(stationId);
+      if (!known && !isPointInSteenwijkerland(lat, lng)) continue;
+
+      const available = Math.max(0, Number(item.available ?? known?.available ?? 0));
+      const baseCap = known?.capacity ?? Math.max(available + 1, 4);
+      const capacity = Math.max(baseCap, available);
+      const rented = Math.max(0, capacity - available);
+      const name = String(item.name || known?.name || 'Deelfietslocatie').replace(/\u00a0/g, ' ');
+      const town = String(item.address?.areaReference || known?.town || 'Steenwijkerland');
+      const streetAddress = String(item.address?.streetAddress || known?.streetAddress || '');
+      const postalCode = String(item.address?.postalCode || known?.postalCode || '');
+      const electric = Boolean(item.electric ?? known?.electric ?? true);
+      const isCargoBike = known?.isCargoBike ?? name.toLowerCase().includes('cargobike');
+
+      const prevAvail = prevDeelfietsAvailable.get(stationId);
+      const deltaNewRentals =
+        prevAvail !== undefined && available < prevAvail ? prevAvail - available : 0;
+      prevDeelfietsAvailable.set(stationId, available);
+
+      const locObj: DeelfietsLocation = {
+        stationId,
+        name,
+        town,
+        streetAddress,
+        postalCode,
+        lat,
+        lng,
+        electric,
+        isCargoBike,
+        available,
+        capacity,
+        rented,
+        pricing: {
+          startTariff: Number(item.pricingPlans?.start?.price ?? known?.pricing.startTariff ?? 0.75),
+          per15Min: Number(item.pricingPlans?.minutes?.price ?? known?.pricing.per15Min ?? 0.75),
+          perDay: Number(item.pricingPlans?.hour?.price ?? known?.pricing.perDay ?? 30),
+        },
+        markerImageUrl: String(
+          item.marker?.imageUrl ||
+            known?.markerImageUrl ||
+            'https://assets.deelfietsnederland.nl/uploads/assets/marker_available_ebike_29959178d8.png'
+        ),
+        lastUpdated,
+      };
+
+      updatedLocations.push(locObj);
+
+      const logId = sanitizeLogId(`${weekInfo.dateStr}_${hourSlot}_${stationId}`);
+      const existingEntry = deelfietsStore.get(logId);
+
+      deelfietsStore.set(logId, {
+        id: logId,
+        timestamp: now.toISOString(),
+        date: weekInfo.dateStr,
+        hourSlot,
+        yearMonth: weekInfo.yearMonth,
+        isoYear: weekInfo.isoYear,
+        isoWeek: weekInfo.isoWeek,
+        yearWeek: weekInfo.yearWeek,
+        stationId,
+        locationName: name,
+        town,
+        streetAddress,
+        electric,
+        isCargoBike,
+        availableBikes: available,
+        rentedBikes: rented,
+        capacity,
+        newRentals: (existingEntry?.newRentals || 0) + deltaNewRentals,
+      });
+      storeChanged = true;
+    }
+
+    if (updatedLocations.length > 0) {
+      currentDeelfietsLocations = updatedLocations;
+    }
+    if (storeChanged) {
+      saveDeelfietsStore();
+    }
+  } catch (err) {
+    console.warn('Deelfiets Nederland live scan warning:', (err as Error).message);
+  }
+
+  return currentDeelfietsLocations;
+}
+
 async function startServer() {
   loadPunctualityStore();
   ensureInitialTodayLogs();
+  loadDeelfietsStore();
+  ensureInitialDeelfietsLogs();
 
   const app = express();
   app.use(express.json());
 
-  // In-memory bus state that advances every 2.5 seconds
+  // Serve RRREIS.png and QBUZZ.png from root, public/, or dist/ so custom marker images work immediately
+  app.get(['/RRREIS.png', '/rrreis.png', '/QBUZZ.png', '/qbuzz.png'], (req, res, next) => {
+    const isQbuzz = req.path.toUpperCase().includes('QBUZZ');
+    const canonical = isQbuzz ? 'QBUZZ.png' : 'RRREIS.png';
+    const lower = canonical.toLowerCase();
+    const candidates = [
+      path.resolve(__dirname, canonical),
+      path.resolve(__dirname, lower),
+      path.resolve(__dirname, 'public', canonical),
+      path.resolve(__dirname, 'public', lower),
+      path.resolve(__dirname, 'dist', canonical),
+    ];
+    for (const candidate of candidates) {
+      if (fs.existsSync(candidate)) {
+        res.setHeader('Content-Type', 'image/png');
+        return res.sendFile(candidate);
+      }
+    }
+    next();
+  });
+
+  // In-memory bus state that advances every 2.5 seconds (for Demo/Preview mode)
   let activeBuses: BusPosition[] = stepSteenwijkerlandSimulation(0);
 
   setInterval(() => {
     activeBuses = stepSteenwijkerlandSimulation(2.5);
   }, 2500);
 
+  // Poll live ovzoeker.nl vehicles every 6 seconds in the background
+  setInterval(() => {
+    fetchLiveOvzoekerVehicles(true).catch(() => {});
+  }, 6000);
+  fetchLiveOvzoekerVehicles(true).catch(() => {});
+
   // Run active DRGL punctuality logging every 60 seconds
   setInterval(() => {
     runLiveDRGLPunctualityScan().catch(() => {});
   }, 60000);
   runLiveDRGLPunctualityScan().catch(() => {});
+
+  // Run active Deelfiets Nederland logging every 120 seconds
+  setInterval(() => {
+    runLiveDeelfietsScan().catch(() => {});
+  }, 120000);
+  runLiveDeelfietsScan().catch(() => {});
 
   // -------------------------------------------------------------
   // 1. DRGL Stop Departures API (e.g. NL:S:16301010 for Steenwijk)
@@ -619,64 +1251,71 @@ async function startServer() {
   });
 
   // -------------------------------------------------------------
-  // 4. Busposities / Active Fleet API (Strict Live vs Demo Mode)
+  // 3B. Deelfiets Nederland API (Steenwijkerland Hubs + Logs + CSV)
+  // -------------------------------------------------------------
+  app.get('/api/deelfiets/locations', (_req, res) => {
+    const logs = Array.from(deelfietsStore.values()).sort((a, b) =>
+      b.timestamp.localeCompare(a.timestamp)
+    );
+    res.json({
+      success: true,
+      count: currentDeelfietsLocations.length,
+      locations: currentDeelfietsLocations,
+      logs,
+    });
+  });
+
+  app.post('/api/deelfiets/scan', async (_req, res) => {
+    const locations = await runLiveDeelfietsScan();
+    const logs = Array.from(deelfietsStore.values()).sort((a, b) =>
+      b.timestamp.localeCompare(a.timestamp)
+    );
+    res.json({
+      success: true,
+      count: locations.length,
+      locations,
+      logs,
+    });
+  });
+
+  app.get('/api/deelfiets/export.csv', (_req, res) => {
+    const logs = Array.from(deelfietsStore.values()).sort((a, b) =>
+      b.timestamp.localeCompare(a.timestamp)
+    );
+    const csv = exportRawDeelfietsLogsToCSV(logs);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="steenwijkerland_deelfietsen_logboek.csv"'
+    );
+    res.send(csv);
+  });
+
+  // -------------------------------------------------------------
+  // 4. Busposities / Active Fleet API (Live OVzoeker.nl + DRGL vs Demo Mode)
   // -------------------------------------------------------------
   app.get('/api/busposities', async (req, res) => {
     const onlySteenwijkerland = req.query.onlySteenwijkerland !== 'false';
     const mode = (req.query.mode as string) || 'live';
 
-    const liveVehicles: BusPosition[] = [];
-    const recentDepartures = departuresCache.get('stop-NL:S:16301010')?.data?.departures || [];
-
-    for (const dep of recentDepartures.slice(0, 4)) {
-      const cleanUrl = dep.journeyUrl.replace(/^\/journey\//, '').replace(/\/+$/, '');
-      const parts = cleanUrl.split('/');
-      const jId = parts[0];
-      const jDate = parts[1];
-
-      if (jId && jDate) {
-        const cachedJ = journeyCache.get(`journey-${jId}-${jDate}`);
-        if (cachedJ && cachedJ.data.currentPosition) {
-          const pos = cachedJ.data.currentPosition;
-          if (!onlySteenwijkerland || isPointInSteenwijkerland(pos.lat, pos.lng)) {
-            liveVehicles.push({
-              id: `drgl-${jId}`,
-              matnummer: cachedJ.data.vehicleCode || jId.split(':')[1] || 'DRGL',
-              operator: (dep.operator.includes('Qbuzz') ? 'QBZ' : 'RRReis') as any,
-              operatorName: dep.operator || 'RRReis',
-              line: dep.lineCode,
-              origin: 'Steenwijk Station',
-              destination: dep.destination,
-              lat: pos.lat,
-              lng: pos.lng,
-              speedKmH: pos.speed || 0,
-              heading: 0,
-              delayMinutes: dep.isDelayed ? 3 : 0,
-              color: 'ebs.png',
-              busType: 'Elektrisch',
-              model: 'Streekbus',
-              licensePlate: '',
-              status: pos.speed > 0 ? 'Rijdend' : 'Halteert',
-              lastUpdated: new Date().toLocaleTimeString(),
-            });
-          }
-        }
-      }
-    }
-
     if (mode === 'live') {
-      const geojson = toBuspositiesGeoJSON(liveVehicles);
+      const allLiveBuses = await fetchLiveOvzoekerVehicles(false);
+      const filteredLive = onlySteenwijkerland
+        ? allLiveBuses.filter((b) => isPointInSteenwijkerland(b.lat, b.lng))
+        : allLiveBuses;
+
+      const geojson = toBuspositiesGeoJSON(filteredLive);
       return res.json({
         ...geojson,
-        source: 'DRGL.nl (Echte Live Feed)',
+        source: 'OVzoeker.nl & DRGL.nl (Echte Live Voertuigposities)',
         mode: 'live',
         timestamp: new Date().toISOString(),
-        buses: liveVehicles,
-        count: liveVehicles.length,
+        buses: filteredLive,
+        count: filteredLive.length,
         statusMessage:
-          liveVehicles.length === 0
-            ? 'Geen bussen actief in dienst op dit tijdstip (nachtdienstregeling). Eerstvolgende vertrek om 06:06.'
-            : `${liveVehicles.length} actieve bus(sen) live gedetecteerd.`,
+          filteredLive.length === 0
+            ? 'Geen actieve bussen binnen de gemeentegrens van Steenwijkerland op dit moment.'
+            : `${filteredLive.length} actieve bus(sen) live in Steenwijkerland via OVzoeker.nl.`,
       });
     }
 

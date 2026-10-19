@@ -1,66 +1,118 @@
 import L from 'leaflet';
 import { BusPosition } from '../types/bus';
 
+const RRREIS_LINES = new Set(['214', '270', '70', '76']);
+const QBUZZ_LINES = new Set(['217', '20', '18', '524', '26']);
+
 /**
- * Creates the authentic DRGL.nl vehicle marker:
- * - Circle with #ffcc00 (gold) fill and #0e518d (DRGL navy) stroke
- * - Speed (km/h) displayed inside the circle
- * - Heading direction pointer
- * - Official line badge and material number
+ * Returns the exact marker image filename ('RRREIS.png' or 'QBUZZ.png') for a given bus line & operator:
+ * - Lijn 214, 270, 70, 76 -> RRREIS.png
+ * - Lijn 217, 20, 18, 524, 26 -> QBUZZ.png
+ */
+export function getVehicleMarkerImage(
+  line: string,
+  operator?: string,
+  operatorName?: string
+): 'RRREIS.png' | 'QBUZZ.png' {
+  const cleanLine = String(line || '').trim();
+  if (RRREIS_LINES.has(cleanLine)) {
+    return 'RRREIS.png';
+  }
+  if (QBUZZ_LINES.has(cleanLine)) {
+    return 'QBUZZ.png';
+  }
+  const opUpper = `${operator || ''} ${operatorName || ''}`.toUpperCase();
+  if (opUpper.includes('QBZ') || opUpper.includes('QBUZZ')) {
+    return 'QBUZZ.png';
+  }
+  return 'RRREIS.png';
+}
+
+/**
+ * Creates the vehicle marker using RRREIS.png (lines 214, 270, 70, 76)
+ * or QBUZZ.png (lines 217, 20, 18, 524, 26), with directional heading pointer,
+ * line badge, vehicle number, and punctuality badge.
  */
 export function createBusMarkerIcon(bus: BusPosition, isSelected = false): L.DivIcon {
-  const isDelayed = bus.delayMinutes > 2;
-  const delayColor = isDelayed ? '#dc2626' : bus.delayMinutes < 0 ? '#16a34a' : '#0e518d';
-  const delayBadge = bus.delayMinutes > 0 ? `+${bus.delayMinutes}m` : bus.delayMinutes < 0 ? `${bus.delayMinutes}m` : 'op tijd';
+  const isDelayed = bus.delayMinutes > 1;
+  const delayColor = isDelayed ? '#dc2626' : bus.delayMinutes < 0 ? '#0284c7' : '#16a34a';
+  const delayBadge =
+    bus.delayMinutes > 0
+      ? `+${bus.delayMinutes}m`
+      : bus.delayMinutes < 0
+      ? `${bus.delayMinutes}m`
+      : 'op tijd';
 
-  // DRGL Line Color
-  let lineBg = '#0e518d';
-  let lineText = '#ffffff';
-  let lineBorder = '#0e518d';
+  const markerImage = getVehicleMarkerImage(bus.line, bus.operator, bus.operatorName);
+  const isQbuzz = markerImage === 'QBUZZ.png';
 
-  if (bus.line === '70') {
-    lineBg = '#00965e'; // RRReis green
-    lineBorder = '#00965e';
-  } else if (bus.line === '214' || bus.line === '270') {
+  // Badge styling per line/operator
+  let lineBg = isQbuzz ? '#dc3545' : '#00965e';
+  const lineText = '#ffffff';
+  let lineBorder = isQbuzz ? '#b91c1c' : '#047857';
+
+  if (bus.line === '214' || bus.line === '270') {
     lineBg = '#0086d6'; // snelRRReis blue
-    lineBorder = '#0086d6';
-  } else if (['18', '20', '26', '524', '40'].includes(bus.line)) {
-    lineBg = '#ffffff';
-    lineText = '#1e293b';
-    lineBorder = '#b6b6b6'; // Qbuzz style
+    lineBorder = '#0369a1';
+  } else if (bus.line === '76') {
+    lineBg = '#0d9488';
+    lineBorder = '#0f766e';
+  } else if (bus.line === '20' || bus.line === '524') {
+    lineBg = '#ea580c';
+    lineBorder = '#c2410c';
+  } else if (bus.line === '217') {
+    lineBg = '#d97706';
+    lineBorder = '#b45309';
   }
 
+  const pointerColor = isQbuzz ? '#dc3545' : '#0e518d';
+  const pointerStroke = isQbuzz ? '#ffcc00' : '#ffffff';
+
   const html = `
-    <div class="relative group cursor-pointer" style="transform: translate(-50%, -50%);">
-      <!-- Glow if selected -->
-      ${isSelected ? `<div class="absolute -inset-2 rounded-full bg-[#ffcc00]/40 animate-ping"></div>` : ''}
+    <div class="relative group cursor-pointer select-none" style="width: 48px; height: 48px; transform: translate(-50%, -50%);">
+      <!-- Selection halo -->
+      ${
+        isSelected
+          ? `<div class="absolute -inset-2 rounded-full border-2 border-[#FFCC00] bg-[#FFCC00]/30 animate-pulse pointer-events-none"></div>`
+          : ''
+      }
 
-      <!-- Heading Direction Triangle -->
-      <div style="transform: rotate(${bus.heading}deg); transform-origin: center center;" class="bus-marker-container flex items-center justify-center">
-        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-lg">
-          <!-- Direction Arrow Pointer -->
-          <polygon points="22,3 28,15 16,15" fill="#0e518d" stroke="#ffcc00" stroke-width="1.5" />
-          
-          <!-- DRGL Yellow Circle (#ffcc00) with #0e518d stroke -->
-          <circle cx="22" cy="24" r="14" fill="#ffcc00" stroke="#0e518d" stroke-width="3" />
+      <!-- Rotated direction pointer -->
+      <div
+        style="transform: rotate(${bus.heading || 0}deg); transform-origin: center center;"
+        class="w-12 h-12 flex items-center justify-center pointer-events-none"
+      >
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="24,1 30,12 18,12" fill="${pointerColor}" stroke="${pointerStroke}" stroke-width="1.5" />
         </svg>
+      </div>
 
-        <!-- Speed displayed in center of DRGL circle -->
-        <span class="absolute text-[11px] font-bold font-mono text-slate-950 pointer-events-none tabular-nums" style="top: 17px;">
-          ${bus.speedKmH}
-        </span>
+      <!-- Official RRREIS.png / QBUZZ.png Vehicle Marker Image -->
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none" style="top: 4px;">
+        <img
+          src="/${markerImage}"
+          alt="${markerImage}"
+          class="w-9 h-9 object-contain drop-shadow-md rounded-full"
+          draggable="false"
+        />
       </div>
 
       <!-- Line & Bus Identifier Badge -->
-      <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center shadow-md rounded px-1.5 py-0.5 bg-white border border-slate-300 whitespace-nowrap z-10 pointer-events-none">
-        <span class="text-[10px] font-bold px-1 rounded mr-1" style="background-color: ${lineBg}; color: ${lineText}; border: 1px solid ${lineBorder};">
+      <div class="absolute -bottom-3.5 left-1/2 -translate-x-1/2 flex items-center shadow-md rounded px-1.5 py-0.5 bg-white border border-slate-300 whitespace-nowrap z-10 pointer-events-none">
+        <span
+          class="text-[10px] font-bold px-1 rounded mr-1 leading-tight"
+          style="background-color: ${lineBg}; color: ${lineText}; border: 1px solid ${lineBorder};"
+        >
           ${bus.line}
         </span>
-        <span class="text-[9px] font-mono font-semibold text-slate-700">#${bus.matnummer}</span>
+        <span class="text-[9px] font-mono font-semibold text-slate-800">#${bus.matnummer}</span>
       </div>
 
       <!-- Delay Pill -->
-      <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded shadow-sm bg-white border text-slate-900 pointer-events-none" style="border-color: ${delayColor};">
+      <div
+        class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded shadow-sm bg-white border text-slate-900 whitespace-nowrap pointer-events-none"
+        style="border-color: ${delayColor};"
+      >
         <span style="color: ${delayColor};">${delayBadge}</span>
       </div>
     </div>
@@ -69,9 +121,9 @@ export function createBusMarkerIcon(bus: BusPosition, isSelected = false): L.Div
   return L.divIcon({
     html,
     className: 'custom-drgl-marker',
-    iconSize: [44, 44],
-    iconAnchor: [22, 22],
-    popupAnchor: [0, -22],
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
+    popupAnchor: [0, -24],
   });
 }
 
@@ -114,3 +166,48 @@ export function createGpsLocationIcon(): L.DivIcon {
     iconAnchor: [12, 12],
   });
 }
+
+/**
+ * Deelfiets Nederland Hub Marker Icon (#00B1FF cyan/blue with #FFE364 accent when available)
+ */
+export function createDeelfietsIcon(
+  available: number,
+  capacity: number,
+  isCargoBike = false
+): L.DivIcon {
+  const hasBikes = available > 0;
+  const bg = hasBikes ? '#00B1FF' : '#64748b';
+  const border = hasBikes ? '#FFE364' : '#cbd5e1';
+
+  const html = `
+    <div class="relative cursor-pointer group select-none" style="transform: translate(-50%, -50%);">
+      <div
+        class="w-8 h-8 rounded-full border-2 flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+        style="background-color: ${bg}; border-color: ${border};"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="5.5" cy="17.5" r="3.5" />
+          <circle cx="18.5" cy="17.5" r="3.5" />
+          <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2" />
+        </svg>
+      </div>
+      <div
+        class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded text-[9px] font-mono font-bold shadow border whitespace-nowrap pointer-events-none"
+        style="background-color: ${hasBikes ? '#ffffff' : '#fef2f2'}; color: ${
+    hasBikes ? '#0369a1' : '#dc2626'
+  }; border-color: ${hasBikes ? '#00B1FF' : '#fca5a5'};"
+      >
+        ${isCargoBike ? 'Bak ' : ''}${available}/${capacity}
+      </div>
+    </div>
+  `;
+
+  return L.divIcon({
+    html,
+    className: 'custom-deelfiets-marker',
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -18],
+  });
+}
+

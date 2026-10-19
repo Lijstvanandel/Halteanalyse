@@ -9,6 +9,7 @@ import {
   Radio,
   ToggleRight,
   BarChart3,
+  Bike,
 } from 'lucide-react';
 
 interface TopNavbarProps {
@@ -18,6 +19,8 @@ interface TopNavbarProps {
   onToggleDepartureBoard: () => void;
   onOpenFleetDrawer: () => void;
   onOpenPunctualityModal: () => void;
+  onOpenDeelfietsModal?: () => void;
+  deelfietsAvailableCount?: number;
   loggedCount?: number;
   dataSource: string;
   isSyncing: boolean;
@@ -34,6 +37,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onToggleDepartureBoard,
   onOpenFleetDrawer,
   onOpenPunctualityModal,
+  onOpenDeelfietsModal,
+  deelfietsAvailableCount = 0,
   loggedCount = 0,
   isSyncing,
   onManualRefresh,
@@ -74,7 +79,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 
       {/* Zone 2: Navigation Controls & Real-Time Filter */}
       <div className="hidden lg:flex items-center gap-4">
-        <nav className="flex items-center gap-2.5 text-xs font-medium text-white/90">
+        <nav className="flex items-center gap-2 text-xs font-medium text-white/90">
           {/* Departures Board Toggle */}
           <button
             onClick={onToggleDepartureBoard}
@@ -95,13 +100,28 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             title="Bekijk uitval, vertragingen en te vroege passages per halte en per lijn (Maand / Week) + CSV export"
           >
             <BarChart3 className="w-3.5 h-3.5 text-[#FFCC00]" />
-            <span>Vertraging & Statistieken (.CSV)</span>
+            <span>OV Vertraging (.CSV)</span>
             {loggedCount > 0 && (
               <span className="px-1.5 py-0.2 rounded bg-emerald-500 text-white font-mono text-[10px]">
                 {loggedCount}
               </span>
             )}
           </button>
+
+          {/* Deelfiets Nederland Modal Button */}
+          {onOpenDeelfietsModal && (
+            <button
+              onClick={onOpenDeelfietsModal}
+              className="px-3 py-1.5 rounded-lg bg-sky-500/25 hover:bg-sky-500/35 text-sky-100 border border-sky-400/50 transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-bold"
+              title="Bekijk beschikbare en gehuurde deelfietsen per dag, week en maand voor alle locaties in Steenwijkerland + CSV export"
+            >
+              <Bike className="w-3.5 h-3.5 text-[#FFE364]" />
+              <span>Deelfietsen (.CSV)</span>
+              <span className="px-1.5 py-0.2 rounded bg-[#00B1FF] text-white font-mono text-[10px]">
+                {deelfietsAvailableCount} vrij
+              </span>
+            </button>
+          )}
 
           {/* Strict Live vs Demo Mode Toggle */}
           <button

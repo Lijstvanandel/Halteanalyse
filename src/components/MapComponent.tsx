@@ -12,11 +12,18 @@ import {
 } from '../data/steenwijkerland';
 import {
   PunctualityLogEntry,
+  getISOWeekInfo,
 } from '../utils/punctuality';
+import {
+  DeelfietsLocation,
+  DeelfietsLogEntry,
+  aggregateDeelfietsStats,
+} from '../utils/deelfiets';
 import {
   createBusMarkerIcon,
   createHalteIcon,
   createGpsLocationIcon,
+  createDeelfietsIcon,
 } from '../utils/markerIcons';
 import {
   Crosshair,
@@ -28,7 +35,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
-  BarChart3,
+  Bike,
 } from 'lucide-react';
 
 interface MapComponentProps {
@@ -38,6 +45,11 @@ interface MapComponentProps {
   onSelectStop?: (stop: BusStop) => void;
   onOpenStopStats?: (stop: BusStop) => void;
   punctualityLogs?: PunctualityLogEntry[];
+  deelfietsLocations?: DeelfietsLocation[];
+  deelfietsLogs?: DeelfietsLogEntry[];
+  showDeelfietsen?: boolean;
+  onToggleDeelfietsen?: (show: boolean) => void;
+  onOpenDeelfietsStats?: (location: DeelfietsLocation) => void;
   showHaltes: boolean;
   onToggleHaltes: (show: boolean) => void;
   showRoutes: boolean;
@@ -78,6 +90,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   onSelectStop,
   onOpenStopStats,
   punctualityLogs = [],
+  deelfietsLocations = [],
+  deelfietsLogs = [],
+  showDeelfietsen = true,
+  onToggleDeelfietsen,
+  onOpenDeelfietsStats,
   showHaltes,
   onToggleHaltes,
   showRoutes,
@@ -91,6 +108,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   const currentTileLayerRef = useRef<L.TileLayer | null>(null);
   const busMarkersRef = useRef<Map<string, L.Marker>>(new Map());
   const haltesLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const deelfietsLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const routesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const journeyPolylineLayerRef = useRef<L.Polyline | null>(null);
   const userGpsMarkerRef = useRef<L.Marker | null>(null);
@@ -102,6 +120,8 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   const [currentZoom, setCurrentZoom] = useState(STEENWIJKERLAND_BOUNDS.defaultZoom);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
+  const lastSelectedBusIdRef = useRef<string | null>(null);
+
   // Initialize Leaflet Map with pitch-black exterior mask outside Gemeente Steenwijkerland
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
@@ -109,7 +129,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     const map = L.map(mapContainerRef.current, {
       center: [STEENWIJKERLAND_BOUNDS.center.lat, STEENWIJKERLAND_BOUNDS.center.lng],
       zoom: STEENWIJKERLAND_BOUNDS.defaultZoom,
-      minZoom: 10,
+      minZoom: 8,
       maxZoom: 19,
       zoomControl: false,
     });
@@ -158,9 +178,10 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     }).addTo(map);
     municipalityOutlineRef.current = municipalityOutline;
 
-    // Layer groups for routes and haltes
+    // Layer groups for routes, haltes, and deelfietsen
     routesLayerGroupRef.current = L.layerGroup().addTo(map);
     haltesLayerGroupRef.current = L.layerGroup().addTo(map);
+    deelfietsLayerGroupRef.current = L.layerGroup().addTo(map);
 
     try {
       const bounds = municipalityOutline.getBounds();
@@ -176,7 +197,16 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       setCurrentZoom(map.getZoom());
     });
 
+    // Automatically invalidate map size when left/right sidebars open or close
+    const ro = new ResizeObserver(() => {
+      map.invalidateSize({ animate: false });
+    });
+    if (mapContainerRef.current) {
+      ro.observe(mapContainerRef.current);
+    }
+
     return () => {
+      ro.disconnect();
       map.remove();
       mapInstanceRef.current = null;
     };
@@ -441,6 +471,121 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     });
   }, [showHaltes, onSelectStop, onOpenStopStats, punctualityLogs]);
 
+  // Draw 17 Deelfiets Nederland Hubs in Gemeente Steenwijkerland with Day/Week/Month stats
+  useEffect(() => {
+    if (!deelfietsLayerGroupRef.current) return;
+    const layer = deelfietsLayerGroupRef.current;
+    layer.clearLayers();
+
+    if (!showDeelfietsen || deelfietsLocations.length === 0) return;
+
+    const nowInfo = getISOWeekInfo(new Date());
+    const statsList = aggregateDeelfietsStats(
+      deelfietsLocations,
+      deelfietsLogs,
+      nowInfo.dateStr,
+      nowInfo.yearWeek,
+      nowInfo.yearMonth,
+      'day'
+    );
+    const statsById = new Map(statsList.map((s) => [s.stationId, s]));
+
+    deelfietsLocations.forEach((loc) => {
+      if (!isPointInSteenwijkerland(loc.lat, loc.lng)) return;
+
+      const marker = L.marker([loc.lat, loc.lng], {
+        icon: createDeelfietsIcon(loc.available, loc.capacity, loc.isCargoBike),
+      });
+
+      const st = statsById.get(loc.stationId);
+
+      marker.bindTooltip(
+        `<div class="font-sans text-xs">
+          <strong>Deelfiets: ${loc.town} — ${loc.name}</strong><br/>
+          <span class="text-slate-600">${loc.streetAddress} • ${
+          loc.isCargoBike ? 'Elektrische Deelbakfiets' : 'Elektrische Deelfiets'
+        }</span><br/>
+          <span class="text-[10px] font-semibold text-sky-700">Nu beschikbaar: ${loc.available}/${
+          loc.capacity
+        } (Gehuurd: ${loc.rented})</span>
+        </div>`,
+        {
+          direction: 'top',
+          offset: [0, -14],
+        }
+      );
+
+      const popupContainer = document.createElement('div');
+      popupContainer.className = 'p-2.5 text-slate-900 min-w-[275px] max-w-[330px] font-sans';
+      popupContainer.innerHTML = `
+        <div class="flex items-center gap-2 pb-1.5 mb-2 border-b border-slate-200">
+          <span class="w-6 h-6 rounded-full bg-[#00B1FF] text-[11px] font-bold text-white flex items-center justify-center shrink-0">🚲</span>
+          <div class="min-w-0">
+            <div class="text-[10px] font-bold text-[#0086d6] uppercase tracking-wider">Deelfiets Nederland • ${loc.town}</div>
+            <div class="text-sm font-bold text-slate-900 leading-tight">${loc.name}</div>
+          </div>
+        </div>
+        <div class="bg-slate-50 rounded-lg p-2 mb-2 border border-slate-200 text-xs space-y-1">
+          <div class="flex justify-between gap-2">
+            <span class="text-slate-500 font-medium">Adres:</span>
+            <span class="font-bold text-slate-900 text-right">${loc.streetAddress}, ${loc.town}</span>
+          </div>
+          <div class="flex justify-between gap-2">
+            <span class="text-slate-500 font-medium">Type:</span>
+            <span class="font-bold text-[#0086d6] text-right">${
+              loc.isCargoBike ? 'Elektrische Deelbakfiets' : 'Elektrisch'
+            }</span>
+          </div>
+          <div class="flex justify-between gap-2">
+            <span class="text-slate-500 font-medium">Nu beschikbaar / gehuurd:</span>
+            <span class="font-mono font-bold text-emerald-700 text-right">${loc.available} beschikbaar • ${loc.rented} gehuurd (cap. ${loc.capacity})</span>
+          </div>
+          <div class="flex justify-between gap-2 text-[11px]">
+            <span class="text-slate-500">Tarief:</span>
+            <span class="text-slate-700 text-right">€${loc.pricing.startTariff.toFixed(2).replace('.', ',')} start • €${loc.pricing.per15Min.toFixed(2).replace('.', ',')}/15m • €${loc.pricing.perDay}/dag</span>
+          </div>
+        </div>
+        ${
+          st
+            ? `<div class="bg-sky-50/80 rounded-lg p-2 mb-2 border border-sky-200 text-[11px] space-y-1">
+                <div class="font-bold text-[#0086d6] uppercase tracking-wider text-[10px]">
+                  Statistieken (Dag / Week / Maand)
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-600">Gem. beschikbare fietsen:</span>
+                  <span class="font-mono font-bold text-sky-900">D: ${st.avgAvailableDay} | W: ${st.avgAvailableWeek} | M: ${st.avgAvailableMonth}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-600">Gem. gehuurde fietsen:</span>
+                  <span class="font-mono font-bold text-amber-800">D: ${st.avgRentedDay} | W: ${st.avgRentedWeek} | M: ${st.avgRentedMonth}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-600">Totaal gehuurde fietsen:</span>
+                  <span class="font-mono font-bold text-emerald-800">D: ${st.totalRentedDay} | W: ${st.totalRentedWeek} | M: ${st.totalRentedMonth}</span>
+                </div>
+              </div>`
+            : ''
+        }
+        <button
+          type="button"
+          class="deelfiets-stats-btn w-full py-1.5 px-2.5 rounded-lg bg-[#0086d6] hover:bg-sky-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+        >
+          <span>Open Deelfiets Statistieken & .CSV</span>
+        </button>
+      `;
+
+      const statsBtn = popupContainer.querySelector('.deelfiets-stats-btn');
+      if (statsBtn && onOpenDeelfietsStats) {
+        statsBtn.addEventListener('click', () => {
+          onOpenDeelfietsStats(loc);
+        });
+      }
+
+      marker.bindPopup(popupContainer);
+      layer.addLayer(marker);
+    });
+  }, [showDeelfietsen, deelfietsLocations, deelfietsLogs, onOpenDeelfietsStats]);
+
   // Update Bus Markers (DRGL Style #ffcc00 + #0e518d, strictly inside Steenwijkerland)
   useEffect(() => {
     if (!mapInstanceRef.current) return;
@@ -461,13 +606,30 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     visibleBuses.forEach((bus) => {
       const isSelected = selectedBus?.id === bus.id;
       const icon = createBusMarkerIcon(bus, isSelected);
+      const delayText =
+        bus.delayMinutes > 0
+          ? `<span style="color:#dc2626;font-weight:bold;">+${bus.delayMinutes} min later</span>`
+          : bus.delayMinutes < 0
+          ? `<span style="color:#0284c7;font-weight:bold;">${bus.delayMinutes} min vroeger</span>`
+          : `<span style="color:#16a34a;font-weight:bold;">op tijd</span>`;
+
+      const tooltipHtml = `<div class="font-sans text-xs">
+        <strong>${bus.operatorName} ${bus.line} → ${bus.destination}</strong><br/>
+        <span>Bus ${bus.matnummer}${bus.ritnummer ? ` • Rit ${bus.ritnummer}` : ''}${bus.omloopnummer ? ` • Omloop ${bus.omloopnummer}` : ''}</span><br/>
+        <span>${delayText} • ${bus.lastUpdated}</span>
+      </div>`;
 
       if (currentMarkerMap.has(bus.id)) {
         const marker = currentMarkerMap.get(bus.id)!;
         marker.setLatLng([bus.lat, bus.lng]);
         marker.setIcon(icon);
+        marker.setTooltipContent(tooltipHtml);
       } else {
         const marker = L.marker([bus.lat, bus.lng], { icon });
+        marker.bindTooltip(tooltipHtml, {
+          direction: 'top',
+          offset: [0, -14],
+        });
 
         marker.on('click', () => {
           onSelectBus(bus);
@@ -525,11 +687,17 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     };
   }, [isFollowingUserGps]);
 
-  // Pan to selected bus
+  // Pan once when a new bus is clicked, without locking or overriding zoom so the user can freely zoom out
   useEffect(() => {
-    if (selectedBus && mapInstanceRef.current) {
-      mapInstanceRef.current.setView([selectedBus.lat, selectedBus.lng], Math.max(mapInstanceRef.current.getZoom(), 14), {
+    if (!selectedBus) {
+      lastSelectedBusIdRef.current = null;
+      return;
+    }
+    if (mapInstanceRef.current && lastSelectedBusIdRef.current !== selectedBus.id) {
+      lastSelectedBusIdRef.current = selectedBus.id;
+      mapInstanceRef.current.panTo([selectedBus.lat, selectedBus.lng], {
         animate: true,
+        duration: 0.5,
       });
     }
   }, [selectedBus]);
@@ -595,6 +763,24 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           </button>
 
           <div className="w-[1px] h-5 bg-slate-200" />
+
+          {/* Deelfietsen Checkbox */}
+          {onToggleDeelfietsen && (
+            <>
+              <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-sky-50 text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={showDeelfietsen}
+                  onChange={(e) => onToggleDeelfietsen(e.target.checked)}
+                  className="w-4 h-4 rounded text-[#0086d6] focus:ring-[#0086d6] border-slate-400"
+                />
+                <Bike className="w-3.5 h-3.5 text-[#0086d6]" />
+                <span>Deelfietsen ({deelfietsLocations.length})</span>
+              </label>
+
+              <div className="w-[1px] h-5 bg-slate-200" />
+            </>
+          )}
 
           {/* GPS Crosshair */}
           <button

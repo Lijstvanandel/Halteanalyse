@@ -3,7 +3,6 @@ import { DRGLJourneyData } from '../utils/drgl';
 import {
   X,
   Bus,
-  Clock,
   MapPin,
   CheckCircle2,
   ExternalLink,
@@ -28,10 +27,10 @@ export const DRGLJourneyView: React.FC<DRGLJourneyViewProps> = ({
   if (!journey && !isLoading) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 z-[500] w-full max-w-md bg-white border-l border-slate-300 shadow-2xl flex flex-col justify-between text-slate-900 animate-in slide-in-from-right duration-300">
+    <aside className="fixed inset-x-0 bottom-0 top-14 md:static md:w-[380px] lg:w-[410px] h-[calc(100vh-3.5rem)] md:h-full z-[600] bg-white border-l border-slate-300 shadow-2xl flex flex-col justify-between text-slate-900 shrink-0 animate-in slide-in-from-right duration-200">
       {/* Header */}
-      <div className="bg-[#0E518D] text-white p-4 flex items-start justify-between border-b border-[#0A3D6B]">
-        <div>
+      <div className="bg-[#0E518D] text-white p-4 flex items-start justify-between gap-3 border-b border-[#0A3D6B]">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2 py-0.5 rounded text-xs font-bold font-mono bg-[#FFCC00] text-slate-950">
               Lijn {journey?.lineCode || 'Rit'}
@@ -42,7 +41,7 @@ export const DRGLJourneyView: React.FC<DRGLJourneyViewProps> = ({
               </span>
             )}
           </div>
-          <h2 className="text-base font-bold text-white tracking-tight">
+          <h2 className="text-base font-bold text-white tracking-tight truncate">
             Richting {journey?.destination}
           </h2>
           <p className="text-xs text-blue-200 mt-0.5">
@@ -51,10 +50,16 @@ export const DRGLJourneyView: React.FC<DRGLJourneyViewProps> = ({
         </div>
 
         <button
-          onClick={onClose}
-          className="p-1 rounded text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="px-2.5 py-1.5 rounded-lg bg-white/15 hover:bg-red-600 text-white transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold shrink-0"
+          title="Overzicht sluiten (Esc)"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
+          <span>Sluiten</span>
         </button>
       </div>
 
@@ -155,6 +160,7 @@ export const DRGLJourneyView: React.FC<DRGLJourneyViewProps> = ({
       {/* Footer Controls */}
       <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center gap-2">
         <button
+          type="button"
           onClick={onCenterMap}
           className="flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-[#0E518D] hover:bg-[#0A3D6B] text-white flex items-center justify-center gap-2 transition-colors cursor-pointer"
         >
@@ -173,7 +179,18 @@ export const DRGLJourneyView: React.FC<DRGLJourneyViewProps> = ({
             <ExternalLink className="w-4 h-4" />
           </a>
         )}
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="py-2 px-3 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+        >
+          Sluiten
+        </button>
       </div>
-    </div>
+    </aside>
   );
 };
