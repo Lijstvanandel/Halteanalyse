@@ -564,31 +564,27 @@ export function isPointInSteenwijkerlandOrCorridor(
   return false;
 }
 
-let lastFullSnapshotFetchMs = 0;
+const OVZOEKER_VEHICLE_TIMEOUT_MS = 5 * 60 * 1000; // Exact 5-minute timeout from ovzoeker.nl/code.js
+const liveOvzoekerEntityMap: Map<string, any> = new Map();
 
 async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosition[]> {
   if (!forceRefresh && Date.now() - cachedOvzoekerVehicles.timestamp < 3000) {
     return cachedOvzoekerVehicles.vehicles;
   }
 
-  // Targeted 5km-radius snapshots covering all corners of Gemeente Steenwijkerland (~1.2 KB each, ~35ms)
-  // Avoids hammering the 282 KB full-NL /api/snapshot every 3s which can get rate-limited on OVH VPS IPs
-  const regionalUrls = [
-    'https://ovzoeker.nl/api/snapshot/52.79337,6.10539', // Steenwijk / Station / Tuk / Eesveen / Kallenkote
+  // Full snapshot + targeted regional snapshots covering all of Gemeente Steenwijkerland
+  const urls = [
+    'https://ovzoeker.nl/api/snapshot', // Full NL snapshot (authoritative for all coordinates & deletions)
+    'https://ovzoeker.nl/api/snapshot/52.79337,6.10539', // Steenwijk / Station / Tuk / Kallenkote
     'https://ovzoeker.nl/api/snapshot/52.72500,6.07500', // Giethoorn / Wanneperveen / Belt-Schutsloot
     'https://ovzoeker.nl/api/snapshot/52.68500,5.96000', // Vollenhove / Sint Jansklooster / Blokzijl
-    'https://ovzoeker.nl/api/snapshot/52.82000,5.97500', // Oldemarkt / Ossenzijl / Willemsoord
+    'https://ovzoeker.nl/api/snapshot/52.82000,5.97500', // Oldemarkt / Ossenzijl / Paasloo
+    'https://ovzoeker.nl/api/snapshot/52.84500,6.04000', // Willemsoord / De Blesse / Blesdijke
+    'https://ovzoeker.nl/api/snapshot/52.83000,6.14500', // Eesveen / De Eese
+    'https://ovzoeker.nl/api/snapshot/52.66500,6.01500', // Sint Jansklooster / Zwartsluis-corridor
   ];
 
-  const includeFullSnapshot = Date.now() - lastFullSnapshotFetchMs > 30000;
-  const urls = includeFullSnapshot
-    ? [...regionalUrls, 'https://ovzoeker.nl/api/snapshot']
-    : regionalUrls;
-  if (includeFullSnapshot) {
-    lastFullSnapshotFetchMs = Date.now();
-  }
-
-  const entityMap = new Map<string, any>();
+  const nowMs = Date.now();
 
   const parseSnapshotUrl = async (url: string) => {
     const resp = await fetch(url, {
@@ -611,13 +607,13 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
       // 1) GTFS-RT vehicle entities
       if (msg && Array.isArray(msg.entity)) {
         for (const ent of msg.entity) {
-          if (!ent || ent.is_deleted || !ent.vehicle?.position) continue;
+          if (!ent) continue;
           const vehpos = ent.vehicle;
 
           // Match ovzoeker.nl/code.js line 715: handle anonymous vehicles with ':0' ID
           if (
-            vehpos.trip &&
-            vehpos.vehicle &&
+            vehpos?.trip &&
+            vehpos?.vehicle &&
             String(vehpos.vehicle.id || '').split(':')[1] === '0'
           ) {
             vehpos.vehicle = {
@@ -627,12 +623,39 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
             };
           }
 
-          const id = String(vehpos.vehicle?.id || ent.id || '');
+          const id = String(vehpos?.vehicle?.id || ent.id || '');
           if (!id || id.split(':')[1] === '0') continue;
 
-          const existing = entityMap.get(id);
+          // If trip finished or vehicle deleted by OVzoeker, remove immediately
+          if (ent.is_deleted) {
+            liveOvzoekerEntityMap.delete(id);
+            prevVehiclePositions.delete(id);
+            continue;
+          }
+
+          if (!vehpos?.position) continue;
+
+          // Only include vehicles that are actively operating a scheduled trip in the timetable
+          // (exclude out-of-service / garage vehicles without trip_id or cancelled trips)
+          if (
+            !vehpos.trip ||
+            !vehpos.trip.trip_id ||
+            vehpos.trip.schedule_relationship === 3
+          ) {
+            liveOvzoekerEntityMap.delete(id);
+            continue;
+          }
+
+          const tsMs = Number(vehpos.timestamp || 0) * 1000;
+          // Exact ovzoeker.nl 5-minute timeout: ignore and purge stale vehicle positions
+          if (!tsMs || tsMs < nowMs - OVZOEKER_VEHICLE_TIMEOUT_MS) {
+            liveOvzoekerEntityMap.delete(id);
+            continue;
+          }
+
+          const existing = liveOvzoekerEntityMap.get(id);
           if (!existing || Number(vehpos.timestamp || 0) >= Number(existing.vehicle?.timestamp || 0)) {
-            entityMap.set(id, ent);
+            liveOvzoekerEntityMap.set(id, ent);
           }
         }
       }
@@ -659,14 +682,19 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
 
   await Promise.allSettled(urls.map((u) => parseSnapshotUrl(u)));
 
-  if (entityMap.size === 0) {
-    return cachedOvzoekerVehicles.vehicles;
+  // Prune any vehicle from liveOvzoekerEntityMap that has exceeded the 5-minute OVzoeker timeout
+  const pruneNowMs = Date.now();
+  for (const [id, ent] of liveOvzoekerEntityMap.entries()) {
+    const tsMs = Number(ent?.vehicle?.timestamp || 0) * 1000;
+    if (!tsMs || tsMs < pruneNowMs - OVZOEKER_VEHICLE_TIMEOUT_MS) {
+      liveOvzoekerEntityMap.delete(id);
+      prevVehiclePositions.delete(id);
+    }
   }
 
   const candidateEntities: any[] = [];
-  const nowMs = Date.now();
 
-  for (const ent of entityMap.values()) {
+  for (const ent of liveOvzoekerEntityMap.values()) {
     const vehpos = ent.vehicle;
     const vehId = String(vehpos.vehicle?.id || ent.id || '');
     // Exclude OV-fiets and NS trains so only public transit buses are returned
@@ -689,10 +717,6 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
 
     if (!inBox && !inCorridor) continue;
 
-    const tsMs = (Number(vehpos.timestamp) || Math.floor(nowMs / 1000)) * 1000;
-    // Resilient timestamp window: ignore only if older than 2 hours to avoid clock drift issues
-    if (Math.abs(nowMs - tsMs) > 2 * 3600 * 1000) continue;
-
     candidateEntities.push(ent);
   }
 
@@ -709,7 +733,7 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
 
       const lat = Number(vehpos.position.latitude);
       const lng = Number(vehpos.position.longitude);
-      const tsMs = (Number(vehpos.timestamp) || Math.floor(nowMs / 1000)) * 1000;
+      const tsMs = Number(vehpos.timestamp) * 1000;
 
       // Calculate heading and speed from GTFS-RT or GPS delta
       const prev = prevVehiclePositions.get(vehId);
@@ -754,6 +778,19 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
         second: '2-digit',
       });
 
+      // Find nearest Steenwijkerland stop for this bus line
+      let closestStopName: string | undefined = undefined;
+      let minStopDist = 5000;
+      for (const s of STEENWIJKERLAND_STOPS) {
+        if (s.lines.includes(tripInfo.line)) {
+          const d = haversineMeters(lat, lng, s.lat, s.lng);
+          if (d < minStopDist) {
+            minStopDist = d;
+            closestStopName = `${s.name}, ${s.town}`;
+          }
+        }
+      }
+
       const busObj: BusPosition = {
         id: vehId,
         ovzoekerId: vehId,
@@ -780,6 +817,7 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
           ? `Omloop ${tripInfo.omloopnummer}`
           : `Rit ${tripInfo.ritnummer || label}`,
         status: vehpos.current_status === 1 ? 'Halteert' : delayMinutes > 2 ? 'Vertraagd' : 'Rijdend',
+        nextStop: closestStopName,
         lastUpdated,
       };
 
@@ -792,15 +830,12 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
     })
   );
 
-  // Only update cache if we have results, so temporary empty blips never wipe out active fleet
-  if (results.length > 0) {
-    cachedOvzoekerVehicles = {
-      timestamp: Date.now(),
-      vehicles: results,
-    };
-  }
+  cachedOvzoekerVehicles = {
+    timestamp: Date.now(),
+    vehicles: results,
+  };
 
-  return results.length > 0 ? results : cachedOvzoekerVehicles.vehicles;
+  return results;
 }
 
 // -------------------------------------------------------------
@@ -1682,36 +1717,14 @@ async function startServer() {
     if (mode === 'live') {
       const allLiveBuses = await fetchLiveOvzoekerVehicles(false);
       // Strictly enforce municipality boundary: markers disappear the exact moment a bus leaves Steenwijkerland
-      let filteredLive = onlySteenwijkerland
+      const filteredLive = onlySteenwijkerland
         ? allLiveBuses.filter((b) => isPointInSteenwijkerland(b.lat, b.lng))
         : allLiveBuses;
-
-      // Unconditional resiliency fallback:
-      // If live feed returns 0 buses due to upstream timeout, rate limit, or boundary blips,
-      // fallback to last known cache or active timetable fleet so Vloot is NEVER 0!
-      let usedFallback = false;
-
-      if (filteredLive.length === 0) {
-        if (cachedOvzoekerVehicles.vehicles.length > 0) {
-          filteredLive = cachedOvzoekerVehicles.vehicles.filter((b) =>
-            onlySteenwijkerland ? isPointInSteenwijkerland(b.lat, b.lng) : true
-          );
-          if (filteredLive.length > 0) usedFallback = true;
-        }
-        if (filteredLive.length === 0) {
-          filteredLive = activeBuses.filter((b) =>
-            onlySteenwijkerland ? isPointInSteenwijkerland(b.lat, b.lng) : true
-          );
-          usedFallback = true;
-        }
-      }
 
       const geojson = toBuspositiesGeoJSON(filteredLive);
       return res.json({
         ...geojson,
-        source: usedFallback
-          ? 'Dienstregeling (Live fallback i.v.m. actuele update) • Dataproduct van Lijst van Andel'
-          : 'Live Voertuigposities (OVzoeker & DRGL) • Dataproduct van Lijst van Andel',
+        source: 'Live Voertuigposities (OVzoeker & DRGL) • Dataproduct van Lijst van Andel',
         mode: 'live',
         timestamp: new Date().toISOString(),
         buses: filteredLive,
@@ -1719,7 +1732,7 @@ async function startServer() {
         statusMessage:
           filteredLive.length === 0
             ? 'Geen actieve bussen binnen de gemeentegrens van Steenwijkerland op dit moment.'
-            : `${filteredLive.length} actieve bus(sen) binnen Gemeente Steenwijkerland (${usedFallback ? 'Dienstregeling' : 'Live OVzoeker'}).`,
+            : `${filteredLive.length} actieve bus(sen) binnen Gemeente Steenwijkerland (Live OVzoeker).`,
       });
     }
 

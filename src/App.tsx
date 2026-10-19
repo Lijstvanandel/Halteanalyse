@@ -47,7 +47,7 @@ import {
 const LOCAL_STORAGE_LOGS_KEY = 'swk_punctuality_logs_v1';
 
 export default function App() {
-  const [buses, setBuses] = useState<BusPosition[]>(() => stepSteenwijkerlandSimulation(0));
+  const [buses, setBuses] = useState<BusPosition[]>([]);
   const [selectedBusId, setSelectedBusId] = useState<string | null>(null);
   const selectedBusFallbackRef = useRef<BusPosition | null>(null);
   const [followedBusId, setFollowedBusId] = useState<string | null>(null);
@@ -339,7 +339,7 @@ export default function App() {
     }
   }, []);
 
-  // 2. Fetch Live Bus Positions (respecting strict Live vs Demo mode + client-side resiliency)
+  // 2. Fetch Live Bus Positions (strictly real OVzoeker GTFS-RT vehicles in Live mode, never simulated ghost buses)
   const fetchBusPositions = useCallback(async () => {
     setIsSyncing(true);
     try {
@@ -352,7 +352,7 @@ export default function App() {
         const contentType = res.headers.get('content-type') || '';
         if (contentType.includes('application/json')) {
           const data = await res.json();
-          if (Array.isArray(data.buses) && data.buses.length > 0) {
+          if (Array.isArray(data.buses)) {
             setBuses(data.buses);
             if (data.statusMessage) {
               setStatusMessage(data.statusMessage);
@@ -361,13 +361,15 @@ export default function App() {
           }
         }
       }
-      // Fallback if backend route is unreachable or returns empty
-      setBuses((prev) =>
-        prev.length > 0 && feedMode === 'live' ? stepSteenwijkerlandSimulation(3) : stepSteenwijkerlandSimulation(3)
-      );
+
+      if (feedMode === 'demo') {
+        setBuses(stepSteenwijkerlandSimulation(3));
+      }
     } catch (e) {
-      console.warn('Bus fetch error, using active timetable route fallback:', e);
-      setBuses(stepSteenwijkerlandSimulation(3));
+      console.warn('Bus fetch error:', e);
+      if (feedMode === 'demo') {
+        setBuses(stepSteenwijkerlandSimulation(3));
+      }
     } finally {
       setIsSyncing(false);
     }
