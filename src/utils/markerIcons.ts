@@ -31,11 +31,11 @@ export function getVehicleMarkerImage(
 /**
  * Creates the vehicle marker using RRREIS.png (lines 214, 270, 70, 76)
  * or QBUZZ.png (lines 217, 20, 18, 524, 26), with directional heading pointer,
- * line badge, vehicle number, and punctuality badge.
+ * line badge, vehicle number, and punctuality badge in Premium Forensic Dark style.
  */
 export function createBusMarkerIcon(bus: BusPosition, isSelected = false): L.DivIcon {
   const isDelayed = bus.delayMinutes > 1;
-  const delayColor = isDelayed ? '#dc2626' : bus.delayMinutes < 0 ? '#0284c7' : '#16a34a';
+  const delayColor = isDelayed ? '#ef4444' : bus.delayMinutes < 0 ? '#38bdf8' : '#10b981';
   const delayBadge =
     bus.delayMinutes > 0
       ? `+${bus.delayMinutes}m`
@@ -46,34 +46,15 @@ export function createBusMarkerIcon(bus: BusPosition, isSelected = false): L.Div
   const markerImage = getVehicleMarkerImage(bus.line, bus.operator, bus.operatorName);
   const isQbuzz = markerImage === 'QBUZZ.png';
 
-  // Badge styling per line/operator
-  let lineBg = isQbuzz ? '#dc3545' : '#00965e';
-  const lineText = '#ffffff';
-  let lineBorder = isQbuzz ? '#b91c1c' : '#047857';
-
-  if (bus.line === '214' || bus.line === '270') {
-    lineBg = '#0086d6'; // snelRRReis blue
-    lineBorder = '#0369a1';
-  } else if (bus.line === '76') {
-    lineBg = '#0d9488';
-    lineBorder = '#0f766e';
-  } else if (bus.line === '20' || bus.line === '524') {
-    lineBg = '#ea580c';
-    lineBorder = '#c2410c';
-  } else if (bus.line === '217') {
-    lineBg = '#d97706';
-    lineBorder = '#b45309';
-  }
-
-  const pointerColor = isQbuzz ? '#dc3545' : '#0e518d';
-  const pointerStroke = isQbuzz ? '#ffcc00' : '#ffffff';
+  const pointerColor = isQbuzz ? '#f59e0b' : '#10b981';
+  const pointerStroke = '#f5f6f4';
 
   const html = `
-    <div class="relative group cursor-pointer select-none" style="width: 48px; height: 48px; transform: translate(-50%, -50%);">
-      <!-- Selection halo -->
+    <div class="relative group cursor-pointer select-none tabular-nums" style="width: 48px; height: 48px; transform: translate(-50%, -50%);">
+      <!-- Selection frame (Zero-Pill architectural square) -->
       ${
         isSelected
-          ? `<div class="absolute -inset-2 rounded-full border-2 border-[#FFCC00] bg-[#FFCC00]/30 animate-pulse pointer-events-none"></div>`
+          ? `<div class="absolute -inset-2 rounded-[5px] border-2 border-[#f59e0b] bg-[#f59e0b]/15 pointer-events-none"></div>`
           : ''
       }
 
@@ -92,28 +73,27 @@ export function createBusMarkerIcon(bus: BusPosition, isSelected = false): L.Div
         <img
           src="/${markerImage}"
           alt="${markerImage}"
-          class="w-9 h-9 object-contain drop-shadow-md rounded-full"
+          class="w-9 h-9 object-contain drop-shadow-md rounded-[4px]"
           draggable="false"
         />
       </div>
 
       <!-- Line & Bus Identifier Badge -->
-      <div class="absolute -bottom-3.5 left-1/2 -translate-x-1/2 flex items-center shadow-md rounded px-1.5 py-0.5 bg-white border border-slate-300 whitespace-nowrap z-10 pointer-events-none">
+      <div class="absolute -bottom-3.5 left-1/2 -translate-x-1/2 flex items-center shadow-md rounded-[4px] px-1.5 py-0.5 bg-[#0b1a13] border border-[#1b3829] whitespace-nowrap z-10 pointer-events-none tabular-nums">
         <span
-          class="text-[10px] font-bold px-1 rounded mr-1 leading-tight"
-          style="background-color: ${lineBg}; color: ${lineText}; border: 1px solid ${lineBorder};"
+          class="text-[10px] font-bold px-1 rounded-[3px] mr-1 leading-tight bg-[#f59e0b] text-[#060e0a]"
         >
           ${bus.line}
         </span>
-        <span class="text-[9px] font-mono font-semibold text-slate-800">#${bus.matnummer}</span>
+        <span class="text-[9px] font-mono font-semibold text-[#f5f6f4] tabular-nums">#${bus.matnummer}</span>
       </div>
 
-      <!-- Delay Pill -->
+      <!-- Delay Tag -->
       <div
-        class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded shadow-sm bg-white border text-slate-900 whitespace-nowrap pointer-events-none"
-        style="border-color: ${delayColor};"
+        class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-[3px] shadow-sm bg-[#0b1a13] border whitespace-nowrap pointer-events-none tabular-nums"
+        style="border-color: ${delayColor}; color: ${delayColor};"
       >
-        <span style="color: ${delayColor};">${delayBadge}</span>
+        <span>${delayBadge}</span>
       </div>
     </div>
   `;
@@ -128,13 +108,13 @@ export function createBusMarkerIcon(bus: BusPosition, isSelected = false): L.Div
 }
 
 /**
- * DRGL Bus Stop (Halte) Icon
+ * DRGL Bus Stop (Halte) Icon — Zero-Pill Architectural Square
  */
 export function createHalteIcon(): L.DivIcon {
   const html = `
     <div class="relative cursor-pointer group" style="transform: translate(-50%, -50%);">
-      <div class="w-6 h-6 rounded-full bg-[#0E518D] border-2 border-white flex items-center justify-center shadow-md hover:scale-125 transition-transform">
-        <span class="text-[10px] font-black text-[#FFCC00]">H</span>
+      <div class="w-5 h-5 rounded-[4px] bg-[#0b1a13] border border-[#437257] flex items-center justify-center shadow-md hover:border-[#f59e0b] transition-colors">
+        <span class="text-[10px] font-extrabold text-[#f59e0b]">H</span>
       </div>
     </div>
   `;
@@ -142,33 +122,32 @@ export function createHalteIcon(): L.DivIcon {
   return L.divIcon({
     html,
     className: 'custom-drgl-halte',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -14],
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -12],
   });
 }
 
 /**
- * GPS location marker
+ * GPS location marker — Zero-Pill Architectural Square
  */
 export function createGpsLocationIcon(): L.DivIcon {
   const html = `
     <div class="relative flex items-center justify-center" style="transform: translate(-50%, -50%);">
-      <div class="w-4 h-4 rounded-full bg-[#0E518D] border-2 border-[#FFCC00] shadow-lg"></div>
-      <div class="absolute w-8 h-8 rounded-full bg-[#0E518D]/30 animate-ping"></div>
+      <div class="w-4 h-4 rounded-[3px] bg-[#38bdf8] border border-[#f5f6f4] shadow-lg"></div>
     </div>
   `;
 
   return L.divIcon({
     html,
     className: 'custom-gps-marker',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
   });
 }
 
 /**
- * Deelfiets Nederland Hub Marker Icon (#00B1FF cyan/blue with #FFE364 accent when available)
+ * Deelfiets Nederland Hub Marker Icon — Premium Forensic Dark
  */
 export function createDeelfietsIcon(
   available: number,
@@ -176,26 +155,25 @@ export function createDeelfietsIcon(
   isCargoBike = false
 ): L.DivIcon {
   const hasBikes = available > 0;
-  const bg = hasBikes ? '#00B1FF' : '#64748b';
-  const border = hasBikes ? '#FFE364' : '#cbd5e1';
+  const bg = '#0b1a13';
+  const border = hasBikes ? '#38bdf8' : '#ef4444';
+  const textColor = hasBikes ? '#38bdf8' : '#ef4444';
 
   const html = `
-    <div class="relative cursor-pointer group select-none" style="transform: translate(-50%, -50%);">
+    <div class="relative cursor-pointer group select-none tabular-nums" style="transform: translate(-50%, -50%);">
       <div
-        class="w-8 h-8 rounded-full border-2 flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+        class="w-7 h-7 rounded-[4px] border flex items-center justify-center shadow-lg transition-transform"
         style="background-color: ${bg}; border-color: ${border};"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${textColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="5.5" cy="17.5" r="3.5" />
           <circle cx="18.5" cy="17.5" r="3.5" />
           <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2" />
         </svg>
       </div>
       <div
-        class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded text-[9px] font-mono font-bold shadow border whitespace-nowrap pointer-events-none"
-        style="background-color: ${hasBikes ? '#ffffff' : '#fef2f2'}; color: ${
-    hasBikes ? '#0369a1' : '#dc2626'
-  }; border-color: ${hasBikes ? '#00B1FF' : '#fca5a5'};"
+        class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-[3px] text-[9px] font-mono font-bold shadow border whitespace-nowrap pointer-events-none tabular-nums"
+        style="background-color: #060e0a; color: ${textColor}; border-color: #1b3829;"
       >
         ${isCargoBike ? 'Bak ' : ''}${available}/${capacity}
       </div>
@@ -205,37 +183,34 @@ export function createDeelfietsIcon(
   return L.divIcon({
     html,
     className: 'custom-deelfiets-marker',
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
-    popupAnchor: [0, -18],
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16],
   });
 }
 
 /**
  * Official NS OV-fiets Station Steenwijk marker using 'bicycle_parking_open.png'
- * As requested: marker on Station Steenwijk with 'bicycle_parking_open.png'
  */
 export function createOvFietsMarkerIcon(
   available: number,
   capacity: number = 33
 ): L.DivIcon {
   const hasBikes = available > 0;
-  const countColor = hasBikes ? '#000066' : '#dc2626';
-  const badgeBg = hasBikes ? '#FFCC00' : '#fee2e2';
-  const badgeBorder = hasBikes ? '#000066' : '#ef4444';
+  const countColor = hasBikes ? '#fbbf24' : '#ef4444';
+  const badgeBg = '#060e0a';
+  const badgeBorder = hasBikes ? '#f59e0b' : '#ef4444';
 
   const html = `
-    <div class="relative cursor-pointer group select-none hover:scale-110 transition-transform" style="width: 36px; height: 44px; transform: translate(-50%, -100%);">
-      <!-- bicycle_parking_open.png custom icon -->
+    <div class="relative cursor-pointer group select-none tabular-nums" style="width: 36px; height: 44px; transform: translate(-50%, -100%);">
       <img
         src="/bicycle_parking_open.png"
         alt="OV-fiets Station Steenwijk"
         class="w-8 h-9 object-contain drop-shadow-md mx-auto block"
         draggable="false"
       />
-      <!-- Live availability badge -->
       <div
-        class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded text-[9px] font-mono font-black shadow border whitespace-nowrap pointer-events-none"
+        class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-[3px] text-[9px] font-mono font-extrabold shadow border whitespace-nowrap pointer-events-none tabular-nums"
         style="background-color: ${badgeBg}; color: ${countColor}; border-color: ${badgeBorder};"
       >
         ${available}/${capacity}
@@ -251,4 +226,3 @@ export function createOvFietsMarkerIcon(
     popupAnchor: [0, -44],
   });
 }
-

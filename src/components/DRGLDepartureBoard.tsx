@@ -41,23 +41,6 @@ export const DRGL_KEY_STOPS = [
   { code: 'NL:S:24451800', name: 'Willemsoord — Steenwijkerweg' },
 ];
 
-const LINE_BADGE_COLORS: Record<string, string> = {
-  '26': '#dc3545',
-  '18': '#e11d48',
-  '20': '#d97706',
-  '524': '#ea580c',
-  '70': '#00965E',
-  '71': '#059669',
-  '171': '#10b981',
-  '76': '#0d9488',
-  '146': '#0284c7',
-  '214': '#0086d6',
-  '217': '#9333ea',
-  '270': '#16a34a',
-  '675': '#4f46e5',
-  '679': '#7c3aed',
-};
-
 export const DRGLDepartureBoard: React.FC<DRGLDepartureBoardProps> = ({
   title,
   departures,
@@ -69,12 +52,12 @@ export const DRGLDepartureBoard: React.FC<DRGLDepartureBoardProps> = ({
   selectedJourneyUrl,
 }) => {
   return (
-    <div className="bg-white rounded-xl border border-slate-300 shadow-xl overflow-hidden flex flex-col h-full text-slate-900">
+    <div className="bg-[var(--bg-card)] rounded-[5px] border border-[var(--border-subtle)] overflow-hidden flex flex-col h-full text-[var(--text-main)] tabular-nums">
       {/* DRGL Panel Header */}
-      <div className="bg-[#0E518D] text-white p-3.5 flex items-center justify-between border-b border-[#0A3D6B]">
+      <div className="bg-[var(--bg-elevated)] text-[var(--text-main)] p-3 flex items-center justify-between border-b border-[var(--border-subtle)]">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#FFCC00] animate-pulse shrink-0" />
-          <h3 className="font-bold text-sm tracking-tight truncate">
+          <div className="w-2 h-2 rounded-[2px] bg-[var(--accent-gold)] shrink-0" />
+          <h3 className="font-bold text-xs tracking-tight truncate">
             {title}
           </h3>
         </div>
@@ -82,50 +65,42 @@ export const DRGLDepartureBoard: React.FC<DRGLDepartureBoardProps> = ({
         <button
           onClick={onRefresh}
           disabled={isLoading}
-          className="p-1 rounded text-white/80 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+          className="p-1.5 rounded-[4px] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] border border-transparent hover:border-[var(--border-subtle)] transition-colors shrink-0 cursor-pointer"
           title="Ververs vertrektijden"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[var(--accent-gold)]' : ''}`} />
         </button>
       </div>
 
       {/* Stop Area Selector Dropdown (Plaats — Haltenaam) */}
-      <div className="p-2.5 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
-        <MapPin className="w-4 h-4 text-[#0E518D] shrink-0" />
+      <div className="p-2.5 bg-[var(--bg-main)] border-b border-[var(--border-subtle)] flex items-center gap-2">
+        <MapPin className="w-4 h-4 text-[var(--accent-gold)] shrink-0" />
         <select
           value={selectedStopCode}
           onChange={(e) => onSelectStopCode(e.target.value)}
-          className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E518D]"
+          className="w-full bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[4px] px-2.5 py-1.5 text-xs font-semibold text-[var(--text-main)] focus:outline-none focus:border-[var(--border-focus)]"
         >
           {DRGL_KEY_STOPS.map((stop) => (
-            <option key={stop.code} value={stop.code}>
+            <option key={stop.code} value={stop.code} className="bg-[#0b1a13] text-[#f5f6f4]">
               {stop.name}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Departures List (Matching exact DRGL table) */}
-      <div className="flex-1 overflow-y-auto divide-y divide-slate-200">
+      {/* Departures List */}
+      <div className="flex-1 overflow-y-auto divide-y divide-[var(--border-subtle)]">
         {isLoading && departures.length === 0 ? (
-          <div className="p-8 text-center text-xs text-slate-500">
+          <div className="p-8 text-center text-xs text-[var(--text-muted)]">
             Vertrektijden ophalen van DRGL.nl...
           </div>
         ) : departures.length === 0 ? (
-          <div className="p-8 text-center text-xs text-slate-500">
+          <div className="p-8 text-center text-xs text-[var(--text-muted)]">
             Geen geplande vertrekken gevonden voor deze halte.
           </div>
         ) : (
           departures.map((dep, idx) => {
             const isSelected = selectedJourneyUrl === dep.journeyUrl;
-
-            const defaultColor = LINE_BADGE_COLORS[dep.lineCode];
-            const bg =
-              dep.lineStyle?.background && dep.lineStyle.background !== '#ffffff'
-                ? dep.lineStyle.background
-                : defaultColor || '#0E518D';
-            const color = '#ffffff';
-            const borderColor = bg;
 
             return (
               <div
@@ -133,60 +108,53 @@ export const DRGLDepartureBoard: React.FC<DRGLDepartureBoardProps> = ({
                 onClick={() => onSelectDeparture(dep)}
                 className={`p-3 transition-colors cursor-pointer text-xs ${
                   isSelected
-                    ? 'bg-blue-50 border-l-4 border-l-[#0E518D]'
-                    : 'hover:bg-slate-50'
+                    ? 'bg-[var(--bg-elevated)] ring-1 ring-inset ring-[var(--border-focus)]'
+                    : 'hover:bg-[var(--bg-card-hover)]'
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
                   {/* Departure time & platform */}
-                  <div className="w-20 shrink-0">
+                  <div className="w-20 shrink-0 tabular-nums">
                     <div
                       className={`text-sm font-bold font-mono tabular-nums ${
                         dep.isDelayed
-                          ? 'text-red-600'
+                          ? 'text-[var(--status-crimson)]'
                           : dep.isUnknown
-                          ? 'text-amber-600'
-                          : 'text-slate-900'
+                          ? 'text-[var(--accent-gold)]'
+                          : 'text-[var(--text-main)]'
                       }`}
                     >
                       {dep.time}
                     </div>
                     {dep.platform && (
-                      <div className="text-[10px] font-semibold text-slate-500">
+                      <div className="text-[10px] font-medium text-[var(--text-dim)] tabular-nums">
                         {dep.platform}
                       </div>
                     )}
                   </div>
 
-                  {/* Line Number Badge */}
-                  <div
-                    className="w-10 h-7 rounded flex items-center justify-center font-bold text-xs shrink-0 shadow-sm"
-                    style={{
-                      backgroundColor: bg,
-                      color: color,
-                      border: `1.5px solid ${borderColor}`,
-                    }}
-                  >
+                  {/* Line Number Identifier */}
+                  <div className="w-11 h-7 rounded-[4px] bg-[var(--bg-elevated)] border border-[var(--border-focus)] flex items-center justify-center font-bold font-mono text-xs text-[var(--accent-gold-bright)] shrink-0 tabular-nums">
                     {dep.lineCode}
                   </div>
 
                   {/* Destination & Product Category */}
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-slate-900 truncate text-[13px]">
+                    <div className="font-bold text-[var(--text-main)] truncate text-[13px]">
                       {dep.destination}
                     </div>
-                    <div className="text-[11px] text-slate-500 flex items-center gap-1.5 truncate">
-                      <span>{dep.category} • {dep.operator}</span>
+                    <div className="text-[11px] text-[var(--text-muted)] flex items-center gap-1.5 truncate">
+                      <span>{dep.category} · {dep.operator}</span>
                       {dep.crowdLevel === 0 && (
-                        <span className="text-[10px] text-emerald-600 font-medium">· leeg</span>
+                        <span className="text-[10px] text-[var(--status-emerald)] font-medium">· rustig</span>
                       )}
                       {dep.crowdLevel === 1 && (
-                        <span className="text-[10px] text-blue-600 font-medium">· zitplaatsen</span>
+                        <span className="text-[10px] text-[var(--status-blue)] font-medium">· zitplaatsen</span>
                       )}
                     </div>
                   </div>
 
-                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-[var(--text-dim)] shrink-0" />
                 </div>
 
                 {/* Notices */}
@@ -195,9 +163,9 @@ export const DRGLDepartureBoard: React.FC<DRGLDepartureBoardProps> = ({
                     {dep.notices.map((n, nIdx) => (
                       <div
                         key={nIdx}
-                        className="text-[11px] px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1"
+                        className="text-[11px] px-2 py-1 rounded-[4px] bg-[var(--accent-gold-glow)] text-[var(--accent-gold-bright)] border border-[var(--border-subtle)] flex items-center gap-1.5"
                       >
-                        <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
+                        <AlertTriangle className="w-3 h-3 text-[var(--accent-gold)] shrink-0" />
                         <span className="truncate">{n}</span>
                       </div>
                     ))}
@@ -210,9 +178,9 @@ export const DRGLDepartureBoard: React.FC<DRGLDepartureBoardProps> = ({
       </div>
 
       {/* Dataproduct Footer */}
-      <div className="p-2.5 bg-slate-100 border-t border-slate-200 text-[11px] text-slate-600 flex items-center justify-between select-none">
-        <span className="font-bold text-[#0E518D]">Dataproduct van Lijst van Andel</span>
-        <span className="font-mono text-slate-500">{departures.length} ritten</span>
+      <div className="p-2.5 bg-[var(--bg-main)] border-t border-[var(--border-subtle)] text-[11px] text-[var(--text-dim)] flex items-center justify-between select-none tabular-nums">
+        <span className="font-semibold text-[var(--accent-gold)]">Dataproduct van Lijst van Andel</span>
+        <span className="font-mono text-[var(--text-muted)] tabular-nums">{departures.length} ritten</span>
       </div>
     </div>
   );

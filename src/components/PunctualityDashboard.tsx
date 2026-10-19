@@ -163,25 +163,25 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[600] bg-black/75 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-hidden">
-      <div className="bg-white w-full max-w-6xl h-[92vh] rounded-2xl border border-slate-300 shadow-2xl flex flex-col overflow-hidden text-slate-900">
+    <div className="fixed inset-0 z-[600] bg-[#060e0a]/85 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-hidden tabular-nums">
+      <div className="bg-[var(--bg-card)] w-full max-w-6xl h-[92vh] rounded-[6px] border border-[var(--border-subtle)] shadow-2xl flex flex-col overflow-hidden text-[var(--text-main)]">
         {/* Header */}
-        <div className="bg-[#0E518D] text-white px-5 py-4 flex items-center justify-between border-b border-[#0A3D6B] shrink-0">
+        <div className="bg-[var(--bg-elevated)] text-[var(--text-main)] px-5 py-4 flex items-center justify-between border-b border-[var(--border-subtle)] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FFCC00] text-slate-950 flex items-center justify-center font-bold shadow">
+            <div className="w-10 h-10 rounded-[4px] bg-[var(--accent-gold)] text-[#060e0a] flex items-center justify-center font-bold">
               <BarChart3 className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold tracking-tight">
-                  OV Stiptheid, Vertraging & Uitval Logboek — Gemeente Steenwijkerland
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base sm:text-lg font-bold tracking-tight text-[var(--text-main)]">
+                  OV Stiptheid, Vertraging &amp; Uitval Logboek — Gemeente Steenwijkerland
                 </h2>
-                <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500 text-white">
-                  Actieve Logging vanaf {todayInfo.dateStr}
+                <span className="text-xs font-mono text-[var(--status-emerald)] tabular-nums">
+                  · Actieve Logging vanaf {todayInfo.dateStr}
                 </span>
               </div>
-              <p className="text-xs text-blue-200 mt-0.5">
-                Analyse per bushalte en per lijnnummer op maand- en weekbasis • Permanent opgeslagen & exporteerbaar als .CSV
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                Analyse per bushalte en per lijnnummer op maand- en weekbasis · Permanent opgeslagen &amp; exporteerbaar als .CSV
               </p>
             </div>
           </div>
@@ -191,7 +191,7 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
               <button
                 onClick={onCloudSync}
                 disabled={isCloudSyncing}
-                className="px-3 py-1.5 rounded-lg bg-[#FFCC00] hover:bg-amber-300 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                className="px-3 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] text-[#060e0a] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                 title={
                   firebaseUserEmail
                     ? `Gesynchroniseerd met Firebase Firestore (${firebaseUserEmail})`
@@ -207,7 +207,7 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
             {firebaseUserEmail && onSignOut && (
               <button
                 onClick={onSignOut}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/90 text-xs transition-colors cursor-pointer"
+                className="p-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] text-xs transition-colors cursor-pointer"
                 title="Uitloggen bij Firebase"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -216,15 +216,15 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
             <button
               onClick={onTriggerLiveScan}
               disabled={isScanning}
-              className="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Log direct actuele DRGL ritten"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin text-[var(--accent-gold)]' : ''}`} />
               <span className="hidden sm:inline">Nu Loggen (DRGL)</span>
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="p-1.5 rounded-[4px] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] border border-transparent hover:border-[var(--border-subtle)] transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -232,30 +232,36 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
         </div>
 
         {/* Filter Bar (Maand / Weeknummer / Lijn / Zoek + CSV Export) */}
-        <div className="bg-slate-100 border-b border-slate-200 px-5 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div className="bg-[var(--bg-main)] border-b border-[var(--border-subtle)] px-5 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
           <div className="flex flex-wrap items-center gap-2">
             {/* Period Type Selector */}
-            <div className="flex items-center bg-white border border-slate-300 rounded-lg p-0.5 text-xs font-semibold">
+            <div className="flex items-center bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[4px] p-0.5 text-xs font-semibold">
               <button
                 onClick={() => setPeriodType('all')}
-                className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                  periodType === 'all' ? 'bg-[#0E518D] text-white' : 'text-slate-700 hover:bg-slate-100'
+                className={`px-2.5 py-1 rounded-[3px] transition-colors cursor-pointer tabular-nums ${
+                  periodType === 'all'
+                    ? 'bg-[var(--accent-gold)] text-[#060e0a]'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)]'
                 }`}
               >
                 Vanaf Vandaag ({todayInfo.dateStr})
               </button>
               <button
                 onClick={() => setPeriodType('month')}
-                className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                  periodType === 'month' ? 'bg-[#0E518D] text-white' : 'text-slate-700 hover:bg-slate-100'
+                className={`px-2.5 py-1 rounded-[3px] transition-colors cursor-pointer ${
+                  periodType === 'month'
+                    ? 'bg-[var(--accent-gold)] text-[#060e0a]'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)]'
                 }`}
               >
                 Per Maand
               </button>
               <button
                 onClick={() => setPeriodType('week')}
-                className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                  periodType === 'week' ? 'bg-[#0E518D] text-white' : 'text-slate-700 hover:bg-slate-100'
+                className={`px-2.5 py-1 rounded-[3px] transition-colors cursor-pointer ${
+                  periodType === 'week'
+                    ? 'bg-[var(--accent-gold)] text-[#060e0a]'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)]'
                 }`}
               >
                 Per Weeknummer
@@ -264,16 +270,16 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
 
             {/* Month Dropdown */}
             {periodType === 'month' && (
-              <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs">
-                <Calendar className="w-3.5 h-3.5 text-[#0E518D]" />
-                <span className="text-slate-500 font-medium">Maand:</span>
+              <div className="flex items-center gap-1.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[4px] px-2.5 py-1 text-xs">
+                <Calendar className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
+                <span className="text-[var(--text-muted)] font-medium">Maand:</span>
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="font-bold text-slate-900 bg-transparent focus:outline-none"
+                  className="font-bold text-[var(--text-main)] bg-transparent focus:outline-none tabular-nums"
                 >
                   {availableMonths.map((m) => (
-                    <option key={m} value={m}>
+                    <option key={m} value={m} className="bg-[#0b1a13] text-[#f5f6f4]">
                       {m}
                     </option>
                   ))}
@@ -283,16 +289,16 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
 
             {/* Week Dropdown */}
             {periodType === 'week' && (
-              <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs">
-                <Calendar className="w-3.5 h-3.5 text-[#0E518D]" />
-                <span className="text-slate-500 font-medium">Week:</span>
+              <div className="flex items-center gap-1.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[4px] px-2.5 py-1 text-xs">
+                <Calendar className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
+                <span className="text-[var(--text-muted)] font-medium">Week:</span>
                 <select
                   value={selectedWeek}
                   onChange={(e) => setSelectedWeek(e.target.value)}
-                  className="font-bold text-slate-900 bg-transparent focus:outline-none"
+                  className="font-bold text-[var(--text-main)] bg-transparent focus:outline-none tabular-nums"
                 >
                   {availableWeeks.map((w) => (
-                    <option key={w} value={w}>
+                    <option key={w} value={w} className="bg-[#0b1a13] text-[#f5f6f4]">
                       Week {w.split('-W')[1]} ({w.split('-W')[0]})
                     </option>
                   ))}
@@ -301,17 +307,17 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
             )}
 
             {/* Line Filter */}
-            <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs">
-              <Bus className="w-3.5 h-3.5 text-[#0E518D]" />
-              <span className="text-slate-500 font-medium">Lijn:</span>
+            <div className="flex items-center gap-1.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[4px] px-2.5 py-1 text-xs">
+              <Bus className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
+              <span className="text-[var(--text-muted)] font-medium">Lijn:</span>
               <select
                 value={selectedLine}
                 onChange={(e) => setSelectedLine(e.target.value)}
-                className="font-bold text-slate-900 bg-transparent focus:outline-none"
+                className="font-bold text-[var(--text-main)] bg-transparent focus:outline-none tabular-nums"
               >
-                <option value="ALL">Alle lijnen ({availableLines.length})</option>
+                <option value="ALL" className="bg-[#0b1a13] text-[#f5f6f4]">Alle lijnen ({availableLines.length})</option>
                 {availableLines.map((l) => (
-                  <option key={l} value={l}>
+                  <option key={l} value={l} className="bg-[#0b1a13] text-[#f5f6f4]">
                     Lijn {l}
                   </option>
                 ))}
@@ -320,18 +326,18 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
 
             {/* Search Stop / Town */}
             <div className="relative flex items-center">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5" />
+              <Search className="w-3.5 h-3.5 text-[var(--text-dim)] absolute left-2.5" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Zoek plaats of haltenaam..."
-                className="pl-8 pr-6 py-1 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0E518D] w-48"
+                className="pl-8 pr-6 py-1 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[4px] text-xs text-[var(--text-main)] placeholder:text-[var(--text-dim)] focus:outline-none focus:border-[var(--border-focus)] w-48"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2 text-slate-400 hover:text-slate-700 text-xs"
+                  className="absolute right-2 text-[var(--text-muted)] hover:text-[var(--text-main)] text-xs"
                 >
                   ×
                 </button>
@@ -348,7 +354,7 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
                   `steenwijkerland_haltes_vertraging_${periodLabel}.csv`
                 )
               }
-              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] text-[#060e0a] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export Haltes (.csv)</span>
@@ -361,9 +367,9 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
                   `steenwijkerland_lijnen_vertraging_${periodLabel}.csv`
                 )
               }
-              className="px-3 py-1.5 rounded-lg bg-[#0E518D] hover:bg-[#0A3D6B] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-elevated)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
               <span>Export Lijnen (.csv)</span>
             </button>
 
@@ -374,71 +380,71 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
                   `steenwijkerland_ruwe_logdata_${periodLabel}.csv`
                 )
               }
-              className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+              className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Exporteer alle individuele gelogde rit-passages als CSV"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-[#FFCC00]" />
+              <FileSpreadsheet className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
               <span className="hidden md:inline">Alle Logregels (.csv)</span>
             </button>
           </div>
         </div>
 
         {/* Summary KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 px-5 py-3 bg-slate-50 border-b border-slate-200 shrink-0 text-xs">
-          <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs">
-            <div className="text-slate-500 font-medium">Gelogde Halte-passages</div>
-            <div className="text-lg font-extrabold text-slate-900 font-mono mt-0.5">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 px-5 py-3 bg-[var(--bg-card)] border-b border-[var(--border-subtle)] shrink-0 text-xs tabular-nums">
+          <div className="bg-[var(--bg-main)] p-3 rounded-[4px] border border-[var(--border-subtle)]">
+            <div className="text-[var(--text-muted)] font-medium">Gelogde Halte-passages</div>
+            <div className="text-lg font-extrabold text-[var(--text-main)] font-mono mt-0.5 tabular-nums">
               {summary.total}
             </div>
           </div>
 
-          <div className="bg-red-50/70 p-2.5 rounded-xl border border-red-200 shadow-xs">
-            <div className="text-red-700 font-semibold flex items-center gap-1">
+          <div className="bg-[var(--bg-main)] p-3 rounded-[4px] border border-[var(--border-subtle)]">
+            <div className="text-[var(--status-crimson)] font-semibold flex items-center gap-1">
               <AlertOctagon className="w-3.5 h-3.5" /> Uitgevallen Ritten
             </div>
-            <div className="text-lg font-extrabold text-red-700 font-mono mt-0.5">
+            <div className="text-lg font-extrabold text-[var(--status-crimson)] font-mono mt-0.5 tabular-nums">
               {summary.cancelledCount}
             </div>
           </div>
 
-          <div className="bg-amber-50/70 p-2.5 rounded-xl border border-amber-200 shadow-xs">
-            <div className="text-amber-800 font-semibold flex items-center gap-1">
+          <div className="bg-[var(--bg-main)] p-3 rounded-[4px] border border-[var(--border-subtle)]">
+            <div className="text-[var(--accent-gold)] font-semibold flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" /> Gem. Vertraging (Te laat)
             </div>
-            <div className="text-lg font-extrabold text-amber-800 font-mono mt-0.5">
+            <div className="text-lg font-extrabold text-[var(--accent-gold-bright)] font-mono mt-0.5 tabular-nums">
               +{summary.avgDelay} min{' '}
-              <span className="text-[11px] font-normal">({summary.delayedCount} ritten)</span>
+              <span className="text-[11px] font-normal text-[var(--text-muted)]">({summary.delayedCount} ritten)</span>
             </div>
           </div>
 
-          <div className="bg-sky-50/70 p-2.5 rounded-xl border border-sky-200 shadow-xs">
-            <div className="text-sky-800 font-semibold flex items-center gap-1">
+          <div className="bg-[var(--bg-main)] p-3 rounded-[4px] border border-[var(--border-subtle)]">
+            <div className="text-[var(--status-blue)] font-semibold flex items-center gap-1">
               <FastForward className="w-3.5 h-3.5" /> Te Vroeg Gepasseerd
             </div>
-            <div className="text-lg font-extrabold text-sky-800 font-mono mt-0.5">
+            <div className="text-lg font-extrabold text-[var(--status-blue)] font-mono mt-0.5 tabular-nums">
               {summary.earlyCount} ritten{' '}
-              <span className="text-[11px] font-normal">(gem. -{summary.avgEarly} min)</span>
+              <span className="text-[11px] font-normal text-[var(--text-muted)]">(gem. -{summary.avgEarly} min)</span>
             </div>
           </div>
 
-          <div className="bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200 shadow-xs col-span-2 sm:col-span-1">
-            <div className="text-emerald-800 font-semibold flex items-center gap-1">
+          <div className="bg-[var(--bg-main)] p-3 rounded-[4px] border border-[var(--border-subtle)] col-span-2 sm:col-span-1">
+            <div className="text-[var(--status-emerald)] font-semibold flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" /> Stipt Op Tijd
             </div>
-            <div className="text-lg font-extrabold text-emerald-700 font-mono mt-0.5">
+            <div className="text-lg font-extrabold text-[var(--status-emerald)] font-mono mt-0.5 tabular-nums">
               {summary.onTimeCount} ritten
             </div>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="px-5 pt-2 bg-white border-b border-slate-200 flex items-center gap-2 shrink-0">
+        <div className="px-5 pt-2 bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)] flex items-center gap-2 shrink-0 tabular-nums">
           <button
             onClick={() => setActiveTab('stops')}
             className={`px-4 py-2 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'stops'
-                ? 'border-[#0E518D] text-[#0E518D]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-[var(--accent-gold)] text-[var(--accent-gold-bright)]'
+                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
             <MapPin className="w-3.5 h-3.5" />
@@ -449,8 +455,8 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
             onClick={() => setActiveTab('lines')}
             className={`px-4 py-2 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'lines'
-                ? 'border-[#0E518D] text-[#0E518D]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-[var(--accent-gold)] text-[var(--accent-gold-bright)]'
+                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
             <Bus className="w-3.5 h-3.5" />
@@ -461,8 +467,8 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
             onClick={() => setActiveTab('raw')}
             className={`px-4 py-2 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'raw'
-                ? 'border-[#0E518D] text-[#0E518D]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-[var(--accent-gold)] text-[var(--accent-gold-bright)]'
+                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
@@ -471,77 +477,68 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
         </div>
 
         {/* Table Content */}
-        <div className="flex-1 overflow-auto p-4">
+        <div className="flex-1 overflow-auto p-4 bg-[var(--bg-main)]">
           {activeTab === 'stops' && (
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="border border-[var(--border-subtle)] rounded-[5px] overflow-hidden bg-[var(--bg-card)]">
+              <table className="w-full text-left border-collapse text-xs tabular-nums">
                 <thead>
-                  <tr className="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold">
+                  <tr className="bg-[var(--bg-elevated)] text-[var(--text-muted)] border-b border-[var(--border-subtle)] font-bold uppercase text-[10px] tracking-wider">
                     <th className="py-2.5 px-3">Plaats</th>
                     <th className="py-2.5 px-3">Haltenaam</th>
                     <th className="py-2.5 px-3">Lijnen</th>
                     <th className="py-2.5 px-3 text-right">Gelogde Ritten</th>
-                    <th className="py-2.5 px-3 text-right text-red-700">Uitgevallen Ritten</th>
-                    <th className="py-2.5 px-3 text-right text-amber-800">
-                      Vertraagde Ritten & Gem. Vertraging
+                    <th className="py-2.5 px-3 text-right text-[var(--status-crimson)]">Uitgevallen Ritten</th>
+                    <th className="py-2.5 px-3 text-right text-[var(--accent-gold-bright)]">
+                      Vertraagde Ritten &amp; Gem. Vertraging
                     </th>
-                    <th className="py-2.5 px-3 text-right text-sky-800">
-                      Te Vroeg Gepasseerd & Gem. Minuten
+                    <th className="py-2.5 px-3 text-right text-[var(--status-blue)]">
+                      Te Vroeg Gepasseerd &amp; Gem. Minuten
                     </th>
-                    <th className="py-2.5 px-3 text-right text-emerald-700">Op Tijd</th>
+                    <th className="py-2.5 px-3 text-right text-[var(--status-emerald)]">Op Tijd</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-[var(--border-subtle)]">
                   {stopStats.map((s) => (
-                    <tr key={`${s.town}-${s.stopName}`} className="hover:bg-slate-50">
-                      <td className="py-2.5 px-3 font-bold text-slate-900">{s.town}</td>
-                      <td className="py-2.5 px-3 font-semibold text-[#0E518D]">{s.stopName}</td>
-                      <td className="py-2.5 px-3">
-                        <div className="flex flex-wrap gap-1">
-                          {s.lines.map((l) => (
-                            <span
-                              key={l}
-                              className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 font-mono text-[10px] font-bold text-slate-800"
-                            >
-                              {l}
-                            </span>
-                          ))}
-                        </div>
+                    <tr key={`${s.town}-${s.stopName}`} className="hover:bg-[var(--bg-card-hover)] transition-colors">
+                      <td className="py-2.5 px-3 font-bold text-[var(--text-main)]">{s.town}</td>
+                      <td className="py-2.5 px-3 font-semibold text-[var(--accent-gold-bright)]">{s.stopName}</td>
+                      <td className="py-2.5 px-3 font-mono text-[11px] text-[var(--text-muted)]">
+                        {s.lines.join(' · ')}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono font-bold">
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-[var(--text-main)] tabular-nums">
                         {s.totalRecordedTrips}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono">
+                      <td className="py-2.5 px-3 text-right font-mono tabular-nums">
                         <span
                           className={
                             s.cancelledCount > 0
-                              ? 'px-2 py-0.5 rounded bg-red-100 text-red-800 font-bold'
-                              : 'text-slate-500'
+                              ? 'text-[var(--status-crimson)] font-bold'
+                              : 'text-[var(--text-dim)]'
                           }
                         >
                           {s.cancelledCount} ({s.cancelledPercent}%)
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono">
-                        <div className="font-bold text-amber-800">
+                      <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                        <div className="font-bold text-[var(--accent-gold-bright)]">
                           +{s.avgDelayWhenDelayedMin} min{' '}
-                          <span className="text-[10px] font-normal text-slate-500">
+                          <span className="text-[10px] font-normal text-[var(--text-dim)]">
                             ({s.delayedCount}x te laat)
                           </span>
                         </div>
-                        <div className="text-[10px] text-slate-500">
+                        <div className="text-[10px] text-[var(--text-dim)]">
                           Alle ritten: +{s.avgDelayAllOperatedMin} min
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono">
-                        <div className="font-bold text-sky-800">
+                      <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                        <div className="font-bold text-[var(--status-blue)]">
                           {s.earlyCount}x te vroeg
                         </div>
-                        <div className="text-[10px] text-sky-700">
+                        <div className="text-[10px] text-[var(--text-dim)]">
                           Gem. -{s.avgEarlyMinutes} min te vroeg
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-emerald-700 font-semibold">
+                      <td className="py-2.5 px-3 text-right font-mono text-[var(--status-emerald)] font-semibold tabular-nums">
                         {s.onTimeCount} ({s.onTimePercent}%)
                       </td>
                     </tr>
@@ -552,66 +549,66 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
           )}
 
           {activeTab === 'lines' && (
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="border border-[var(--border-subtle)] rounded-[5px] overflow-hidden bg-[var(--bg-card)]">
+              <table className="w-full text-left border-collapse text-xs tabular-nums">
                 <thead>
-                  <tr className="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold">
+                  <tr className="bg-[var(--bg-elevated)] text-[var(--text-muted)] border-b border-[var(--border-subtle)] font-bold uppercase text-[10px] tracking-wider">
                     <th className="py-2.5 px-3">Lijn</th>
                     <th className="py-2.5 px-3">Vervoerder</th>
                     <th className="py-2.5 px-3">Traject in Steenwijkerland</th>
                     <th className="py-2.5 px-3 text-right">Gelogde Passages</th>
-                    <th className="py-2.5 px-3 text-right text-red-700">Uitgevallen Ritten</th>
-                    <th className="py-2.5 px-3 text-right text-amber-800">
-                      Vertraagd & Gem. Vertraging
+                    <th className="py-2.5 px-3 text-right text-[var(--status-crimson)]">Uitgevallen Ritten</th>
+                    <th className="py-2.5 px-3 text-right text-[var(--accent-gold-bright)]">
+                      Vertraagd &amp; Gem. Vertraging
                     </th>
-                    <th className="py-2.5 px-3 text-right text-sky-800">
-                      Te Vroeg Gepasseerd & Gem. Minuten
+                    <th className="py-2.5 px-3 text-right text-[var(--status-blue)]">
+                      Te Vroeg Gepasseerd &amp; Gem. Minuten
                     </th>
-                    <th className="py-2.5 px-3 text-right text-emerald-700">Op Tijd</th>
+                    <th className="py-2.5 px-3 text-right text-[var(--status-emerald)]">Op Tijd</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-[var(--border-subtle)]">
                   {lineStats.map((l) => (
-                    <tr key={l.line} className="hover:bg-slate-50">
+                    <tr key={l.line} className="hover:bg-[var(--bg-card-hover)] transition-colors">
                       <td className="py-2.5 px-3">
-                        <span className="px-2.5 py-1 rounded bg-[#0E518D] text-white font-mono font-bold text-xs">
+                        <span className="px-2 py-0.5 rounded-[4px] bg-[var(--bg-elevated)] border border-[var(--border-focus)] text-[var(--accent-gold-bright)] font-mono font-bold text-xs tabular-nums">
                           Lijn {l.line}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 font-semibold text-slate-700">{l.operator}</td>
-                      <td className="py-2.5 px-3 text-slate-600">{l.routeSummary}</td>
-                      <td className="py-2.5 px-3 text-right font-mono font-bold">
+                      <td className="py-2.5 px-3 font-semibold text-[var(--text-main)]">{l.operator}</td>
+                      <td className="py-2.5 px-3 text-[var(--text-muted)]">{l.routeSummary}</td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-[var(--text-main)] tabular-nums">
                         {l.totalRecordedTrips}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono">
+                      <td className="py-2.5 px-3 text-right font-mono tabular-nums">
                         <span
                           className={
                             l.cancelledCount > 0
-                              ? 'px-2 py-0.5 rounded bg-red-100 text-red-800 font-bold'
-                              : 'text-slate-500'
+                              ? 'text-[var(--status-crimson)] font-bold'
+                              : 'text-[var(--text-dim)]'
                           }
                         >
                           {l.cancelledCount} ({l.cancelledPercent}%)
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono">
-                        <div className="font-bold text-amber-800">
+                      <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                        <div className="font-bold text-[var(--accent-gold-bright)]">
                           +{l.avgDelayWhenDelayedMin} min{' '}
-                          <span className="text-[10px] font-normal text-slate-500">
+                          <span className="text-[10px] font-normal text-[var(--text-dim)]">
                             ({l.delayedCount}x)
                           </span>
                         </div>
-                        <div className="text-[10px] text-slate-500">
+                        <div className="text-[10px] text-[var(--text-dim)]">
                           Alle ritten: +{l.avgDelayAllOperatedMin} min
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono">
-                        <div className="font-bold text-sky-800">{l.earlyCount}x te vroeg</div>
-                        <div className="text-[10px] text-sky-700">
+                      <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                        <div className="font-bold text-[var(--status-blue)]">{l.earlyCount}x te vroeg</div>
+                        <div className="text-[10px] text-[var(--text-dim)]">
                           Gem. -{l.avgEarlyMinutes} min te vroeg
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-emerald-700 font-semibold">
+                      <td className="py-2.5 px-3 text-right font-mono text-[var(--status-emerald)] font-semibold tabular-nums">
                         {l.onTimeCount} ({l.onTimePercent}%)
                       </td>
                     </tr>
@@ -622,57 +619,57 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
           )}
 
           {activeTab === 'raw' && (
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="border border-[var(--border-subtle)] rounded-[5px] overflow-hidden bg-[var(--bg-card)]">
+              <table className="w-full text-left border-collapse text-xs tabular-nums">
                 <thead>
-                  <tr className="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold">
-                    <th className="py-2 px-3">Datum & Week</th>
-                    <th className="py-2 px-3">Plaats & Haltenaam</th>
-                    <th className="py-2 px-3">Lijn & Richting</th>
-                    <th className="py-2 px-3">Gepland</th>
-                    <th className="py-2 px-3">Werkelijk</th>
-                    <th className="py-2 px-3">Status & Afwijking</th>
+                  <tr className="bg-[var(--bg-elevated)] text-[var(--text-muted)] border-b border-[var(--border-subtle)] font-bold uppercase text-[10px] tracking-wider">
+                    <th className="py-2.5 px-3">Datum &amp; Week</th>
+                    <th className="py-2.5 px-3">Plaats &amp; Haltenaam</th>
+                    <th className="py-2.5 px-3">Lijn &amp; Richting</th>
+                    <th className="py-2.5 px-3">Gepland</th>
+                    <th className="py-2.5 px-3">Werkelijk</th>
+                    <th className="py-2.5 px-3">Status &amp; Afwijking</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-[var(--border-subtle)]">
                   {filteredRawLogs.slice(0, 250).map((log) => (
-                    <tr key={log.id} className="hover:bg-slate-50">
-                      <td className="py-2 px-3 font-mono text-[11px] text-slate-600">
+                    <tr key={log.id} className="hover:bg-[var(--bg-card-hover)] transition-colors">
+                      <td className="py-2 px-3 font-mono text-[11px] text-[var(--text-muted)] tabular-nums">
                         <div>{log.date}</div>
-                        <div className="text-[10px] text-slate-400">
-                          {log.yearWeek} • Maand {log.yearMonth}
+                        <div className="text-[10px] text-[var(--text-dim)]">
+                          {log.yearWeek} · Maand {log.yearMonth}
                         </div>
                       </td>
                       <td className="py-2 px-3">
-                        <span className="font-bold text-slate-900">{log.town}</span> —{' '}
-                        <span className="font-semibold text-[#0E518D]">{log.stopName}</span>
+                        <span className="font-bold text-[var(--text-main)]">{log.town}</span> —{' '}
+                        <span className="font-semibold text-[var(--accent-gold-bright)]">{log.stopName}</span>
                       </td>
                       <td className="py-2 px-3">
-                        <span className="px-1.5 py-0.5 rounded bg-slate-800 text-white font-mono font-bold text-[10px] mr-1.5">
+                        <span className="font-mono font-bold text-[var(--accent-gold)] mr-1.5 tabular-nums">
                           Lijn {log.line}
                         </span>
-                        <span className="text-slate-700">{log.destination}</span>
+                        <span className="text-[var(--text-muted)]">→ {log.destination}</span>
                       </td>
-                      <td className="py-2 px-3 font-mono font-semibold">{log.plannedTime}</td>
-                      <td className="py-2 px-3 font-mono font-semibold">{log.actualTime}</td>
-                      <td className="py-2 px-3 font-mono">
+                      <td className="py-2 px-3 font-mono font-semibold text-[var(--text-main)] tabular-nums">{log.plannedTime}</td>
+                      <td className="py-2 px-3 font-mono font-semibold text-[var(--text-main)] tabular-nums">{log.actualTime}</td>
+                      <td className="py-2 px-3 font-mono tabular-nums">
                         {log.status === 'cancelled' && (
-                          <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 font-bold">
+                          <span className="text-[var(--status-crimson)] font-bold">
                             Uitgevallen
                           </span>
                         )}
                         {log.status === 'delayed' && (
-                          <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
+                          <span className="text-[var(--accent-gold-bright)] font-bold">
                             Vertraagd (+{log.delayMinutes} min)
                           </span>
                         )}
                         {log.status === 'early' && (
-                          <span className="px-2 py-0.5 rounded bg-sky-100 text-sky-900 font-bold">
+                          <span className="text-[var(--status-blue)] font-bold">
                             Te vroeg ({log.delayMinutes} min)
                           </span>
                         )}
                         {log.status === 'ontime' && (
-                          <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">
+                          <span className="text-[var(--status-emerald)] font-semibold">
                             Op tijd (0 min)
                           </span>
                         )}

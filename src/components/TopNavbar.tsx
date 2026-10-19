@@ -52,7 +52,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onManualRefresh,
   feedMode,
   onToggleFeedMode,
-  isEmbed = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -68,56 +67,56 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     : [];
 
   return (
-    <header className="h-14 bg-[#0E518D] border-b border-[#0A3D6B] px-3 md:px-5 flex items-center justify-between gap-3 z-30 select-none shrink-0 shadow-md">
+    <header className="h-14 bg-[var(--bg-card)] border-b border-[var(--border-subtle)] px-3 md:px-5 flex items-center justify-between gap-3 z-30 select-none shrink-0">
       {/* Zone 1: Brand title (Lijst van Andel Dataproduct) */}
       <div className="flex items-center gap-3 shrink-0">
-        <a href="/" className="flex items-center gap-2.5 text-white transition-opacity group">
-          <div className="w-8 h-8 rounded-lg bg-[#FFCC00] flex items-center justify-center shadow-md shrink-0 group-hover:scale-105 transition-transform">
-            <span className="text-sm font-black text-[#0E518D]">LA</span>
+        <a href="/" className="flex items-center gap-2.5 text-[var(--text-main)] transition-opacity group">
+          <div className="w-8 h-8 rounded-[4px] bg-[var(--accent-gold)] border border-[var(--accent-gold-bright)] flex items-center justify-center shrink-0">
+            <span className="text-xs font-extrabold text-[#060e0a] tracking-tight">LA</span>
           </div>
           <div className="flex flex-col leading-tight">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-base font-black tracking-tight text-white whitespace-nowrap">
+            <div className="flex items-baseline gap-2">
+              <span className="text-sm font-bold tracking-tight text-[var(--text-main)] whitespace-nowrap">
                 Lijst van Andel
               </span>
-              <span className="text-xs text-[#FFCC00] font-bold hidden sm:inline">
+              <span className="text-xs text-[var(--accent-gold)] font-semibold hidden sm:inline">
                 Steenwijkerland
               </span>
             </div>
-            <span className="text-[10px] text-blue-200 hidden md:inline font-medium">
-              Dataproduct • Actuele Busposities & Deelfietsen
+            <span className="text-[11px] text-[var(--text-muted)] hidden md:inline">
+              Dataproduct · Actuele Busposities &amp; Deelfietsen
             </span>
           </div>
         </a>
       </div>
 
       {/* Zone 2: Navigation Controls & Real-Time Filter */}
-      <div className="hidden lg:flex items-center gap-4">
-        <nav className="flex items-center gap-2 text-xs font-medium text-white/90">
+      <div className="hidden lg:flex items-center gap-3">
+        <nav className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-main)]">
           {/* Departures Board Toggle */}
           <button
             onClick={onToggleDepartureBoard}
-            className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold ${
+            className={`px-3 py-1.5 rounded-[4px] border transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold ${
               showDepartureBoard
-                ? 'bg-white text-[#0E518D] shadow-sm'
-                : 'text-white hover:bg-white/10'
+                ? 'bg-[var(--bg-elevated)] text-[var(--accent-gold-bright)] border-[var(--border-focus)]'
+                : 'bg-[var(--bg-main)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)]'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
             <span>Vertrektijden Bord</span>
           </button>
 
           {/* Punctuality & Delay Logger Modal Button */}
           <button
             onClick={onOpenPunctualityModal}
-            className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-bold"
+            className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold tabular-nums"
             title="Bekijk uitval, vertragingen en te vroege passages per halte en per lijn (Maand / Week) + CSV export"
           >
-            <BarChart3 className="w-3.5 h-3.5 text-[#FFCC00]" />
+            <BarChart3 className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
             <span>OV Vertraging (.CSV)</span>
             {loggedCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded bg-emerald-500 text-white font-mono text-[10px]">
-                {loggedCount}
+              <span className="text-[var(--text-muted)] font-mono text-[11px] tabular-nums">
+                · {loggedCount}
               </span>
             )}
           </button>
@@ -126,13 +125,13 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           {onOpenDeelfietsModal && (
             <button
               onClick={onOpenDeelfietsModal}
-              className="px-3 py-1.5 rounded-lg bg-sky-500/25 hover:bg-sky-500/35 text-sky-100 border border-sky-400/50 transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-bold"
+              className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold tabular-nums"
               title="Bekijk beschikbare en gehuurde deelfietsen per dag, week en maand voor alle locaties in Steenwijkerland + CSV export"
             >
-              <Bike className="w-3.5 h-3.5 text-[#FFE364]" />
+              <Bike className="w-3.5 h-3.5 text-[var(--status-blue)]" />
               <span>Deelfietsen (.CSV)</span>
-              <span className="px-1.5 py-0.2 rounded bg-[#00B1FF] text-white font-mono text-[10px]">
-                {deelfietsAvailableCount} vrij
+              <span className="text-[var(--status-blue)] font-mono text-[11px] tabular-nums">
+                · {deelfietsAvailableCount} vrij
               </span>
             </button>
           )}
@@ -141,7 +140,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           {onOpenOvFietsModal && (
             <button
               onClick={onOpenOvFietsModal}
-              className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-100 border border-[#FFCC00]/50 transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-bold"
+              className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold tabular-nums"
               title="Bekijk de actuele en historische beschikbaarheid van NS OV-fietsen op Station Steenwijk (swk002) + CSV export"
             >
               <img
@@ -150,8 +149,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                 className="w-3.5 h-4 object-contain shrink-0"
               />
               <span>OV-fiets (.CSV)</span>
-              <span className="px-1.5 py-0.2 rounded bg-[#000066] text-[#FFCC00] font-mono text-[10px] font-black border border-[#FFCC00]/50">
-                {ovfietsAvailableCount} vrij
+              <span className="text-[var(--accent-gold-bright)] font-mono text-[11px] tabular-nums">
+                · {ovfietsAvailableCount} vrij
               </span>
             </button>
           )}
@@ -159,17 +158,17 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           {/* Strict Live vs Demo Mode Toggle */}
           <button
             onClick={() => onToggleFeedMode(feedMode === 'live' ? 'demo' : 'live')}
-            className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs font-semibold ${
+            className={`px-3 py-1.5 rounded-[4px] border transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs font-semibold ${
               feedMode === 'live'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40'
-                : 'bg-amber-400/20 text-[#FFCC00] border border-[#FFCC00]/40'
+                ? 'bg-[var(--bg-main)] text-[var(--status-emerald)] border-[var(--border-subtle)] hover:bg-[var(--bg-card-hover)]'
+                : 'bg-[var(--accent-gold-glow)] text-[var(--accent-gold-bright)] border-[var(--accent-gold)]'
             }`}
             title="Wissel tussen uitsluitend echt rijdende bussen en dienstregeling-voorbeeld"
           >
             {feedMode === 'live' ? (
-              <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <Radio className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
             ) : (
-              <ToggleRight className="w-3.5 h-3.5 text-[#FFCC00]" />
+              <ToggleRight className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
             )}
             <span>{feedMode === 'live' ? 'Modus: Echt Live' : 'Modus: Dienstregeling Preview'}</span>
           </button>
@@ -177,29 +176,29 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           {/* Fleet count */}
           <button
             onClick={onOpenFleetDrawer}
-            className="px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer hover:bg-white/10"
+            className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer tabular-nums"
           >
-            <Bus className="w-3.5 h-3.5 text-[#FFCC00]" />
+            <Bus className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
             <span>Vloot ({buses.length})</span>
           </button>
         </nav>
 
         {/* Search */}
         <div className="relative">
-          <div className="flex items-center bg-[#0A3D6B] border border-blue-400/30 rounded-lg px-2.5 py-1.5 w-48 focus-within:border-[#FFCC00] focus-within:ring-1 focus-within:ring-[#FFCC00] transition-all">
-            <Search className="w-3.5 h-3.5 text-blue-300 mr-2 shrink-0" />
+          <div className="flex items-center bg-[var(--bg-main)] border border-[var(--border-subtle)] rounded-[4px] px-2.5 py-1.5 w-48 focus-within:border-[var(--border-focus)] transition-colors">
+            <Search className="w-3.5 h-3.5 text-[var(--text-muted)] mr-2 shrink-0" />
             <input
               type="text"
               placeholder="Zoek rit of lijn..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchOpen(true)}
-              className="bg-transparent text-xs text-white placeholder:text-blue-200/60 focus:outline-none w-full"
+              className="bg-transparent text-xs text-[var(--text-main)] placeholder:text-[var(--text-dim)] focus:outline-none w-full"
             />
           </div>
 
           {isSearchOpen && filteredBuses.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-300 rounded-xl shadow-2xl py-1 z-50 max-h-60 overflow-y-auto text-slate-800">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-[5px] shadow-2xl py-1 z-50 max-h-60 overflow-y-auto text-[var(--text-main)]">
               {filteredBuses.map((bus) => (
                 <button
                   key={bus.id}
@@ -208,13 +207,13 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                     setIsSearchOpen(false);
                     setSearchQuery('');
                   }}
-                  className="w-full text-left px-3 py-2 hover:bg-slate-100 transition-colors flex items-center justify-between text-xs"
+                  className="w-full text-left px-3 py-2 hover:bg-[var(--bg-card-hover)] transition-colors flex items-center justify-between text-xs border-b border-[var(--border-subtle)] last:border-b-0 tabular-nums"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-[#0E518D] font-mono">Lijn {bus.line}</span>
-                    <span className="text-slate-700">→ {bus.destination}</span>
+                    <span className="font-bold text-[var(--accent-gold)] font-mono">Lijn {bus.line}</span>
+                    <span className="text-[var(--text-main)]">→ {bus.destination}</span>
                   </div>
-                  <span className="font-mono text-slate-500 text-[11px]">#{bus.matnummer}</span>
+                  <span className="font-mono text-[var(--text-muted)] text-[11px] tabular-nums">#{bus.matnummer}</span>
                 </button>
               ))}
             </div>
@@ -226,25 +225,25 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={onOpenPunctualityModal}
-          className="lg:hidden px-2.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer"
+          className="lg:hidden px-2.5 py-1.5 text-xs font-semibold text-[var(--text-main)] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] rounded-[4px] transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer"
           title="Vertraging & Statistieken (.CSV)"
         >
-          <BarChart3 className="w-3.5 h-3.5 text-[#FFCC00]" />
+          <BarChart3 className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
           <span>Statistieken</span>
         </button>
 
         <button
           onClick={onManualRefresh}
           disabled={isSyncing}
-          className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+          className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] rounded-[4px] transition-colors cursor-pointer"
           title="Ververs DRGL gegevens nu"
         >
-          <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-[#FFCC00]' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-[var(--accent-gold)]' : ''}`} />
         </button>
 
         <button
           onClick={onToggleDepartureBoard}
-          className="lg:hidden px-3 py-1.5 text-xs font-semibold text-[#0E518D] bg-[#FFCC00] hover:bg-amber-300 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+          className="lg:hidden px-3 py-1.5 text-xs font-semibold text-[#060e0a] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] rounded-[4px] transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
         >
           <Clock className="w-3.5 h-3.5" />
           <span>Tijden</span>
@@ -253,17 +252,17 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         {onOpenEmbedModal && (
           <button
             onClick={onOpenEmbedModal}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/40 text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
             title="Insluiten als interactief dataproduct in nieuwsberichten (HTML/Iframe)"
           >
-            <Code2 className="w-3.5 h-3.5 text-[#FFCC00]" />
+            <Code2 className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
             <span>Insluiten (&lt;/&gt;)</span>
           </button>
         )}
 
         <button
           onClick={onOpenFleetDrawer}
-          className="px-3.5 py-1.5 text-xs font-semibold text-slate-900 bg-[#FFCC00] hover:bg-amber-300 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+          className="px-3.5 py-1.5 text-xs font-bold text-[#060e0a] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] rounded-[4px] transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer tabular-nums"
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Vloot</span>

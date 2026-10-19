@@ -472,7 +472,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-black text-slate-900 font-sans">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[var(--bg-main)] text-[var(--text-main)] font-sans tabular-nums">
       {/* Top Navbar */}
       <TopNavbar
         buses={buses}
@@ -514,10 +514,10 @@ export default function App() {
       />
 
       {/* Main Viewport */}
-      <main className="flex-1 relative flex w-full h-[calc(100vh-3.5rem-1.75rem)] overflow-hidden bg-black">
+      <main className="flex-1 relative flex w-full h-[calc(100vh-3.5rem-1.75rem)] overflow-hidden bg-[var(--bg-main)]">
         {/* DRGL Left Sidebar: Live Departure Board */}
         {showDepartureBoard && (
-          <aside className="w-full md:w-[380px] lg:w-[420px] h-full bg-slate-50 border-r border-slate-300 p-3 flex flex-col shrink-0 z-20 shadow-xl overflow-hidden animate-in slide-in-from-left duration-200">
+          <aside className="w-full md:w-[380px] lg:w-[420px] h-full bg-[var(--bg-main)] border-r border-[var(--border-subtle)] p-2.5 flex flex-col shrink-0 z-20 overflow-hidden animate-in slide-in-from-left duration-200">
             <DRGLDepartureBoard
               title={departureTitle}
               departures={departures}
@@ -535,7 +535,7 @@ export default function App() {
         )}
 
         {/* Center: Leaflet Interactive Map (pitch-black outside Gemeente Steenwijkerland) */}
-        <section className="flex-1 relative h-full overflow-hidden bg-black">
+        <section className="flex-1 relative h-full overflow-hidden bg-[var(--bg-main)]">
           <MapComponent
             buses={buses}
             selectedBus={selectedBus}
@@ -578,16 +578,16 @@ export default function App() {
 
           {/* Real-Time Live Status Banner on Map when 0 buses active at night (between 00:00 and 06:00) */}
           {feedMode === 'live' && buses.length === 0 && new Date().getHours() < 6 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[500] max-w-lg w-[90%] bg-[#0E518D] text-white p-3.5 rounded-2xl shadow-2xl border-2 border-[#FFCC00] flex items-center justify-between gap-3 animate-in fade-in duration-300">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[500] max-w-lg w-[90%] bg-[var(--bg-elevated)] text-[var(--text-main)] p-3.5 rounded-[5px] shadow-2xl border border-[var(--border-focus)] flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                  <Moon className="w-5 h-5 text-[#FFCC00]" />
+                <div className="w-8 h-8 rounded-[4px] bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0">
+                  <Moon className="w-4 h-4 text-[var(--accent-gold)]" />
                 </div>
                 <div className="text-xs">
-                  <div className="font-bold text-white flex items-center gap-1.5">
+                  <div className="font-bold text-[var(--text-main)] flex items-center gap-1.5">
                     <span>Echte Live Feed: Geen bussen onderweg</span>
                   </div>
-                  <div className="text-blue-200 text-[11px] mt-0.5">
+                  <div className="text-[var(--text-muted)] text-[11px] mt-0.5 tabular-nums">
                     Er rijden momenteel geen actieve bussen (nachtdienst). Eerstvolgende vertrek om 06:06.
                   </div>
                 </div>
@@ -595,7 +595,7 @@ export default function App() {
 
               <button
                 onClick={() => setFeedMode('demo')}
-                className="px-3 py-1.5 rounded-lg bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs whitespace-nowrap transition-colors flex items-center gap-1 cursor-pointer"
+                className="px-3 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] text-[#060e0a] font-bold text-xs whitespace-nowrap transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Bekijk Preview</span>
@@ -604,19 +604,19 @@ export default function App() {
           )}
 
           {/* Floating Toggle for Departures Board & Punctuality Stats on Desktop */}
-          <div className="hidden md:flex absolute top-4 left-4 z-[501] items-center gap-2">
+          <div className="hidden md:flex absolute top-3 left-3 z-[501] items-center gap-1.5">
             <button
               onClick={() => setShowDepartureBoard(!showDepartureBoard)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E518D] text-white text-xs font-semibold shadow-lg hover:bg-[#0A3D6B] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold shadow-lg transition-colors cursor-pointer"
             >
               {showDepartureBoard ? (
                 <>
-                  <PanelLeftClose className="w-4 h-4 text-[#FFCC00]" />
+                  <PanelLeftClose className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
                   <span>Verberg Vertrektijden</span>
                 </>
               ) : (
                 <>
-                  <PanelLeftOpen className="w-4 h-4 text-[#FFCC00]" />
+                  <PanelLeftOpen className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
                   <span>Toon DRGL Vertrektijden</span>
                 </>
               )}
@@ -627,10 +627,10 @@ export default function App() {
                 setPunctualityStopFilter('');
                 setIsPunctualityModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold shadow-lg hover:bg-emerald-700 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold shadow-lg transition-colors cursor-pointer"
             >
-              <BarChart3 className="w-4 h-4 text-[#FFCC00]" />
-              <span>Vertraging & Uitval Statistieken (.CSV)</span>
+              <BarChart3 className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
+              <span>Vertraging &amp; Uitval Statistieken (.CSV)</span>
             </button>
 
             <button
@@ -639,10 +639,10 @@ export default function App() {
                 setDeelfietsLocationFilter('');
                 setIsDeelfietsModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00B1FF] text-white text-xs font-bold shadow-lg hover:bg-sky-600 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold shadow-lg transition-colors cursor-pointer tabular-nums"
               title="Deelfiets Nederland locaties in Steenwijkerland: gemiddelden en totalen per dag, week en maand"
             >
-              <Bike className="w-4 h-4 text-white" />
+              <Bike className="w-3.5 h-3.5 text-[var(--status-blue)]" />
               <span>Deelfietsen ({totalAvailableDeelfietsen} vrij) (.CSV)</span>
             </button>
 
@@ -651,7 +651,7 @@ export default function App() {
                 setDeelfietsInitialTab('ovfiets');
                 setIsDeelfietsModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#000066] text-[#FFCC00] text-xs font-bold shadow-lg hover:bg-blue-950 transition-colors cursor-pointer border border-[#FFCC00]/40"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--accent-gold-bright)] text-xs font-semibold shadow-lg transition-colors cursor-pointer tabular-nums"
               title="NS OV-fiets Station Steenwijk (swk002): actuele en historische beschikbaarheid & .CSV"
             >
               <img
@@ -664,10 +664,10 @@ export default function App() {
 
             <button
               onClick={() => setIsEmbedModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-700 hover:bg-sky-800 text-white text-xs font-bold shadow-lg transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold shadow-lg transition-colors cursor-pointer"
               title="Sluit dit dataproduct in op een nieuwsbericht of website"
             >
-              <Code2 className="w-4 h-4 text-[#FFCC00]" />
+              <Code2 className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
               <span>Insluiten (&lt;/&gt;)</span>
             </button>
           </div>
@@ -744,32 +744,32 @@ export default function App() {
       </main>
 
       {/* Persistent Dataproduct Footer: Dataproduct van Lijst van Andel */}
-      <footer className="h-7 bg-[#0A3D6B] border-t border-[#062440] px-3 md:px-5 flex items-center justify-between text-xs text-white/90 z-30 shrink-0 select-none shadow-md">
+      <footer className="h-7 bg-[var(--bg-card)] border-t border-[var(--border-subtle)] px-3 md:px-5 flex items-center justify-between text-xs text-[var(--text-muted)] z-30 shrink-0 select-none">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-3.5 h-3.5 rounded bg-[#FFCC00] text-[#0A3D6B] font-black text-[9px] flex items-center justify-center shrink-0">
+          <div className="w-4 h-4 rounded-[3px] bg-[var(--accent-gold)] text-[#060e0a] font-extrabold text-[9px] flex items-center justify-center shrink-0">
             LA
           </div>
-          <span className="font-bold text-[#FFCC00] tracking-tight whitespace-nowrap">
+          <span className="font-bold text-[var(--accent-gold-bright)] tracking-tight whitespace-nowrap">
             Dataproduct van Lijst van Andel
           </span>
-          <span className="text-blue-200 hidden md:inline truncate text-[11px]">
-            • Realtime actuele busposities & deelfietslocaties in Gemeente Steenwijkerland
+          <span className="text-[var(--text-dim)] hidden md:inline truncate text-[11px]">
+            · Realtime actuele busposities &amp; deelfietslocaties in Gemeente Steenwijkerland
           </span>
         </div>
 
-        <div className="flex items-center gap-3 text-[11px] text-white/80 shrink-0">
+        <div className="flex items-center gap-3 text-[11px] text-[var(--text-muted)] shrink-0">
           <button
             onClick={() => setIsEmbedModalOpen(true)}
-            className="hover:text-[#FFCC00] flex items-center gap-1 cursor-pointer transition-colors"
+            className="hover:text-[var(--accent-gold-bright)] flex items-center gap-1 cursor-pointer transition-colors"
             title="Sluit dit interactieve dataproduct in op een website of nieuwsbericht"
           >
-            <Code2 className="w-3.5 h-3.5 text-[#FFCC00]" />
+            <Code2 className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
             <span className="hidden sm:inline">Insluiten</span>
           </button>
 
           <button
             onClick={handleToggleFullscreen}
-            className="hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+            className="hover:text-[var(--text-main)] flex items-center gap-1 cursor-pointer transition-colors"
             title="Volledig scherm weergave"
           >
             <Maximize2 className="w-3 h-3" />
@@ -780,7 +780,7 @@ export default function App() {
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-white flex items-center gap-1 transition-colors"
+            className="hover:text-[var(--text-main)] flex items-center gap-1 transition-colors"
             title="Openen in een nieuw venster"
           >
             <ExternalLink className="w-3 h-3" />

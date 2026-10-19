@@ -77,7 +77,7 @@ const TILE_LAYERS: Record<TileLayerKey, { name: string; url: string; attribution
   osm: {
     name: 'OpenStreetMap (Lijst van Andel)',
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors • Dataproduct van Lijst van Andel',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Dataproduct van Lijst van Andel',
     maxZoom: 19,
   },
   opentopo: {
@@ -134,12 +134,12 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   const [activeTileLayer, setActiveTileLayer] = useState<TileLayerKey>('osm');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [isFollowingUserGps, setIsFollowingUserGps] = useState(false);
-  const [currentZoom, setCurrentZoom] = useState(STEENWIJKERLAND_BOUNDS.defaultZoom);
+  const [, setCurrentZoom] = useState(STEENWIJKERLAND_BOUNDS.defaultZoom);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
   const lastSelectedBusIdRef = useRef<string | null>(null);
 
-  // Initialize Leaflet Map with pitch-black exterior mask outside Gemeente Steenwijkerland
+  // Initialize Leaflet Map with Forensic Dark exterior mask outside Gemeente Steenwijkerland
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
@@ -153,8 +153,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
     mapInstanceRef.current = map;
 
-    // Create custom pane for the pitch-black mask outside the municipality border
-    // zIndex 450 sits above tilePane (200) and overlayPane (400), masking all map tiles and routes outside Steenwijkerland
+    // Create custom pane for the mask outside the municipality border
     const maskPane = map.createPane('exteriorBlackMaskPane');
     maskPane.style.zIndex = '450';
     maskPane.style.pointerEvents = 'none';
@@ -167,8 +166,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     }).addTo(map);
     currentTileLayerRef.current = tileLayer;
 
-    // Inverted world polygon with hole = STEENWIJKERLAND_POLYGON (3,782 exact vertices)
-    // Everything outside the municipal border is rendered 100% solid black (#000000)
+    // Inverted world polygon with hole = STEENWIJKERLAND_POLYGON
     const outerWorldRing: [number, number][] = [
       [-90, -180],
       [-90, 180],
@@ -179,10 +177,10 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     L.polygon([outerWorldRing, STEENWIJKERLAND_POLYGON], {
       pane: 'exteriorBlackMaskPane',
       stroke: true,
-      color: '#0E518D',
-      weight: 2.5,
+      color: '#437257',
+      weight: 2,
       opacity: 1,
-      fillColor: '#000000',
+      fillColor: '#060e0a',
       fillOpacity: 1,
       interactive: false,
     }).addTo(map);
@@ -248,7 +246,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     currentTileLayerRef.current = newTileLayer;
   }, [activeTileLayer]);
 
-  // Active Journey Polyline (DRGL Style: #0E518D, width 6)
+  // Active Journey Polyline
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
@@ -265,9 +263,9 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       const ptsToDraw = clipped.length >= 2 ? clipped : activeJourneyPolyline;
 
       const poly = L.polyline(ptsToDraw, {
-        color: '#0E518D',
-        weight: 6,
-        opacity: 0.9,
+        color: '#f59e0b',
+        weight: 5,
+        opacity: 0.95,
         lineCap: 'round',
         lineJoin: 'round',
       }).addTo(map);
@@ -289,13 +287,13 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       const polyline = L.polyline(route.path, {
         color: route.color,
         weight: route.line === '26' ? 4.5 : 4,
-        opacity: 0.82,
+        opacity: 0.85,
         lineCap: 'round',
         lineJoin: 'round',
       });
 
       polyline.bindTooltip(
-        `<div class="font-sans text-xs"><strong>Lijn ${route.line} (${route.operator})</strong><br/>${route.name}</div>`,
+        `<div class="font-sans text-xs text-[#f5f6f4] tabular-nums"><strong>Lijn ${route.line} (${route.operator})</strong><br/><span class="text-[#9bb0a4]">${route.name}</span></div>`,
         {
           sticky: true,
           className: 'route-tooltip',
@@ -303,12 +301,12 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       );
 
       polyline.bindPopup(
-        `<div class="p-2 font-sans text-xs text-slate-900">
+        `<div class="p-2.5 font-sans text-xs text-[#f5f6f4] tabular-nums">
           <div class="flex items-center gap-2 mb-1">
-            <span style="background:${route.color};color:#fff;padding:2px 7px;border-radius:4px;font-weight:bold;">Lijn ${route.line}</span>
-            <span class="font-semibold text-slate-600">${route.operator}</span>
+            <span style="background:#f59e0b;color:#060e0a;padding:2px 7px;border-radius:4px;font-weight:700;">Lijn ${route.line}</span>
+            <span class="font-semibold text-[#9bb0a4]">${route.operator}</span>
           </div>
-          <div class="font-bold text-slate-900">${route.name}</div>
+          <div class="font-bold text-[#f5f6f4]">${route.name}</div>
         </div>`
       );
 
@@ -319,7 +317,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     ROUTE_MAP_BADGES.filter((b) => isPointInSteenwijkerland(b.lat, b.lng)).forEach((badge) => {
       const badgeIcon = L.divIcon({
         className: 'route-map-badge-icon',
-        html: `<div style="background:${badge.color};color:#ffffff;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:800;white-space:nowrap;border:1.5px solid #ffffff;box-shadow:0 2px 5px rgba(0,0,0,0.35);font-family:sans-serif;letter-spacing:0.01em;">${badge.label}</div>`,
+        html: `<div style="background:#0b1a13;color:#f5f6f4;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap;border:1px solid #437257;box-shadow:0 2px 6px rgba(0,0,0,0.6);font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;">${badge.label}</div>`,
         iconSize: [96, 20],
         iconAnchor: [48, 10],
       });
@@ -330,11 +328,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       });
 
       badgeMarker.bindPopup(
-        `<div class="p-2 font-sans text-xs text-slate-900">
+        `<div class="p-2.5 font-sans text-xs text-[#f5f6f4] tabular-nums">
           <div class="flex items-center gap-2 mb-1">
-            <span style="background:${badge.color};color:#fff;padding:2px 7px;border-radius:4px;font-weight:bold;">Lijn ${badge.line}</span>
+            <span style="background:#f59e0b;color:#060e0a;padding:2px 7px;border-radius:4px;font-weight:700;">Lijn ${badge.line}</span>
           </div>
-          <div class="font-bold text-slate-900">${badge.subtitle}</div>
+          <div class="font-bold text-[#f5f6f4]">${badge.subtitle}</div>
         </div>`
       );
 
@@ -342,7 +340,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     });
   }, [showRoutes]);
 
-  // Draw Exact 186 Bus Stops from bestandkaart.html (with Plaats, Haltenaam & live Punctuality Stats)
+  // Draw Exact 186 Bus Stops
   useEffect(() => {
     if (!haltesLayerGroupRef.current) return;
     const layer = haltesLayerGroupRef.current;
@@ -382,10 +380,10 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           : '0.0';
 
       marker.bindTooltip(
-        `<div class="font-sans text-xs">
+        `<div class="font-sans text-xs text-[#f5f6f4] tabular-nums">
           <strong>${stop.town} — Halte ${stop.name}</strong><br/>
-          <span class="text-slate-600">Lijnen: ${stop.lines.join(', ')}</span><br/>
-          <span class="text-[10px] text-slate-500">Uitval: ${cancelledTrips} • Gem. vertraging: +${avgDelayMin}m • Te vroeg: ${earlyTrips.length}x (-${avgEarlyMin}m)</span>
+          <span class="text-[#9bb0a4]">Lijnen: ${stop.lines.join(', ')}</span><br/>
+          <span class="text-[10px] text-[#60756a]">Uitval: ${cancelledTrips} · Gem. vertraging: +${avgDelayMin}m · Te vroeg: ${earlyTrips.length}x (-${avgEarlyMin}m)</span>
         </div>`,
         {
           direction: 'top',
@@ -399,57 +397,57 @@ export const MapComponent: React.FC<MapComponentProps> = ({
               .map(
                 (r) =>
                   `<div style="margin-bottom:4px;font-size:11.5px;line-height:1.35;display:flex;align-items:flex-start;gap:6px;">
-                    <span style="background:${r.color};color:#fff;padding:1px 6px;border-radius:3px;font-weight:bold;font-size:10.5px;flex-shrink:0;">${r.line}</span>
-                    <span style="color:#1e293b;">${r.description}</span>
+                    <span style="background:#f59e0b;color:#060e0a;padding:1px 6px;border-radius:3px;font-weight:700;font-size:10.5px;flex-shrink:0;">${r.line}</span>
+                    <span style="color:#f5f6f4;">${r.description}</span>
                   </div>`
               )
               .join('')
           : stop.lines
               .map(
                 (l) =>
-                  `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-bold border border-slate-300 mr-1">${l}</span>`
+                  `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] bg-[#0b1a13] text-[#fbbf24] font-bold border border-[#1b3829] mr-1">${l}</span>`
               )
               .join('');
 
       const popupContainer = document.createElement('div');
-      popupContainer.className = 'p-2.5 text-slate-900 min-w-[265px] max-w-[320px] font-sans';
+      popupContainer.className = 'p-3 text-[#f5f6f4] min-w-[265px] max-w-[320px] font-sans tabular-nums';
       popupContainer.innerHTML = `
-        <div class="flex items-center gap-2 pb-1.5 mb-2 border-b border-slate-200">
-          <span class="w-5 h-5 rounded-full bg-[#0E518D] text-[10px] font-bold text-[#FFCC00] flex items-center justify-center shrink-0">H</span>
+        <div class="flex items-center gap-2 pb-2 mb-2 border-b border-[#1b3829]">
+          <span class="w-5 h-5 rounded-[3px] bg-[#f59e0b] text-[10px] font-extrabold text-[#060e0a] flex items-center justify-center shrink-0">H</span>
           <div class="min-w-0">
-            <div class="text-[10px] font-bold text-[#0E518D] uppercase tracking-wider">Bushalte Steenwijkerland</div>
-            <div class="text-sm font-bold text-slate-900 leading-tight">${stop.town} — ${stop.name}</div>
+            <div class="text-[10px] font-bold text-[#fbbf24] uppercase tracking-wider">Bushalte Steenwijkerland</div>
+            <div class="text-sm font-bold text-[#f5f6f4] leading-tight">${stop.town} — ${stop.name}</div>
           </div>
         </div>
-        <div class="bg-slate-50 rounded-lg p-2 mb-2 border border-slate-200 text-xs space-y-1">
+        <div class="bg-[#0b1a13] rounded-[4px] p-2 mb-2 border border-[#1b3829] text-xs space-y-1">
           <div class="flex justify-between gap-2">
-            <span class="text-slate-500 font-medium">Plaats:</span>
-            <span class="font-bold text-slate-900 text-right">${stop.town}</span>
+            <span class="text-[#9bb0a4] font-medium">Plaats:</span>
+            <span class="font-bold text-[#f5f6f4] text-right">${stop.town}</span>
           </div>
           <div class="flex justify-between gap-2">
-            <span class="text-slate-500 font-medium">Haltenaam:</span>
-            <span class="font-bold text-[#0E518D] text-right">${stop.name}</span>
+            <span class="text-[#9bb0a4] font-medium">Haltenaam:</span>
+            <span class="font-bold text-[#fbbf24] text-right">${stop.name}</span>
           </div>
         </div>
-        <div class="bg-blue-50/70 rounded-lg p-2 mb-2 border border-blue-200 text-[11px] space-y-1">
-          <div class="font-bold text-[#0E518D] uppercase tracking-wider text-[10px]">
-            Halte Stiptheid & Vertraging (${totalTrips} gelogde ritten)
+        <div class="bg-[#060e0a] rounded-[4px] p-2 mb-2 border border-[#1b3829] text-[11px] space-y-1 tabular-nums">
+          <div class="font-bold text-[#9bb0a4] uppercase tracking-wider text-[10px]">
+            Halte Stiptheid &amp; Vertraging (${totalTrips} gelogde ritten)
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-600">Uitgevallen ritten:</span>
-            <span class="font-mono font-bold text-red-700">${cancelledTrips} ritten</span>
+            <span class="text-[#9bb0a4]">Uitgevallen ritten:</span>
+            <span class="font-mono font-bold text-[#ef4444]">${cancelledTrips} ritten</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-600">Gemiddelde vertraging:</span>
-            <span class="font-mono font-bold text-amber-800">+${avgDelayMin} min (${delayedTrips.length}x te laat)</span>
+            <span class="text-[#9bb0a4]">Gemiddelde vertraging:</span>
+            <span class="font-mono font-bold text-[#fbbf24]">+${avgDelayMin} min (${delayedTrips.length}x te laat)</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-600">Te vroeg gepasseerd:</span>
-            <span class="font-mono font-bold text-sky-800">${earlyTrips.length}x (gem. -${avgEarlyMin} min)</span>
+            <span class="text-[#9bb0a4]">Te vroeg gepasseerd:</span>
+            <span class="font-mono font-bold text-[#38bdf8]">${earlyTrips.length}x (gem. -${avgEarlyMin} min)</span>
           </div>
         </div>
-        <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-          Bediende Lijnen & Richtingen:
+        <div class="text-[10px] font-semibold text-[#9bb0a4] uppercase tracking-wider mb-1">
+          Bediende Lijnen &amp; Richtingen:
         </div>
         <div class="max-h-28 overflow-y-auto pr-1 mb-2">
           ${routeListHtml}
@@ -457,15 +455,15 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         <div class="flex flex-col gap-1.5">
           <button
             type="button"
-            class="drgl-stop-btn w-full py-1.5 px-2.5 rounded-lg bg-[#0E518D] hover:bg-[#0A3D6B] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            class="drgl-stop-btn w-full py-1.5 px-2.5 rounded-[4px] bg-[#f59e0b] hover:bg-[#fbbf24] text-[#060e0a] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
             <span>Toon Vertrektijden (${stop.town}, ${stop.name})</span>
           </button>
           <button
             type="button"
-            class="drgl-stats-btn w-full py-1.5 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            class="drgl-stats-btn w-full py-1.5 px-2.5 rounded-[4px] bg-[#0b1a13] hover:bg-[#10251c] border border-[#1b3829] text-[#f5f6f4] font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            <span>Maand- & Weekstatistieken (.CSV)</span>
+            <span>Maand- &amp; Weekstatistieken (.CSV)</span>
           </button>
         </div>
       `;
@@ -489,7 +487,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     });
   }, [showHaltes, onSelectStop, onOpenStopStats, punctualityLogs]);
 
-  // Draw 17 Deelfiets Nederland Hubs in Gemeente Steenwijkerland with Day/Week/Month stats
+  // Draw 17 Deelfiets Nederland Hubs in Gemeente Steenwijkerland
   useEffect(() => {
     if (!deelfietsLayerGroupRef.current) return;
     const layer = deelfietsLayerGroupRef.current;
@@ -518,12 +516,12 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       const st = statsById.get(loc.stationId);
 
       marker.bindTooltip(
-        `<div class="font-sans text-xs">
+        `<div class="font-sans text-xs text-[#f5f6f4] tabular-nums">
           <strong>Deelfiets: ${loc.town} — ${loc.name}</strong><br/>
-          <span class="text-slate-600">${loc.streetAddress} • ${
+          <span class="text-[#9bb0a4]">${loc.streetAddress} · ${
           loc.isCargoBike ? 'Elektrische Deelbakfiets' : 'Elektrische Deelfiets'
         }</span><br/>
-          <span class="text-[10px] font-semibold text-sky-700">Nu beschikbaar: ${loc.available}/${
+          <span class="text-[10px] font-semibold text-[#38bdf8]">Nu beschikbaar: ${loc.available}/${
           loc.capacity
         } (Gehuurd: ${loc.rented})</span>
         </div>`,
@@ -534,61 +532,61 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       );
 
       const popupContainer = document.createElement('div');
-      popupContainer.className = 'p-2.5 text-slate-900 min-w-[275px] max-w-[330px] font-sans';
+      popupContainer.className = 'p-3 text-[#f5f6f4] min-w-[275px] max-w-[330px] font-sans tabular-nums';
       popupContainer.innerHTML = `
-        <div class="flex items-center gap-2 pb-1.5 mb-2 border-b border-slate-200">
-          <span class="w-6 h-6 rounded-full bg-[#00B1FF] text-[11px] font-bold text-white flex items-center justify-center shrink-0">🚲</span>
+        <div class="flex items-center gap-2 pb-2 mb-2 border-b border-[#1b3829]">
+          <span class="w-6 h-6 rounded-[4px] bg-[#0b1a13] border border-[#38bdf8] text-[11px] font-bold text-[#38bdf8] flex items-center justify-center shrink-0">🚲</span>
           <div class="min-w-0">
-            <div class="text-[10px] font-bold text-[#0086d6] uppercase tracking-wider">Deelfiets Nederland • ${loc.town}</div>
-            <div class="text-sm font-bold text-slate-900 leading-tight">${loc.name}</div>
+            <div class="text-[10px] font-bold text-[#38bdf8] uppercase tracking-wider">Deelfiets Nederland · ${loc.town}</div>
+            <div class="text-sm font-bold text-[#f5f6f4] leading-tight">${loc.name}</div>
           </div>
         </div>
-        <div class="bg-slate-50 rounded-lg p-2 mb-2 border border-slate-200 text-xs space-y-1">
+        <div class="bg-[#0b1a13] rounded-[4px] p-2 mb-2 border border-[#1b3829] text-xs space-y-1">
           <div class="flex justify-between gap-2">
-            <span class="text-slate-500 font-medium">Adres:</span>
-            <span class="font-bold text-slate-900 text-right">${loc.streetAddress}, ${loc.town}</span>
+            <span class="text-[#9bb0a4] font-medium">Adres:</span>
+            <span class="font-bold text-[#f5f6f4] text-right">${loc.streetAddress}, ${loc.town}</span>
           </div>
           <div class="flex justify-between gap-2">
-            <span class="text-slate-500 font-medium">Type:</span>
-            <span class="font-bold text-[#0086d6] text-right">${
+            <span class="text-[#9bb0a4] font-medium">Type:</span>
+            <span class="font-bold text-[#38bdf8] text-right">${
               loc.isCargoBike ? 'Elektrische Deelbakfiets' : 'Elektrisch'
             }</span>
           </div>
           <div class="flex justify-between gap-2">
-            <span class="text-slate-500 font-medium">Nu beschikbaar / gehuurd:</span>
-            <span class="font-mono font-bold text-emerald-700 text-right">${loc.available} beschikbaar • ${loc.rented} gehuurd (cap. ${loc.capacity})</span>
+            <span class="text-[#9bb0a4] font-medium">Nu beschikbaar / gehuurd:</span>
+            <span class="font-mono font-bold text-[#10b981] text-right">${loc.available} vrij · ${loc.rented} gehuurd (cap. ${loc.capacity})</span>
           </div>
           <div class="flex justify-between gap-2 text-[11px]">
-            <span class="text-slate-500">Tarief:</span>
-            <span class="text-slate-700 text-right">€${loc.pricing.startTariff.toFixed(2).replace('.', ',')} start • €${loc.pricing.per15Min.toFixed(2).replace('.', ',')}/15m • €${loc.pricing.perDay}/dag</span>
+            <span class="text-[#60756a]">Tarief:</span>
+            <span class="text-[#9bb0a4] text-right">€${loc.pricing.startTariff.toFixed(2).replace('.', ',')} start · €${loc.pricing.per15Min.toFixed(2).replace('.', ',')}/15m · €${loc.pricing.perDay}/dag</span>
           </div>
         </div>
         ${
           st
-            ? `<div class="bg-sky-50/80 rounded-lg p-2 mb-2 border border-sky-200 text-[11px] space-y-1">
-                <div class="font-bold text-[#0086d6] uppercase tracking-wider text-[10px]">
+            ? `<div class="bg-[#060e0a] rounded-[4px] p-2 mb-2 border border-[#1b3829] text-[11px] space-y-1 tabular-nums">
+                <div class="font-bold text-[#9bb0a4] uppercase tracking-wider text-[10px]">
                   Statistieken (Dag / Week / Maand)
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-slate-600">Gem. beschikbare fietsen:</span>
-                  <span class="font-mono font-bold text-sky-900">D: ${st.avgAvailableDay} | W: ${st.avgAvailableWeek} | M: ${st.avgAvailableMonth}</span>
+                  <span class="text-[#9bb0a4]">Gem. beschikbare fietsen:</span>
+                  <span class="font-mono font-bold text-[#38bdf8]">D: ${st.avgAvailableDay} | W: ${st.avgAvailableWeek} | M: ${st.avgAvailableMonth}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-slate-600">Gem. gehuurde fietsen:</span>
-                  <span class="font-mono font-bold text-amber-800">D: ${st.avgRentedDay} | W: ${st.avgRentedWeek} | M: ${st.avgRentedMonth}</span>
+                  <span class="text-[#9bb0a4]">Gem. gehuurde fietsen:</span>
+                  <span class="font-mono font-bold text-[#fbbf24]">D: ${st.avgRentedDay} | W: ${st.avgRentedWeek} | M: ${st.avgRentedMonth}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-slate-600">Totaal gehuurde fietsen:</span>
-                  <span class="font-mono font-bold text-emerald-800">D: ${st.totalRentedDay} | W: ${st.totalRentedWeek} | M: ${st.totalRentedMonth}</span>
+                  <span class="text-[#9bb0a4]">Totaal gehuurde fietsen:</span>
+                  <span class="font-mono font-bold text-[#10b981]">D: ${st.totalRentedDay} | W: ${st.totalRentedWeek} | M: ${st.totalRentedMonth}</span>
                 </div>
               </div>`
             : ''
         }
         <button
           type="button"
-          class="deelfiets-stats-btn w-full py-1.5 px-2.5 rounded-lg bg-[#0086d6] hover:bg-sky-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+          class="deelfiets-stats-btn w-full py-1.5 px-2.5 rounded-[4px] bg-[#f59e0b] hover:bg-[#fbbf24] text-[#060e0a] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
         >
-          <span>Open Deelfiets Statistieken & .CSV</span>
+          <span>Open Deelfiets Statistieken &amp; .CSV</span>
         </button>
       `;
 
@@ -616,10 +614,10 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     const icon = createOvFietsMarkerIcon(loc.available, loc.totalCapacity);
     const marker = L.marker([loc.lat, loc.lng], { icon, zIndexOffset: 880 });
 
-    const tooltipHtml = `<div class="font-sans text-xs">
-      <strong>NS OV-fiets • Station Steenwijk (swk002)</strong><br/>
-      <span class="text-emerald-700 font-bold">${loc.available} beschikbaar</span> • <span class="text-blue-700 font-bold">${loc.rented} verhuurd</span> (cap. ${loc.totalCapacity})<br/>
-      <span class="text-slate-500">${loc.streetAddress}</span>
+    const tooltipHtml = `<div class="font-sans text-xs text-[#f5f6f4] tabular-nums">
+      <strong>NS OV-fiets · Station Steenwijk (swk002)</strong><br/>
+      <span class="text-[#10b981] font-bold">${loc.available} beschikbaar</span> · <span class="text-[#38bdf8] font-bold">${loc.rented} verhuurd</span> (cap. ${loc.totalCapacity})<br/>
+      <span class="text-[#9bb0a4]">${loc.streetAddress}</span>
     </div>`;
 
     marker.bindTooltip(tooltipHtml, {
@@ -630,60 +628,60 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     const st = ovfietsLogs && ovfietsLogs.length > 0 ? aggregateOvFietsStats(loc, ovfietsLogs) : null;
 
     const popupContainer = document.createElement('div');
-    popupContainer.className = 'font-sans text-slate-900 min-w-[270px] max-w-[320px] p-1';
+    popupContainer.className = 'font-sans text-[#f5f6f4] min-w-[270px] max-w-[320px] p-3 tabular-nums';
     popupContainer.innerHTML = `
-      <div class="flex items-center gap-2 pb-1.5 mb-2 border-b border-slate-200">
+      <div class="flex items-center gap-2 pb-2 mb-2 border-b border-[#1b3829]">
         <img src="/bicycle_parking_open.png" alt="OV-fiets" class="w-7 h-8 object-contain shrink-0" />
         <div class="min-w-0">
-          <div class="text-[10px] font-bold text-[#000066] uppercase tracking-wider flex items-center gap-1.5">
+          <div class="text-[10px] font-bold text-[#fbbf24] uppercase tracking-wider flex items-center gap-1.5">
             <span>NS OV-fiets</span>
-            <span class="px-1 py-0.2 rounded bg-[#FFCC00] text-[#000066] font-mono text-[9px] font-black">${loc.stationCode}</span>
+            <span class="font-mono text-[9px] text-[#9bb0a4]">· ${loc.stationCode}</span>
           </div>
-          <div class="text-sm font-black text-slate-900 leading-tight">${loc.name}</div>
+          <div class="text-sm font-bold text-[#f5f6f4] leading-tight">${loc.name}</div>
         </div>
       </div>
 
-      <div class="bg-slate-50 rounded-lg p-2 mb-2 border border-slate-200 text-xs space-y-1">
+      <div class="bg-[#0b1a13] rounded-[4px] p-2 mb-2 border border-[#1b3829] text-xs space-y-1">
         <div class="flex justify-between gap-2">
-          <span class="text-slate-500 font-medium">Adres:</span>
-          <span class="font-bold text-slate-900 text-right">${loc.streetAddress}, ${loc.town}</span>
+          <span class="text-[#9bb0a4] font-medium">Adres:</span>
+          <span class="font-bold text-[#f5f6f4] text-right">${loc.streetAddress}, ${loc.town}</span>
         </div>
         <div class="flex justify-between gap-2">
-          <span class="text-slate-500 font-medium">Type stalling:</span>
-          <span class="font-semibold text-slate-800 text-right">${loc.serviceType}</span>
+          <span class="text-[#9bb0a4] font-medium">Type stalling:</span>
+          <span class="font-semibold text-[#f5f6f4] text-right">${loc.serviceType}</span>
         </div>
         <div class="flex justify-between gap-2">
-          <span class="text-slate-500 font-medium">Live beschikbaar:</span>
-          <span class="font-mono font-black text-emerald-700 text-right text-sm">${loc.available} <span class="text-xs font-normal text-slate-500">/ ${loc.totalCapacity}</span></span>
+          <span class="text-[#9bb0a4] font-medium">Live beschikbaar:</span>
+          <span class="font-mono font-bold text-[#10b981] text-right text-sm">${loc.available} <span class="text-xs font-normal text-[#60756a]">/ ${loc.totalCapacity}</span></span>
         </div>
         <div class="flex justify-between gap-2">
-          <span class="text-slate-500 font-medium">Nu actief verhuurd:</span>
-          <span class="font-mono font-bold text-blue-800 text-right">${loc.rented} fietsen</span>
+          <span class="text-[#9bb0a4] font-medium">Nu actief verhuurd:</span>
+          <span class="font-mono font-bold text-[#38bdf8] text-right">${loc.rented} fietsen</span>
         </div>
-        <div class="flex justify-between gap-2 text-[11px] pt-0.5 border-t border-slate-200">
-          <span class="text-slate-500">Huurprijs:</span>
-          <span class="text-slate-700 text-right font-semibold">${loc.rentalTariff}</span>
+        <div class="flex justify-between gap-2 text-[11px] pt-1 border-t border-[#1b3829]">
+          <span class="text-[#60756a]">Huurprijs:</span>
+          <span class="text-[#9bb0a4] text-right font-semibold">${loc.rentalTariff}</span>
         </div>
       </div>
 
       ${
         st
-          ? `<div class="bg-amber-50/80 rounded-lg p-2 mb-2 border border-amber-200 text-[11px] space-y-1">
-              <div class="font-bold text-[#000066] uppercase tracking-wider text-[10px] flex items-center justify-between">
-                <span>Gemiddelden & Totalen</span>
-                <span class="text-[9px] text-amber-900 font-normal">Dag | Week | Maand</span>
+          ? `<div class="bg-[#060e0a] rounded-[4px] p-2 mb-2 border border-[#1b3829] text-[11px] space-y-1 tabular-nums">
+              <div class="font-bold text-[#9bb0a4] uppercase tracking-wider text-[10px] flex items-center justify-between">
+                <span>Gemiddelden &amp; Totalen</span>
+                <span class="text-[9px] text-[#60756a] font-normal">Dag | Week | Maand</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-slate-600">Gem. beschikbaar:</span>
-                <span class="font-mono font-bold text-sky-900">D: ${st.avgAvailableDay} | W: ${st.avgAvailableWeek} | M: ${st.avgAvailableMonth}</span>
+                <span class="text-[#9bb0a4]">Gem. beschikbaar:</span>
+                <span class="font-mono font-bold text-[#38bdf8]">D: ${st.avgAvailableDay} | W: ${st.avgAvailableWeek} | M: ${st.avgAvailableMonth}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-slate-600">Gem. gehuurd:</span>
-                <span class="font-mono font-bold text-amber-800">D: ${st.avgRentedDay} | W: ${st.avgRentedWeek} | M: ${st.avgRentedMonth}</span>
+                <span class="text-[#9bb0a4]">Gem. gehuurd:</span>
+                <span class="font-mono font-bold text-[#fbbf24]">D: ${st.avgRentedDay} | W: ${st.avgRentedWeek} | M: ${st.avgRentedMonth}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-slate-600">Totaal verhuurd:</span>
-                <span class="font-mono font-bold text-emerald-800">D: ${st.totalRentedDay} | W: ${st.totalRentedWeek} | M: ${st.totalRentedMonth}</span>
+                <span class="text-[#9bb0a4]">Totaal verhuurd:</span>
+                <span class="font-mono font-bold text-[#10b981]">D: ${st.totalRentedDay} | W: ${st.totalRentedWeek} | M: ${st.totalRentedMonth}</span>
               </div>
             </div>`
           : ''
@@ -691,10 +689,9 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
       <button
         type="button"
-        class="ovfiets-stats-btn w-full py-1.5 px-2.5 rounded-lg bg-[#000066] hover:bg-blue-950 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+        class="ovfiets-stats-btn w-full py-1.5 px-2.5 rounded-[4px] bg-[#f59e0b] hover:bg-[#fbbf24] text-[#060e0a] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
       >
-        <span class="text-[#FFCC00]">🚲</span>
-        <span>Open OV-fiets Dashboard & .CSV</span>
+        <span>Open OV-fiets Dashboard &amp; .CSV</span>
       </button>
     `;
 
@@ -709,11 +706,10 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     layer.addLayer(marker);
   }, [showOvfietsen, ovfietsLocation, ovfietsLogs, onOpenOvfietsStats]);
 
-  // Update Bus Markers (DRGL Style #ffcc00 + #0e518d, strictly inside Steenwijkerland)
+  // Update Bus Markers
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
-    // Render all buses supplied by the server (server handles boundary enforcement)
     const visibleBuses = buses;
     const activeIds = new Set(visibleBuses.map((b) => b.id));
     const busMarkers = busMarkersRef.current;
@@ -732,15 +728,15 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       const icon = createBusMarkerIcon(bus, isSelected);
       const delayText =
         bus.delayMinutes > 0
-          ? `<span style="color:#dc2626;font-weight:bold;">+${bus.delayMinutes} min later</span>`
+          ? `<span style="color:#ef4444;font-weight:bold;">+${bus.delayMinutes} min later</span>`
           : bus.delayMinutes < 0
-          ? `<span style="color:#0284c7;font-weight:bold;">${bus.delayMinutes} min vroeger</span>`
-          : `<span style="color:#16a34a;font-weight:bold;">op tijd</span>`;
+          ? `<span style="color:#38bdf8;font-weight:bold;">${bus.delayMinutes} min vroeger</span>`
+          : `<span style="color:#10b981;font-weight:bold;">op tijd</span>`;
 
-      const tooltipHtml = `<div class="font-sans text-xs">
+      const tooltipHtml = `<div class="font-sans text-xs text-[#f5f6f4] tabular-nums">
         <strong>${bus.operatorName} ${bus.line} → ${bus.destination}</strong><br/>
-        <span>Bus ${bus.matnummer}${bus.ritnummer ? ` • Rit ${bus.ritnummer}` : ''}${bus.omloopnummer ? ` • Omloop ${bus.omloopnummer}` : ''}</span><br/>
-        <span>${delayText} • ${bus.lastUpdated}</span>
+        <span class="text-[#9bb0a4]">Bus ${bus.matnummer}${bus.ritnummer ? ` · Rit ${bus.ritnummer}` : ''}${bus.omloopnummer ? ` · Omloop ${bus.omloopnummer}` : ''}</span><br/>
+        <span>${delayText} · <span class="text-[#60756a]">${bus.lastUpdated}</span></span>
       </div>`;
 
       if (busMarkers.has(bus.id)) {
@@ -763,8 +759,6 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         busMarkers.set(bus.id, marker);
       }
     });
-
-
 
     if (followedBusId) {
       const followed = visibleBuses.find((b) => b.id === followedBusId);
@@ -813,7 +807,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     };
   }, [isFollowingUserGps]);
 
-  // Pan once when a new bus is clicked, without locking or overriding zoom so the user can freely zoom out
+  // Pan once when a new bus is clicked
   useEffect(() => {
     if (!selectedBus) {
       lastSelectedBusIdRef.current = null;
@@ -852,71 +846,73 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden select-none bg-black">
+    <div className="relative w-full h-full overflow-hidden select-none bg-[var(--bg-main)] tabular-nums">
       <div
         ref={mapContainerRef}
-        className="w-full h-full bg-black"
+        className="w-full h-full bg-[var(--bg-main)]"
         id="map"
-        style={{ backgroundColor: '#000000' }}
+        style={{ backgroundColor: 'var(--bg-main)' }}
       />
 
-      {/* Top Left Controls: DRGL styled */}
-      <div className="absolute top-14 left-4 z-[500] flex flex-col gap-2">
-        <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md p-1.5 rounded-xl border border-slate-300 shadow-xl text-slate-800">
+      {/* Top Left Controls: Forensic Dark styled */}
+      <div className="absolute top-14 left-3 z-[500] flex flex-col gap-2">
+        <div className="flex items-center gap-1.5 bg-[var(--bg-card)]/95 backdrop-blur-xs p-1.5 rounded-[5px] border border-[var(--border-subtle)] shadow-2xl text-[var(--text-main)]">
           {/* Haltes Checkbox */}
-          <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-slate-100 text-slate-800">
+          <label className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-xs font-semibold cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] tabular-nums">
             <input
               type="checkbox"
               checked={showHaltes}
               onChange={(e) => onToggleHaltes(e.target.checked)}
-              className="w-4 h-4 rounded text-[#0E518D] focus:ring-[#0E518D] border-slate-400"
+              className="w-3.5 h-3.5 rounded-[3px] accent-[#f59e0b]"
             />
             <span>Haltes ({STEENWIJKERLAND_STOPS.length})</span>
           </label>
 
-          <div className="w-[1px] h-5 bg-slate-200" />
+          <div className="w-[1px] h-4 bg-[var(--border-subtle)]" />
 
           {/* Lines Toggle */}
           <button
             onClick={() => onToggleRoutes(!showRoutes)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-              showRoutes ? 'bg-[#0E518D]/10 text-[#0E518D] font-bold border border-[#0E518D]/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] text-xs font-medium transition-colors cursor-pointer border tabular-nums ${
+              showRoutes
+                ? 'bg-[var(--bg-elevated)] text-[var(--accent-gold-bright)] font-bold border-[var(--border-focus)]'
+                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)]'
             }`}
             title="Toon lijnennetwerk (incl. Lijn 26 naar Meppel)"
           >
-            {showRoutes ? <Eye className="w-3.5 h-3.5 text-[#0E518D]" /> : <EyeOff className="w-3.5 h-3.5" />}
+            {showRoutes ? <Eye className="w-3.5 h-3.5 text-[var(--accent-gold)]" /> : <EyeOff className="w-3.5 h-3.5" />}
             <span>Lijnennet ({BUS_ROUTES.length})</span>
           </button>
 
-          <div className="w-[1px] h-5 bg-slate-200" />
+          <div className="w-[1px] h-4 bg-[var(--border-subtle)]" />
 
           {/* Deelfietsen Checkbox */}
           {onToggleDeelfietsen && (
             <>
-              <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-sky-50 text-slate-800">
+              <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] text-xs font-semibold cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] tabular-nums">
                 <input
                   type="checkbox"
                   checked={showDeelfietsen}
                   onChange={(e) => onToggleDeelfietsen(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#0086d6] focus:ring-[#0086d6] border-slate-400"
+                  className="w-3.5 h-3.5 rounded-[3px] accent-[#38bdf8]"
                 />
-                <Bike className="w-3.5 h-3.5 text-[#0086d6]" />
+                <Bike className="w-3.5 h-3.5 text-[var(--status-blue)]" />
                 <span>Deelfietsen ({deelfietsLocations.length})</span>
               </label>
 
-              <div className="w-[1px] h-5 bg-slate-200" />
+              <div className="w-[1px] h-4 bg-[var(--border-subtle)]" />
             </>
           )}
 
           {/* NS OV-fiets Checkbox */}
           {onToggleOvfietsen && (
             <>
-              <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-amber-50 text-slate-800">
+              <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] text-xs font-semibold cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)] text-[var(--text-main)]">
                 <input
                   type="checkbox"
                   checked={showOvfietsen}
                   onChange={(e) => onToggleOvfietsen(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#000066] focus:ring-[#000066] border-slate-400"
+                  className="w-3.5 h-3.5 rounded-[3px] accent-[#f59e0b]"
                 />
                 <img
                   src="/bicycle_parking_open.png"
@@ -926,15 +922,17 @@ export const MapComponent: React.FC<MapComponentProps> = ({
                 <span>OV-fiets Steenwijk</span>
               </label>
 
-              <div className="w-[1px] h-5 bg-slate-200" />
+              <div className="w-[1px] h-4 bg-[var(--border-subtle)]" />
             </>
           )}
 
           {/* GPS Crosshair */}
           <button
             onClick={() => setIsFollowingUserGps(!isFollowingUserGps)}
-            className={`p-2 rounded-lg transition-colors cursor-pointer ${
-              isFollowingUserGps ? 'bg-[#0E518D] text-[#FFCC00] shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            className={`p-1.5 rounded-[4px] border transition-colors cursor-pointer ${
+              isFollowingUserGps
+                ? 'bg-[var(--accent-gold)] text-[#060e0a] border-[var(--accent-gold-bright)]'
+                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)]'
             }`}
             title="Volg mijn GPS positie"
           >
@@ -945,16 +943,16 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowLayerMenu(!showLayerMenu)}
-              className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] rounded-[4px] transition-colors cursor-pointer"
               title="Kaartlaag wijzigen"
             >
               <Layers className="w-4 h-4" />
             </button>
 
             {showLayerMenu && (
-              <div className="absolute top-full left-0 mt-2 w-52 bg-white border border-slate-300 rounded-xl shadow-2xl p-1.5 z-50 text-xs">
-                <div className="px-2 py-1 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  Kaartlagen (Buiten grens zwart)
+              <div className="absolute top-full left-0 mt-2 w-56 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-[5px] shadow-2xl p-1.5 z-50 text-xs">
+                <div className="px-2 py-1 text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-wider">
+                  Kaartlagen (Buiten grens donker)
                 </div>
                 {(Object.keys(TILE_LAYERS) as TileLayerKey[]).map((key) => (
                   <button
@@ -963,12 +961,14 @@ export const MapComponent: React.FC<MapComponentProps> = ({
                       setActiveTileLayer(key);
                       setShowLayerMenu(false);
                     }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-colors flex items-center justify-between ${
-                      activeTileLayer === key ? 'bg-[#0E518D] text-white font-medium' : 'text-slate-700 hover:bg-slate-100'
+                    className={`w-full text-left px-2.5 py-1.5 rounded-[4px] transition-colors flex items-center justify-between cursor-pointer ${
+                      activeTileLayer === key
+                        ? 'bg-[var(--bg-card)] text-[var(--accent-gold-bright)] font-semibold border border-[var(--border-focus)]'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)]'
                     }`}
                   >
                     <span>{TILE_LAYERS[key].name}</span>
-                    {activeTileLayer === key && <span className="w-1.5 h-1.5 rounded-full bg-[#FFCC00]" />}
+                    {activeTileLayer === key && <span className="w-2 h-2 rounded-[2px] bg-[var(--accent-gold)]" />}
                   </button>
                 ))}
               </div>
@@ -978,14 +978,14 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
         {/* Camera Following Banner */}
         {followedBusId && (
-          <div className="flex items-center justify-between gap-3 bg-[#0E518D] text-white px-3 py-1.5 rounded-lg text-xs shadow-lg animate-pulse">
+          <div className="flex items-center justify-between gap-3 bg-[var(--bg-elevated)] border border-[var(--border-focus)] text-[var(--text-main)] px-3 py-1.5 rounded-[4px] text-xs shadow-lg tabular-nums">
             <div className="flex items-center gap-1.5">
-              <Navigation className="w-3.5 h-3.5 text-[#FFCC00] animate-spin" />
+              <Navigation className="w-3.5 h-3.5 text-[var(--accent-gold)] animate-spin" />
               <span>Camera volgt bus #{buses.find((b) => b.id === followedBusId)?.matnummer}</span>
             </div>
             <button
               onClick={onStopFollowBus}
-              className="underline text-[#FFCC00] hover:text-white font-semibold cursor-pointer"
+              className="underline text-[var(--accent-gold-bright)] hover:text-[var(--text-main)] font-semibold cursor-pointer"
             >
               Stop
             </button>
@@ -993,83 +993,83 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         )}
 
         {gpsError && (
-          <div className="bg-red-500/90 text-white px-3 py-1.5 rounded-lg text-xs shadow-md">
+          <div className="bg-[var(--bg-elevated)] border border-[var(--status-crimson)] text-[var(--status-crimson)] px-3 py-1.5 rounded-[4px] text-xs shadow-md">
             {gpsError}
           </div>
         )}
       </div>
 
       {/* Top Right: Steenwijkerland Hotspots & Lijn 26 Quick Jump */}
-      <div className="absolute top-4 right-4 z-[500] hidden md:flex items-center gap-1 bg-white/95 backdrop-blur-md p-1.5 rounded-xl border border-slate-300 shadow-xl text-slate-800">
-        <span className="text-[11px] font-semibold text-slate-500 px-2 flex items-center gap-1">
-          <MapPin className="w-3 h-3 text-[#0E518D]" />
+      <div className="absolute top-3 right-3 z-[500] hidden md:flex items-center gap-1 bg-[var(--bg-card)]/95 backdrop-blur-xs p-1.5 rounded-[5px] border border-[var(--border-subtle)] shadow-2xl text-[var(--text-main)]">
+        <span className="text-[11px] font-semibold text-[var(--text-muted)] px-2 flex items-center gap-1">
+          <MapPin className="w-3 h-3 text-[var(--accent-gold)]" />
           Steenwijkerland:
         </span>
         <button
           onClick={resetToMunicipality}
-          className="px-2 py-1 rounded-md text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+          className="px-2 py-1 rounded-[4px] text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
         >
           Gemeentegrens
         </button>
         <button
           onClick={() => jumpToLocation(52.79056, 6.11800, 15)}
-          className="px-2 py-1 rounded-md text-xs font-semibold text-[#0E518D] hover:bg-[#0E518D]/10 transition-colors cursor-pointer"
+          className="px-2 py-1 rounded-[4px] text-xs font-semibold text-[var(--accent-gold-bright)] hover:bg-[var(--bg-card-hover)] transition-colors cursor-pointer"
         >
           Station Steenwijk
         </button>
         <button
           onClick={() => jumpToLocation(52.78539, 6.13210, 14)}
-          className="px-2 py-1 rounded-md text-xs font-bold text-[#dc3545] hover:bg-red-50 transition-colors cursor-pointer"
+          className="px-2 py-1 rounded-[4px] text-xs font-bold text-[var(--status-emerald)] hover:bg-[var(--bg-card-hover)] transition-colors cursor-pointer"
           title="Bekijk Lijn 26 richting Meppel"
         >
           Lijn 26 → Meppel
         </button>
         <button
           onClick={() => jumpToLocation(52.73815, 6.07747, 14)}
-          className="px-2 py-1 rounded-md text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+          className="px-2 py-1 rounded-[4px] text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
         >
           Giethoorn
         </button>
         <button
           onClick={() => jumpToLocation(52.72800, 5.95705, 15)}
-          className="px-2 py-1 rounded-md text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+          className="px-2 py-1 rounded-[4px] text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
         >
           Blokzijl
         </button>
         <button
           onClick={() => jumpToLocation(52.68240, 5.95740, 15)}
-          className="px-2 py-1 rounded-md text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+          className="px-2 py-1 rounded-[4px] text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
         >
           Vollenhove
         </button>
         <button
           onClick={() => jumpToLocation(52.81738, 5.97783, 15)}
-          className="px-2 py-1 rounded-md text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+          className="px-2 py-1 rounded-[4px] text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
         >
           Oldemarkt
         </button>
       </div>
 
       {/* Bottom Right Zoom */}
-      <div className="absolute bottom-6 right-4 z-[500] flex flex-col gap-1 bg-white/95 backdrop-blur-md p-1 rounded-xl border border-slate-300 shadow-2xl">
+      <div className="absolute bottom-6 right-3 z-[500] flex flex-col gap-1 bg-[var(--bg-card)]/95 backdrop-blur-xs p-1 rounded-[5px] border border-[var(--border-subtle)] shadow-2xl">
         <button
           onClick={() => mapInstanceRef.current?.zoomIn()}
-          className="p-2 text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+          className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] rounded-[4px] transition-colors cursor-pointer"
           title="Inzoomen"
         >
           <ZoomIn className="w-4 h-4" />
         </button>
         <button
           onClick={() => mapInstanceRef.current?.zoomOut()}
-          className="p-2 text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+          className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] rounded-[4px] transition-colors cursor-pointer"
           title="Uitzoomen"
         >
           <ZoomOut className="w-4 h-4" />
         </button>
-        <div className="w-full h-[1px] bg-slate-200 my-0.5" />
+        <div className="w-full h-[1px] bg-[var(--border-subtle)] my-0.5" />
         <button
           onClick={resetToMunicipality}
-          className="p-2 text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+          className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] rounded-[4px] transition-colors cursor-pointer"
           title="Centreer op Steenwijkerland"
         >
           <Maximize2 className="w-4 h-4" />
