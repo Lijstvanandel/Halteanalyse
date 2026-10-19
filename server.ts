@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
+import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import {
@@ -1783,9 +1784,40 @@ async function startServer() {
     });
   }
 
-  app.listen(Number(PORT), '0.0.0.0', () => {
-    console.log(`DRGL Server gestart op http://0.0.0.0:${PORT}`);
-  });
+  const bindServer = (retried = false) => {
+    const srv = app.listen(Number(PORT), '0.0.0.0', () => {
+      console.log(`DRGL Server gestart op http://0.0.0.0:${PORT}`);
+    });
+    srv.on('error', (err: any) => {
+      if (err && err.code === 'EADDRINUSE' && !retried) {
+        console.warn(`Poort ${PORT} bezet door een verweesd proces; wordt vrijgemaakt...`);
+        try {
+          const out = execSync(
+            `lsof -ti tcp:${PORT} || ss -lptn "sport = :${PORT}" | grep -oP 'pid=\\K[0-9]+' || true`,
+            { encoding: 'utf8' }
+          );
+          const pids = out
+            .split(/\s+/)
+            .map((s) => Number(s.trim()))
+            .filter((n) => n > 0 && n !== process.pid);
+          for (const pid of pids) {
+            try {
+              process.kill(pid, 'SIGKILL');
+            } catch {
+              // ignore
+            }
+          }
+        } catch {
+          // ignore
+        }
+        setTimeout(() => bindServer(true), 800);
+      } else {
+        console.error('Server listen error:', err);
+      }
+    });
+  };
+
+  bindServer();
 }
 
 startServer().catch((err) => {
