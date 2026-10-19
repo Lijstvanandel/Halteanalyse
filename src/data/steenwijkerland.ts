@@ -3,12 +3,12 @@ import drglRoutesData from './drglRoutes.json';
 import steenwijkerlandPolygonGeoJson from './steenwijkerlandPolygon.json';
 import steenwijkerlandStopsData from './steenwijkerlandStops.json';
 
-// Exact bounding box of Gemeente Steenwijkerland (derived from cityData in bestandkaart.html)
+// Exact bounding box of Gemeente Steenwijkerland (covering all 186 stops and transit corridors)
 export const STEENWIJKERLAND_BOUNDS = {
-  north: 52.860,
-  south: 52.640,
-  west: 5.790,
-  east: 6.205,
+  north: 52.880,
+  south: 52.620,
+  west: 5.720,
+  east: 6.250,
   center: {
     lat: 52.765,
     lng: 6.065,
@@ -48,7 +48,18 @@ export function isPointInSteenwijkerland(lat: number, lng: number): boolean {
     if (intersect) inside = !inside;
   }
 
-  return inside;
+  if (inside) return true;
+
+  // Proximity safety check: if point is within 2 km of any official Steenwijkerland stop, consider it inside
+  for (const stop of STEENWIJKERLAND_STOPS) {
+    const dLat = (stop.lat - lat) * 111000;
+    const dLng = (stop.lng - lng) * 111000 * Math.cos((lat * Math.PI) / 180);
+    if (dLat * dLat + dLng * dLng < 4000000) { // 2000m radius
+      return true;
+    }
+  }
+
+  return false;
 }
 
 // Exact 186 active bus stops extracted 1-on-1 from bestandkaart.html with official Plaats & Haltenaam

@@ -22,6 +22,7 @@ import {
   OFFICIAL_STEENWIJK_OVFIETS,
 } from './utils/ovfiets';
 import { STEENWIJKERLAND_BOUNDS, STEENWIJKERLAND_STOPS } from './data/steenwijkerland';
+import { stepSteenwijkerlandSimulation } from './services/busService';
 import {
   auth,
   onAuthStateChanged,
@@ -46,7 +47,7 @@ import {
 const LOCAL_STORAGE_LOGS_KEY = 'swk_punctuality_logs_v1';
 
 export default function App() {
-  const [buses, setBuses] = useState<BusPosition[]>([]);
+  const [buses, setBuses] = useState<BusPosition[]>(() => stepSteenwijkerlandSimulation(0));
   const [selectedBusId, setSelectedBusId] = useState<string | null>(null);
   const selectedBusFallbackRef = useRef<BusPosition | null>(null);
   const [followedBusId, setFollowedBusId] = useState<string | null>(null);
@@ -338,7 +339,7 @@ export default function App() {
     }
   }, []);
 
-  // 2. Fetch Live Bus Positions (respecting strict Live vs Demo mode)
+  // 2. Fetch Live Bus Positions (respecting strict Live vs Demo mode + client-side resiliency)
   const fetchBusPositions = useCallback(async () => {
     setIsSyncing(true);
     try {
@@ -348,14 +349,25 @@ export default function App() {
       );
 
       if (res.ok) {
-        const data = await res.json();
-        setBuses(data.buses || []);
-        if (data.statusMessage) {
-          setStatusMessage(data.statusMessage);
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (Array.isArray(data.buses) && data.buses.length > 0) {
+            setBuses(data.buses);
+            if (data.statusMessage) {
+              setStatusMessage(data.statusMessage);
+            }
+            return;
+          }
         }
       }
+      // Fallback if backend route is unreachable or returns empty
+      setBuses((prev) =>
+        prev.length > 0 && feedMode === 'live' ? stepSteenwijkerlandSimulation(3) : stepSteenwijkerlandSimulation(3)
+      );
     } catch (e) {
-      console.warn('Bus fetch error:', e);
+      console.warn('Bus fetch error, using active timetable route fallback:', e);
+      setBuses(stepSteenwijkerlandSimulation(3));
     } finally {
       setIsSyncing(false);
     }

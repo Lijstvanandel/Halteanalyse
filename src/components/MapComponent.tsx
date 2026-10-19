@@ -713,16 +713,16 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
-    const currentMarkerMap = busMarkersRef.current;
-    // Strict boundary enforcement: marker immediately disappears when crossing outside Steenwijkerland
-    const visibleBuses = buses.filter((b) => isPointInSteenwijkerland(b.lat, b.lng));
+    // Render all buses supplied by the server (server handles boundary enforcement)
+    const visibleBuses = buses;
     const activeIds = new Set(visibleBuses.map((b) => b.id));
+    const busMarkers = busMarkersRef.current;
 
     // Remove obsolete
-    for (const [id, marker] of currentMarkerMap.entries()) {
+    for (const [id, marker] of busMarkers.entries()) {
       if (!activeIds.has(id)) {
         map.removeLayer(marker);
-        currentMarkerMap.delete(id);
+        busMarkers.delete(id);
       }
     }
 
@@ -743,8 +743,8 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         <span>${delayText} • ${bus.lastUpdated}</span>
       </div>`;
 
-      if (currentMarkerMap.has(bus.id)) {
-        const marker = currentMarkerMap.get(bus.id)!;
+      if (busMarkers.has(bus.id)) {
+        const marker = busMarkers.get(bus.id)!;
         marker.setLatLng([bus.lat, bus.lng]);
         marker.setIcon(icon);
         marker.setTooltipContent(tooltipHtml);
@@ -760,9 +760,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         });
 
         marker.addTo(map);
-        currentMarkerMap.set(bus.id, marker);
+        busMarkers.set(bus.id, marker);
       }
     });
+
+
 
     if (followedBusId) {
       const followed = visibleBuses.find((b) => b.id === followedBusId);
