@@ -5,10 +5,10 @@ import steenwijkerlandStopsData from './steenwijkerlandStops.json';
 
 // Exact bounding box of Gemeente Steenwijkerland (derived from cityData in bestandkaart.html)
 export const STEENWIJKERLAND_BOUNDS = {
-  north: 52.865,
-  south: 52.635,
-  west: 5.835,
-  east: 6.210,
+  north: 52.860,
+  south: 52.640,
+  west: 5.790,
+  east: 6.205,
   center: {
     lat: 52.765,
     lng: 6.065,

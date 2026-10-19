@@ -10,6 +10,7 @@ import {
   ToggleRight,
   BarChart3,
   Bike,
+  Code2,
 } from 'lucide-react';
 
 interface TopNavbarProps {
@@ -20,7 +21,10 @@ interface TopNavbarProps {
   onOpenFleetDrawer: () => void;
   onOpenPunctualityModal: () => void;
   onOpenDeelfietsModal?: () => void;
+  onOpenOvFietsModal?: () => void;
+  onOpenEmbedModal?: () => void;
   deelfietsAvailableCount?: number;
+  ovfietsAvailableCount?: number;
   loggedCount?: number;
   dataSource: string;
   isSyncing: boolean;
@@ -28,6 +32,7 @@ interface TopNavbarProps {
   feedMode: 'live' | 'demo';
   onToggleFeedMode: (mode: 'live' | 'demo') => void;
   statusMessage?: string;
+  isEmbed?: boolean;
 }
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({
@@ -38,12 +43,16 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onOpenFleetDrawer,
   onOpenPunctualityModal,
   onOpenDeelfietsModal,
+  onOpenOvFietsModal,
+  onOpenEmbedModal,
   deelfietsAvailableCount = 0,
+  ovfietsAvailableCount = 0,
   loggedCount = 0,
   isSyncing,
   onManualRefresh,
   feedMode,
   onToggleFeedMode,
+  isEmbed = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -59,19 +68,24 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     : [];
 
   return (
-    <header className="h-14 bg-[#0E518D] border-b border-[#0A3D6B] px-4 md:px-6 flex items-center justify-between gap-4 z-30 select-none shrink-0 shadow-md">
-      {/* Zone 1: Brand title */}
+    <header className="h-14 bg-[#0E518D] border-b border-[#0A3D6B] px-3 md:px-5 flex items-center justify-between gap-3 z-30 select-none shrink-0 shadow-md">
+      {/* Zone 1: Brand title (Lijst van Andel Dataproduct) */}
       <div className="flex items-center gap-3 shrink-0">
-        <a href="/" className="flex items-center gap-2.5 text-white transition-opacity">
-          <div className="w-8 h-8 rounded-lg bg-[#FFCC00] flex items-center justify-center shadow-md">
-            <span className="text-sm font-black text-[#0E518D]">DR</span>
+        <a href="/" className="flex items-center gap-2.5 text-white transition-opacity group">
+          <div className="w-8 h-8 rounded-lg bg-[#FFCC00] flex items-center justify-center shadow-md shrink-0 group-hover:scale-105 transition-transform">
+            <span className="text-sm font-black text-[#0E518D]">LA</span>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-bold tracking-tight text-white whitespace-nowrap">
-              DRGL.nl
-            </span>
-            <span className="text-xs text-[#FFCC00] font-semibold hidden sm:inline">
-              Steenwijkerland
+          <div className="flex flex-col leading-tight">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-base font-black tracking-tight text-white whitespace-nowrap">
+                Lijst van Andel
+              </span>
+              <span className="text-xs text-[#FFCC00] font-bold hidden sm:inline">
+                Steenwijkerland
+              </span>
+            </div>
+            <span className="text-[10px] text-blue-200 hidden md:inline font-medium">
+              Dataproduct • Actuele Busposities & Deelfietsen
             </span>
           </div>
         </a>
@@ -119,6 +133,25 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               <span>Deelfietsen (.CSV)</span>
               <span className="px-1.5 py-0.2 rounded bg-[#00B1FF] text-white font-mono text-[10px]">
                 {deelfietsAvailableCount} vrij
+              </span>
+            </button>
+          )}
+
+          {/* NS OV-fiets Station Steenwijk Modal Button */}
+          {onOpenOvFietsModal && (
+            <button
+              onClick={onOpenOvFietsModal}
+              className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-100 border border-[#FFCC00]/50 transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-bold"
+              title="Bekijk de actuele en historische beschikbaarheid van NS OV-fietsen op Station Steenwijk (swk002) + CSV export"
+            >
+              <img
+                src="/bicycle_parking_open.png"
+                alt="OV-fiets"
+                className="w-3.5 h-4 object-contain shrink-0"
+              />
+              <span>OV-fiets (.CSV)</span>
+              <span className="px-1.5 py-0.2 rounded bg-[#000066] text-[#FFCC00] font-mono text-[10px] font-black border border-[#FFCC00]/50">
+                {ovfietsAvailableCount} vrij
               </span>
             </button>
           )}
@@ -216,6 +249,17 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           <Clock className="w-3.5 h-3.5" />
           <span>Tijden</span>
         </button>
+
+        {onOpenEmbedModal && (
+          <button
+            onClick={onOpenEmbedModal}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/40 text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
+            title="Insluiten als interactief dataproduct in nieuwsberichten (HTML/Iframe)"
+          >
+            <Code2 className="w-3.5 h-3.5 text-[#FFCC00]" />
+            <span>Insluiten (&lt;/&gt;)</span>
+          </button>
+        )}
 
         <button
           onClick={onOpenFleetDrawer}

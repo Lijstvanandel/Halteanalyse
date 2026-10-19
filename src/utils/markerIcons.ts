@@ -211,3 +211,44 @@ export function createDeelfietsIcon(
   });
 }
 
+/**
+ * Official NS OV-fiets Station Steenwijk marker using 'bicycle_parking_open.png'
+ * As requested: marker on Station Steenwijk with 'bicycle_parking_open.png'
+ */
+export function createOvFietsMarkerIcon(
+  available: number,
+  capacity: number = 33
+): L.DivIcon {
+  const hasBikes = available > 0;
+  const countColor = hasBikes ? '#000066' : '#dc2626';
+  const badgeBg = hasBikes ? '#FFCC00' : '#fee2e2';
+  const badgeBorder = hasBikes ? '#000066' : '#ef4444';
+
+  const html = `
+    <div class="relative cursor-pointer group select-none hover:scale-110 transition-transform" style="width: 36px; height: 44px; transform: translate(-50%, -100%);">
+      <!-- bicycle_parking_open.png custom icon -->
+      <img
+        src="/bicycle_parking_open.png"
+        alt="OV-fiets Station Steenwijk"
+        class="w-8 h-9 object-contain drop-shadow-md mx-auto block"
+        draggable="false"
+      />
+      <!-- Live availability badge -->
+      <div
+        class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded text-[9px] font-mono font-black shadow border whitespace-nowrap pointer-events-none"
+        style="background-color: ${badgeBg}; color: ${countColor}; border-color: ${badgeBorder};"
+      >
+        ${available}/${capacity}
+      </div>
+    </div>
+  `;
+
+  return L.divIcon({
+    html,
+    className: 'custom-ovfiets-marker',
+    iconSize: [36, 44],
+    iconAnchor: [18, 44],
+    popupAnchor: [0, -44],
+  });
+}
+

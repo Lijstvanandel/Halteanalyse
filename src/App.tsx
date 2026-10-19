@@ -8,6 +8,7 @@ import { BusDetailModal } from './components/BusDetailModal';
 import { SidebarBusList } from './components/SidebarBusList';
 import { PunctualityDashboard } from './components/PunctualityDashboard';
 import { DeelfietsDashboard } from './components/DeelfietsDashboard';
+import { EmbedDataproductModal } from './components/EmbedDataproductModal';
 import { DRGLDeparture, DRGLJourneyData } from './utils/drgl';
 import { PunctualityLogEntry, sanitizeLogId } from './utils/punctuality';
 import {
@@ -15,6 +16,11 @@ import {
   DeelfietsLogEntry,
   STEENWIJKERLAND_DEELFIETS_HUBS,
 } from './utils/deelfiets';
+import {
+  OvFietsLocation,
+  OvFietsLogEntry,
+  OFFICIAL_STEENWIJK_OVFIETS,
+} from './utils/ovfiets';
 import { STEENWIJKERLAND_BOUNDS, STEENWIJKERLAND_STOPS } from './data/steenwijkerland';
 import {
   auth,
@@ -25,7 +31,17 @@ import {
   subscribeUserPunctualityLogs,
   User,
 } from './firebase';
-import { PanelLeftClose, PanelLeftOpen, Moon, Sparkles, BarChart3, Bike } from 'lucide-react';
+import {
+  PanelLeftClose,
+  PanelLeftOpen,
+  Moon,
+  Sparkles,
+  BarChart3,
+  Bike,
+  Code2,
+  Maximize2,
+  ExternalLink,
+} from 'lucide-react';
 
 const LOCAL_STORAGE_LOGS_KEY = 'swk_punctuality_logs_v1';
 
@@ -84,10 +100,38 @@ export default function App() {
   const [isDeelfietsModalOpen, setIsDeelfietsModalOpen] = useState<boolean>(false);
   const [deelfietsLocationFilter, setDeelfietsLocationFilter] = useState<string>('');
   const [isScanningDeelfiets, setIsScanningDeelfiets] = useState<boolean>(false);
+  const [deelfietsInitialTab, setDeelfietsInitialTab] = useState<'deelfiets' | 'ovfiets'>('deelfiets');
+
+  // NS OV-fiets Station Steenwijk (swk002) - gemeten los van deelfietsennetwerk
+  const [ovfietsLocation, setOvfietsLocation] = useState<OvFietsLocation>(OFFICIAL_STEENWIJK_OVFIETS);
+  const [ovfietsLogs, setOvfietsLogs] = useState<OvFietsLogEntry[]>([]);
+  const [showOvfietsen, setShowOvfietsen] = useState<boolean>(true);
+  const [isScanningOvFiets, setIsScanningOvFiets] = useState<boolean>(false);
 
   const totalAvailableDeelfietsen = useMemo(() => {
     return deelfietsLocations.reduce((acc, loc) => acc + (loc.available || 0), 0);
   }, [deelfietsLocations]);
+
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState<boolean>(false);
+
+  const isEmbed = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return (
+      params.get('embed') === 'true' ||
+      params.get('widget') === 'true' ||
+      window.self !== window.top
+    );
+  }, []);
+
+  const handleToggleFullscreen = useCallback(() => {
+    if (typeof document === 'undefined') return;
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
 
   // DRGL State
   const [selectedStopCode, setSelectedStopCode] = useState<string>('NL:S:16301010');
@@ -236,6 +280,44 @@ export default function App() {
     }
   }, []);
 
+  // 1c. Fetch NS OV-fiets Station Steenwijk live data & logs
+  const fetchOvFietsData = useCallback(async () => {
+    try {
+      const res = await fetch('/api/ovfiets/steenwijk');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.location) {
+          setOvfietsLocation(data.location);
+        }
+        if (Array.isArray(data.logs)) {
+          setOvfietsLogs(data.logs);
+        }
+      }
+    } catch (e) {
+      console.warn('Fout bij ophalen OV-fiets gegevens:', e);
+    }
+  }, []);
+
+  const triggerLiveOvFietsScan = useCallback(async () => {
+    setIsScanningOvFiets(true);
+    try {
+      const res = await fetch('/api/ovfiets/scan', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.location) {
+          setOvfietsLocation(data.location);
+        }
+        if (Array.isArray(data.logs)) {
+          setOvfietsLogs(data.logs);
+        }
+      }
+    } catch (e) {
+      console.warn('Fout bij live OV-fiets scan:', e);
+    } finally {
+      setIsScanningOvFiets(false);
+    }
+  }, []);
+
   // 1. Fetch DRGL Departures
   const fetchDepartures = useCallback(async (stopCode: string) => {
     setIsDeparturesLoading(true);
@@ -285,6 +367,7 @@ export default function App() {
     fetchBusPositions();
     fetchPunctualityLogs();
     fetchDeelfietsData();
+    fetchOvFietsData();
 
     const busInterval = setInterval(fetchBusPositions, 3000);
     const depInterval = setInterval(() => {
@@ -292,11 +375,13 @@ export default function App() {
       fetchPunctualityLogs();
     }, 20000);
     const deelfietsInterval = setInterval(fetchDeelfietsData, 30000);
+    const ovfietsInterval = setInterval(fetchOvFietsData, 30000);
 
     return () => {
       clearInterval(busInterval);
       clearInterval(depInterval);
       clearInterval(deelfietsInterval);
+      clearInterval(ovfietsInterval);
     };
   }, [
     selectedStopCode,
@@ -304,6 +389,7 @@ export default function App() {
     fetchBusPositions,
     fetchPunctualityLogs,
     fetchDeelfietsData,
+    fetchOvFietsData,
   ]);
 
   // Handle selecting a departure from DRGL board
@@ -366,6 +452,7 @@ export default function App() {
         setIsFleetDrawerOpen(false);
         setIsPunctualityModalOpen(false);
         setIsDeelfietsModalOpen(false);
+        setIsEmbedModalOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -386,10 +473,17 @@ export default function App() {
           setIsPunctualityModalOpen(true);
         }}
         onOpenDeelfietsModal={() => {
+          setDeelfietsInitialTab('deelfiets');
           setDeelfietsLocationFilter('');
           setIsDeelfietsModalOpen(true);
         }}
+        onOpenOvFietsModal={() => {
+          setDeelfietsInitialTab('ovfiets');
+          setIsDeelfietsModalOpen(true);
+        }}
+        onOpenEmbedModal={() => setIsEmbedModalOpen(true)}
         deelfietsAvailableCount={totalAvailableDeelfietsen}
+        ovfietsAvailableCount={ovfietsLocation.available}
         loggedCount={punctualityLogs.length}
         dataSource={dataSource}
         isSyncing={isSyncing}
@@ -398,14 +492,17 @@ export default function App() {
           fetchDepartures(selectedStopCode);
           triggerLivePunctualityScan();
           fetchDeelfietsData();
+          fetchOvFietsData();
+          triggerLiveOvFietsScan();
         }}
         feedMode={feedMode}
         onToggleFeedMode={(mode) => setFeedMode(mode)}
         statusMessage={statusMessage}
+        isEmbed={isEmbed}
       />
 
       {/* Main Viewport */}
-      <main className="flex-1 relative flex w-full h-[calc(100vh-3.5rem)] overflow-hidden bg-black">
+      <main className="flex-1 relative flex w-full h-[calc(100vh-3.5rem-1.75rem)] overflow-hidden bg-black">
         {/* DRGL Left Sidebar: Live Departure Board */}
         {showDepartureBoard && (
           <aside className="w-full md:w-[380px] lg:w-[420px] h-full bg-slate-50 border-r border-slate-300 p-3 flex flex-col shrink-0 z-20 shadow-xl overflow-hidden animate-in slide-in-from-left duration-200">
@@ -446,7 +543,16 @@ export default function App() {
             showDeelfietsen={showDeelfietsen}
             onToggleDeelfietsen={setShowDeelfietsen}
             onOpenDeelfietsStats={(loc) => {
+              setDeelfietsInitialTab('deelfiets');
               setDeelfietsLocationFilter(loc.name);
+              setIsDeelfietsModalOpen(true);
+            }}
+            ovfietsLocation={ovfietsLocation}
+            ovfietsLogs={ovfietsLogs}
+            showOvfietsen={showOvfietsen}
+            onToggleOvfietsen={setShowOvfietsen}
+            onOpenOvfietsStats={() => {
+              setDeelfietsInitialTab('ovfiets');
               setIsDeelfietsModalOpen(true);
             }}
             showHaltes={showHaltes}
@@ -458,8 +564,8 @@ export default function App() {
             activeJourneyPolyline={selectedJourneyData?.polyLines}
           />
 
-          {/* Real-Time Live Status Banner on Map when 0 buses active at night */}
-          {feedMode === 'live' && buses.length === 0 && (
+          {/* Real-Time Live Status Banner on Map when 0 buses active at night (between 00:00 and 06:00) */}
+          {feedMode === 'live' && buses.length === 0 && new Date().getHours() < 6 && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[500] max-w-lg w-[90%] bg-[#0E518D] text-white p-3.5 rounded-2xl shadow-2xl border-2 border-[#FFCC00] flex items-center justify-between gap-3 animate-in fade-in duration-300">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
@@ -517,6 +623,7 @@ export default function App() {
 
             <button
               onClick={() => {
+                setDeelfietsInitialTab('deelfiets');
                 setDeelfietsLocationFilter('');
                 setIsDeelfietsModalOpen(true);
               }}
@@ -525,6 +632,31 @@ export default function App() {
             >
               <Bike className="w-4 h-4 text-white" />
               <span>Deelfietsen ({totalAvailableDeelfietsen} vrij) (.CSV)</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setDeelfietsInitialTab('ovfiets');
+                setIsDeelfietsModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#000066] text-[#FFCC00] text-xs font-bold shadow-lg hover:bg-blue-950 transition-colors cursor-pointer border border-[#FFCC00]/40"
+              title="NS OV-fiets Station Steenwijk (swk002): actuele en historische beschikbaarheid & .CSV"
+            >
+              <img
+                src="/bicycle_parking_open.png"
+                alt="OV-fiets"
+                className="w-3.5 h-4 object-contain shrink-0"
+              />
+              <span>OV-fiets Steenwijk ({ovfietsLocation.available} vrij) (.CSV)</span>
+            </button>
+
+            <button
+              onClick={() => setIsEmbedModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-700 hover:bg-sky-800 text-white text-xs font-bold shadow-lg transition-colors cursor-pointer"
+              title="Sluit dit dataproduct in op een nieuwsbericht of website"
+            >
+              <Code2 className="w-4 h-4 text-[#FFCC00]" />
+              <span>Insluiten (&lt;/&gt;)</span>
             </button>
           </div>
         </section>
@@ -576,7 +708,7 @@ export default function App() {
           onSignOut={signOutFirebase}
         />
 
-        {/* Deelfiets Nederland Dashboard Modal (Alle locaties Steenwijkerland + Dag/Week/Maand statistieken) */}
+        {/* Deelfiets Nederland & NS OV-fiets Station Steenwijk Dashboard Modal */}
         <DeelfietsDashboard
           isOpen={isDeelfietsModalOpen}
           onClose={() => setIsDeelfietsModalOpen(false)}
@@ -585,8 +717,65 @@ export default function App() {
           initialLocationFilter={deelfietsLocationFilter}
           onTriggerLiveScan={triggerLiveDeelfietsScan}
           isScanning={isScanningDeelfiets}
+          ovfietsLocation={ovfietsLocation}
+          ovfietsLogs={ovfietsLogs}
+          onTriggerLiveOvFietsScan={triggerLiveOvFietsScan}
+          isScanningOvFiets={isScanningOvFiets}
+          initialNetworkTab={deelfietsInitialTab}
+        />
+
+        {/* Embed Dataproduct Modal (Insluiten in nieuwsberichten) */}
+        <EmbedDataproductModal
+          isOpen={isEmbedModalOpen}
+          onClose={() => setIsEmbedModalOpen(false)}
         />
       </main>
+
+      {/* Persistent Dataproduct Footer: Dataproduct van Lijst van Andel */}
+      <footer className="h-7 bg-[#0A3D6B] border-t border-[#062440] px-3 md:px-5 flex items-center justify-between text-xs text-white/90 z-30 shrink-0 select-none shadow-md">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-3.5 h-3.5 rounded bg-[#FFCC00] text-[#0A3D6B] font-black text-[9px] flex items-center justify-center shrink-0">
+            LA
+          </div>
+          <span className="font-bold text-[#FFCC00] tracking-tight whitespace-nowrap">
+            Dataproduct van Lijst van Andel
+          </span>
+          <span className="text-blue-200 hidden md:inline truncate text-[11px]">
+            • Realtime actuele busposities & deelfietslocaties in Gemeente Steenwijkerland
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 text-[11px] text-white/80 shrink-0">
+          <button
+            onClick={() => setIsEmbedModalOpen(true)}
+            className="hover:text-[#FFCC00] flex items-center gap-1 cursor-pointer transition-colors"
+            title="Sluit dit interactieve dataproduct in op een website of nieuwsbericht"
+          >
+            <Code2 className="w-3.5 h-3.5 text-[#FFCC00]" />
+            <span className="hidden sm:inline">Insluiten</span>
+          </button>
+
+          <button
+            onClick={handleToggleFullscreen}
+            className="hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+            title="Volledig scherm weergave"
+          >
+            <Maximize2 className="w-3 h-3" />
+            <span className="hidden sm:inline">Volledig scherm</span>
+          </button>
+
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white flex items-center gap-1 transition-colors"
+            title="Openen in een nieuw venster"
+          >
+            <ExternalLink className="w-3 h-3" />
+            <span className="hidden sm:inline">Nieuw venster</span>
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }

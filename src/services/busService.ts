@@ -316,7 +316,7 @@ export function toBuspositiesGeoJSON(buses: BusPosition[]): BuspositiesGeoJSONRe
     type: 'Feature',
     geometry: {
       type: 'Point',
-      coordinates: [b.lat, b.lng],
+      coordinates: [b.lng, b.lat],
     },
     properties: {
       matnummer: b.matnummer,

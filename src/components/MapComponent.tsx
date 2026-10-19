@@ -20,10 +20,16 @@ import {
   aggregateDeelfietsStats,
 } from '../utils/deelfiets';
 import {
+  OvFietsLocation,
+  OvFietsLogEntry,
+  aggregateOvFietsStats,
+} from '../utils/ovfiets';
+import {
   createBusMarkerIcon,
   createHalteIcon,
   createGpsLocationIcon,
   createDeelfietsIcon,
+  createOvFietsMarkerIcon,
 } from '../utils/markerIcons';
 import {
   Crosshair,
@@ -50,6 +56,11 @@ interface MapComponentProps {
   showDeelfietsen?: boolean;
   onToggleDeelfietsen?: (show: boolean) => void;
   onOpenDeelfietsStats?: (location: DeelfietsLocation) => void;
+  ovfietsLocation?: OvFietsLocation | null;
+  ovfietsLogs?: OvFietsLogEntry[];
+  showOvfietsen?: boolean;
+  onToggleOvfietsen?: (show: boolean) => void;
+  onOpenOvfietsStats?: () => void;
   showHaltes: boolean;
   onToggleHaltes: (show: boolean) => void;
   showRoutes: boolean;
@@ -64,9 +75,9 @@ type TileLayerKey = 'osm' | 'opentopo' | 'satellite';
 
 const TILE_LAYERS: Record<TileLayerKey, { name: string; url: string; attribution: string; maxZoom: number }> = {
   osm: {
-    name: 'OpenStreetMap (Standaard DRGL)',
+    name: 'OpenStreetMap (Lijst van Andel)',
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors • Dataproduct van Lijst van Andel',
     maxZoom: 19,
   },
   opentopo: {
@@ -95,6 +106,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   showDeelfietsen = true,
   onToggleDeelfietsen,
   onOpenDeelfietsStats,
+  ovfietsLocation,
+  ovfietsLogs = [],
+  showOvfietsen = true,
+  onToggleOvfietsen,
+  onOpenOvfietsStats,
   showHaltes,
   onToggleHaltes,
   showRoutes,
@@ -109,6 +125,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   const busMarkersRef = useRef<Map<string, L.Marker>>(new Map());
   const haltesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const deelfietsLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const ovfietsLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const routesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const journeyPolylineLayerRef = useRef<L.Polyline | null>(null);
   const userGpsMarkerRef = useRef<L.Marker | null>(null);
@@ -178,10 +195,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     }).addTo(map);
     municipalityOutlineRef.current = municipalityOutline;
 
-    // Layer groups for routes, haltes, and deelfietsen
+    // Layer groups for routes, haltes, deelfietsen, and ov-fiets
     routesLayerGroupRef.current = L.layerGroup().addTo(map);
     haltesLayerGroupRef.current = L.layerGroup().addTo(map);
     deelfietsLayerGroupRef.current = L.layerGroup().addTo(map);
+    ovfietsLayerGroupRef.current = L.layerGroup().addTo(map);
 
     try {
       const bounds = municipalityOutline.getBounds();
@@ -586,11 +604,117 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     });
   }, [showDeelfietsen, deelfietsLocations, deelfietsLogs, onOpenDeelfietsStats]);
 
+  // Update NS OV-fiets Marker on Station Steenwijk (using bicycle_parking_open.png)
+  useEffect(() => {
+    if (!ovfietsLayerGroupRef.current) return;
+    const layer = ovfietsLayerGroupRef.current;
+    layer.clearLayers();
+
+    if (showOvfietsen === false || !ovfietsLocation) return;
+
+    const loc = ovfietsLocation;
+    const icon = createOvFietsMarkerIcon(loc.available, loc.totalCapacity);
+    const marker = L.marker([loc.lat, loc.lng], { icon, zIndexOffset: 880 });
+
+    const tooltipHtml = `<div class="font-sans text-xs">
+      <strong>NS OV-fiets • Station Steenwijk (swk002)</strong><br/>
+      <span class="text-emerald-700 font-bold">${loc.available} beschikbaar</span> • <span class="text-blue-700 font-bold">${loc.rented} verhuurd</span> (cap. ${loc.totalCapacity})<br/>
+      <span class="text-slate-500">${loc.streetAddress}</span>
+    </div>`;
+
+    marker.bindTooltip(tooltipHtml, {
+      direction: 'top',
+      offset: [0, -44],
+    });
+
+    const st = ovfietsLogs && ovfietsLogs.length > 0 ? aggregateOvFietsStats(loc, ovfietsLogs) : null;
+
+    const popupContainer = document.createElement('div');
+    popupContainer.className = 'font-sans text-slate-900 min-w-[270px] max-w-[320px] p-1';
+    popupContainer.innerHTML = `
+      <div class="flex items-center gap-2 pb-1.5 mb-2 border-b border-slate-200">
+        <img src="/bicycle_parking_open.png" alt="OV-fiets" class="w-7 h-8 object-contain shrink-0" />
+        <div class="min-w-0">
+          <div class="text-[10px] font-bold text-[#000066] uppercase tracking-wider flex items-center gap-1.5">
+            <span>NS OV-fiets</span>
+            <span class="px-1 py-0.2 rounded bg-[#FFCC00] text-[#000066] font-mono text-[9px] font-black">${loc.stationCode}</span>
+          </div>
+          <div class="text-sm font-black text-slate-900 leading-tight">${loc.name}</div>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 rounded-lg p-2 mb-2 border border-slate-200 text-xs space-y-1">
+        <div class="flex justify-between gap-2">
+          <span class="text-slate-500 font-medium">Adres:</span>
+          <span class="font-bold text-slate-900 text-right">${loc.streetAddress}, ${loc.town}</span>
+        </div>
+        <div class="flex justify-between gap-2">
+          <span class="text-slate-500 font-medium">Type stalling:</span>
+          <span class="font-semibold text-slate-800 text-right">${loc.serviceType}</span>
+        </div>
+        <div class="flex justify-between gap-2">
+          <span class="text-slate-500 font-medium">Live beschikbaar:</span>
+          <span class="font-mono font-black text-emerald-700 text-right text-sm">${loc.available} <span class="text-xs font-normal text-slate-500">/ ${loc.totalCapacity}</span></span>
+        </div>
+        <div class="flex justify-between gap-2">
+          <span class="text-slate-500 font-medium">Nu actief verhuurd:</span>
+          <span class="font-mono font-bold text-blue-800 text-right">${loc.rented} fietsen</span>
+        </div>
+        <div class="flex justify-between gap-2 text-[11px] pt-0.5 border-t border-slate-200">
+          <span class="text-slate-500">Huurprijs:</span>
+          <span class="text-slate-700 text-right font-semibold">${loc.rentalTariff}</span>
+        </div>
+      </div>
+
+      ${
+        st
+          ? `<div class="bg-amber-50/80 rounded-lg p-2 mb-2 border border-amber-200 text-[11px] space-y-1">
+              <div class="font-bold text-[#000066] uppercase tracking-wider text-[10px] flex items-center justify-between">
+                <span>Gemiddelden & Totalen</span>
+                <span class="text-[9px] text-amber-900 font-normal">Dag | Week | Maand</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-600">Gem. beschikbaar:</span>
+                <span class="font-mono font-bold text-sky-900">D: ${st.avgAvailableDay} | W: ${st.avgAvailableWeek} | M: ${st.avgAvailableMonth}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-600">Gem. gehuurd:</span>
+                <span class="font-mono font-bold text-amber-800">D: ${st.avgRentedDay} | W: ${st.avgRentedWeek} | M: ${st.avgRentedMonth}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-600">Totaal verhuurd:</span>
+                <span class="font-mono font-bold text-emerald-800">D: ${st.totalRentedDay} | W: ${st.totalRentedWeek} | M: ${st.totalRentedMonth}</span>
+              </div>
+            </div>`
+          : ''
+      }
+
+      <button
+        type="button"
+        class="ovfiets-stats-btn w-full py-1.5 px-2.5 rounded-lg bg-[#000066] hover:bg-blue-950 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+      >
+        <span class="text-[#FFCC00]">🚲</span>
+        <span>Open OV-fiets Dashboard & .CSV</span>
+      </button>
+    `;
+
+    const statsBtn = popupContainer.querySelector('.ovfiets-stats-btn');
+    if (statsBtn && onOpenOvfietsStats) {
+      statsBtn.addEventListener('click', () => {
+        onOpenOvfietsStats();
+      });
+    }
+
+    marker.bindPopup(popupContainer);
+    layer.addLayer(marker);
+  }, [showOvfietsen, ovfietsLocation, ovfietsLogs, onOpenOvfietsStats]);
+
   // Update Bus Markers (DRGL Style #ffcc00 + #0e518d, strictly inside Steenwijkerland)
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
     const currentMarkerMap = busMarkersRef.current;
+    // Strict boundary enforcement: marker immediately disappears when crossing outside Steenwijkerland
     const visibleBuses = buses.filter((b) => isPointInSteenwijkerland(b.lat, b.lng));
     const activeIds = new Set(visibleBuses.map((b) => b.id));
 
@@ -776,6 +900,28 @@ export const MapComponent: React.FC<MapComponentProps> = ({
                 />
                 <Bike className="w-3.5 h-3.5 text-[#0086d6]" />
                 <span>Deelfietsen ({deelfietsLocations.length})</span>
+              </label>
+
+              <div className="w-[1px] h-5 bg-slate-200" />
+            </>
+          )}
+
+          {/* NS OV-fiets Checkbox */}
+          {onToggleOvfietsen && (
+            <>
+              <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-amber-50 text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={showOvfietsen}
+                  onChange={(e) => onToggleOvfietsen(e.target.checked)}
+                  className="w-4 h-4 rounded text-[#000066] focus:ring-[#000066] border-slate-400"
+                />
+                <img
+                  src="/bicycle_parking_open.png"
+                  alt="OV-fiets"
+                  className="w-3.5 h-4 object-contain shrink-0"
+                />
+                <span>OV-fiets Steenwijk</span>
               </label>
 
               <div className="w-[1px] h-5 bg-slate-200" />

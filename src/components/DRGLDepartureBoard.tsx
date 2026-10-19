@@ -209,10 +209,10 @@ export const DRGLDepartureBoard: React.FC<DRGLDepartureBoardProps> = ({
         )}
       </div>
 
-      {/* DRGL Footer */}
-      <div className="p-2.5 bg-slate-100 border-t border-slate-200 text-[11px] text-slate-500 flex items-center justify-between">
-        <span>Bron: DRGL.nl vertrektijden</span>
-        <span className="font-mono">{departures.length} ritten</span>
+      {/* Dataproduct Footer */}
+      <div className="p-2.5 bg-slate-100 border-t border-slate-200 text-[11px] text-slate-600 flex items-center justify-between select-none">
+        <span className="font-bold text-[#0E518D]">Dataproduct van Lijst van Andel</span>
+        <span className="font-mono text-slate-500">{departures.length} ritten</span>
       </div>
     </div>
   );
