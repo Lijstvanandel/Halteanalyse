@@ -349,13 +349,21 @@ function computeBearingDeg(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 function decompressOvzoekerBuffer(buf: Buffer): string {
-  if (buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b) {
-    return zlib.gunzipSync(buf).toString('utf8');
+  try {
+    if (buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b) {
+      return zlib.gunzipSync(buf).toString('utf8');
+    }
+    if (buf.length >= 1 && buf[0] === 0x78) {
+      return zlib.inflateSync(buf).toString('utf8');
+    }
+    return buf.toString('utf8');
+  } catch {
+    try {
+      return zlib.gunzipSync(buf).toString('utf8');
+    } catch {
+      return buf.toString('utf8');
+    }
   }
-  if (buf.length >= 1 && buf[0] === 0x78) {
-    return zlib.inflateSync(buf).toString('utf8');
-  }
-  return buf.toString('utf8');
 }
 
 const LINE_DESTINATIONS: Record<string, { agency: string; defaultDest: string }> = {
@@ -371,10 +379,12 @@ const LINE_DESTINATIONS: Record<string, { agency: string; defaultDest: string }>
   '524': { agency: 'Qbuzz', defaultDest: 'Buurtbus Steenwijkerland' },
 };
 
-async function getOvzoekerTripInfo(tripId: string, fallbackLine: string, vehId: string): Promise<OvzoekerTripInfo> {
-  const cached = ovzoekerTripCache.get(tripId);
-  if (cached && Date.now() - cached.fetchedAt < 30 * 60 * 1000) {
-    return cached;
+function getOvzoekerTripInfo(tripId: string, fallbackLine: string, vehId: string): OvzoekerTripInfo {
+  if (tripId && ovzoekerTripCache.has(tripId)) {
+    const cached = ovzoekerTripCache.get(tripId)!;
+    if (Date.now() - cached.fetchedAt < 30 * 60 * 1000) {
+      return cached;
+    }
   }
 
   const cleanLine = String(fallbackLine || '').trim();
@@ -400,32 +410,28 @@ async function getOvzoekerTripInfo(tripId: string, fallbackLine: string, vehId: 
     realtimeTripId: `${vehId.split(':')[0]}:${cleanLine}:${tripId}`,
   };
 
-  if (!tripId) {
-    return initialInfo;
-  }
-
-  // Fetch full details with short timeout so response never stalls
-  try {
-    const res = await fetch(`https://ovzoeker.nl/api/trip/${encodeURIComponent(tripId)}`, {
+  // Asynchronously populate detailed trip info in background without blocking vehicle rendering
+  if (tripId && !ovzoekerTripCache.has(tripId)) {
+    fetch(`https://ovzoeker.nl/api/trip/${encodeURIComponent(tripId)}`, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Steenwijkerland-OV/1.0)' },
       signal: AbortSignal.timeout(2000),
-    });
-    if (res.ok) {
-      const data: any = await res.json();
-      const info: OvzoekerTripInfo = {
-        fetchedAt: Date.now(),
-        agencyName: data.route?.agency_name || defaultAgency,
-        line: data.route?.route_short_name || cleanLine || '?',
-        headsign: data.trip?.trip_headsign || defaultHeadsign,
-        ritnummer: data.journey?.journey_id || data.trip?.trip_short_name || '',
-        omloopnummer: data.journey?.circulation_id || '',
-        realtimeTripId: data.trip?.realtime_trip_id || `${vehId.split(':')[0]}:${cleanLine}:${tripId}`,
-      };
-      ovzoekerTripCache.set(tripId, info);
-      return info;
-    }
-  } catch {
-    // Non-blocking fallback
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data: any = await res.json();
+          const info: OvzoekerTripInfo = {
+            fetchedAt: Date.now(),
+            agencyName: data.route?.agency_name || defaultAgency,
+            line: data.route?.route_short_name || cleanLine || '?',
+            headsign: data.trip?.trip_headsign || defaultHeadsign,
+            ritnummer: data.journey?.journey_id || data.trip?.trip_short_name || '',
+            omloopnummer: data.journey?.circulation_id || '',
+            realtimeTripId: data.trip?.realtime_trip_id || `${vehId.split(':')[0]}:${cleanLine}:${tripId}`,
+          };
+          ovzoekerTripCache.set(tripId, info);
+        }
+      })
+      .catch(() => {});
   }
 
   ovzoekerTripCache.set(tripId, initialInfo);
@@ -612,16 +618,15 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
 
   const results: BusPosition[] = [];
 
-  await Promise.all(
-    candidateEntities.map(async (ent) => {
-      const vehpos = ent.vehicle;
-      const vehId = String(vehpos.vehicle?.id || ent.id);
-      const rawPrefix = vehId.split(':')[0] || 'EBS';
-      const label = String(vehpos.vehicle?.label || vehId.split(':')[1] || vehId);
-      const fallbackLine = String(vehpos.trip?.start_date || '');
-      const tripId = String(vehpos.trip?.trip_id || '');
+  candidateEntities.forEach((ent) => {
+    const vehpos = ent.vehicle;
+    const vehId = String(vehpos.vehicle?.id || ent.id);
+    const rawPrefix = vehId.split(':')[0] || 'EBS';
+    const label = String(vehpos.vehicle?.label || vehId.split(':')[1] || vehId);
+    const fallbackLine = String(vehpos.trip?.start_date || '');
+    const tripId = String(vehpos.trip?.trip_id || '');
 
-      const tripInfo = await getOvzoekerTripInfo(tripId, fallbackLine, vehId);
+    const tripInfo = getOvzoekerTripInfo(tripId, fallbackLine, vehId);
 
       const lat = Number(vehpos.position.latitude);
       const lng = Number(vehpos.position.longitude);
@@ -701,8 +706,7 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
       }
 
       results.push(busObj);
-    })
-  );
+    });
 
   // Only update cache if we have results, so temporary empty blips never wipe out active fleet
   if (results.length > 0) {
