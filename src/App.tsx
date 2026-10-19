@@ -33,12 +33,8 @@ import {
   User,
 } from './firebase';
 import {
-  PanelLeftClose,
-  PanelLeftOpen,
   Moon,
   Sparkles,
-  BarChart3,
-  Bike,
   Code2,
   Maximize2,
   ExternalLink,
@@ -54,7 +50,16 @@ export default function App() {
   const [showHaltes, setShowHaltes] = useState<boolean>(true);
   const [showRoutes, setShowRoutes] = useState<boolean>(true);
   const [isFleetDrawerOpen, setIsFleetDrawerOpen] = useState<boolean>(false);
-  const [showDepartureBoard, setShowDepartureBoard] = useState<boolean>(true);
+  const [showDepartureBoard, setShowDepartureBoard] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    const embedded =
+      params.get('embed') === 'true' ||
+      params.get('widget') === 'true' ||
+      window.self !== window.top;
+    if (embedded) return false;
+    return window.innerWidth >= 1100;
+  });
   const [feedMode, setFeedMode] = useState<'live' | 'demo'>('live');
   const [statusMessage, setStatusMessage] = useState<string>('');
 
@@ -406,10 +411,21 @@ export default function App() {
     fetchOvFietsData,
   ]);
 
+  // Ensure Leaflet recalculates map size when departure board toggles
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [showDepartureBoard]);
+
   // Handle selecting a departure from DRGL board
   const handleSelectDeparture = async (dep: DRGLDeparture) => {
     setSelectedJourneyUrl(dep.journeyUrl);
     setIsJourneyLoading(true);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setShowDepartureBoard(false);
+    }
 
     try {
       const cleaned = dep.journeyUrl.replace(/^\/journey\//, '').replace(/\/+$/, '');
@@ -481,6 +497,7 @@ export default function App() {
         onSelectBus={handleSelectBus}
         showDepartureBoard={showDepartureBoard}
         onToggleDepartureBoard={() => setShowDepartureBoard(!showDepartureBoard)}
+        onShowMapOnly={() => setShowDepartureBoard(false)}
         onOpenFleetDrawer={() => setIsFleetDrawerOpen(true)}
         onOpenPunctualityModal={() => {
           setPunctualityStopFilter('');
@@ -516,10 +533,18 @@ export default function App() {
       />
 
       {/* Main Viewport */}
-      <main className="flex-1 relative flex w-full h-[calc(100vh-3.5rem-1.75rem)] overflow-hidden bg-[var(--bg-main)]">
+      <main className="flex-1 relative flex w-full overflow-hidden bg-[var(--bg-main)]">
+        {/* Mobile/Iframe Backdrop when Departure Board is open */}
+        {showDepartureBoard && (
+          <div
+            onClick={() => setShowDepartureBoard(false)}
+            className="lg:hidden fixed inset-0 bg-black/60 z-[510] cursor-pointer"
+          />
+        )}
+
         {/* DRGL Left Sidebar: Live Departure Board */}
         {showDepartureBoard && (
-          <aside className="w-full md:w-[380px] lg:w-[420px] h-full bg-[var(--bg-main)] border-r border-[var(--border-subtle)] p-2.5 flex flex-col shrink-0 z-20 overflow-hidden animate-in slide-in-from-left duration-200">
+          <aside className="absolute inset-y-0 left-0 w-full sm:w-[360px] lg:static lg:w-[390px] h-full bg-[var(--bg-main)] border-r border-[var(--border-subtle)] p-2 flex flex-col shrink-0 z-[520] lg:z-20 overflow-hidden shadow-2xl lg:shadow-none">
             <DRGLDepartureBoard
               title={departureTitle}
               departures={departures}
@@ -532,12 +557,13 @@ export default function App() {
               isLoading={isDeparturesLoading}
               onRefresh={() => fetchDepartures(selectedStopCode)}
               selectedJourneyUrl={selectedJourneyUrl}
+              onClose={() => setShowDepartureBoard(false)}
             />
           </aside>
         )}
 
         {/* Center: Leaflet Interactive Map (pitch-black outside Gemeente Steenwijkerland) */}
-        <section className="flex-1 relative h-full overflow-hidden bg-[var(--bg-main)]">
+        <section className="flex-1 relative w-full h-full overflow-hidden bg-[var(--bg-main)]">
           <MapComponent
             buses={buses}
             selectedBus={selectedBus}
@@ -604,75 +630,6 @@ export default function App() {
               </button>
             </div>
           )}
-
-          {/* Floating Toggle for Departures Board & Punctuality Stats on Desktop */}
-          <div className="hidden md:flex absolute top-3 left-3 z-[501] items-center gap-1.5">
-            <button
-              onClick={() => setShowDepartureBoard(!showDepartureBoard)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold shadow-lg transition-colors cursor-pointer"
-            >
-              {showDepartureBoard ? (
-                <>
-                  <PanelLeftClose className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
-                  <span>Verberg Vertrektijden</span>
-                </>
-              ) : (
-                <>
-                  <PanelLeftOpen className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
-                  <span>Toon DRGL Vertrektijden</span>
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={() => {
-                setPunctualityStopFilter('');
-                setIsPunctualityModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold shadow-lg transition-colors cursor-pointer"
-            >
-              <BarChart3 className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
-              <span>Vertraging &amp; Uitval Statistieken (.CSV)</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setDeelfietsInitialTab('deelfiets');
-                setDeelfietsLocationFilter('');
-                setIsDeelfietsModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold shadow-lg transition-colors cursor-pointer tabular-nums"
-              title="Deelfiets Nederland locaties in Steenwijkerland: gemiddelden en totalen per dag, week en maand"
-            >
-              <Bike className="w-3.5 h-3.5 text-[var(--status-blue)]" />
-              <span>Deelfietsen ({totalAvailableDeelfietsen} vrij) (.CSV)</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setDeelfietsInitialTab('ovfiets');
-                setIsDeelfietsModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--accent-gold-bright)] text-xs font-semibold shadow-lg transition-colors cursor-pointer tabular-nums"
-              title="NS OV-fiets Station Steenwijk (swk002): actuele en historische beschikbaarheid & .CSV"
-            >
-              <img
-                src="/bicycle_parking_open.png"
-                alt="OV-fiets"
-                className="w-3.5 h-4 object-contain shrink-0"
-              />
-              <span>OV-fiets Steenwijk ({ovfietsLocation.available} vrij) (.CSV)</span>
-            </button>
-
-            <button
-              onClick={() => setIsEmbedModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold shadow-lg transition-colors cursor-pointer"
-              title="Sluit dit dataproduct in op een nieuwsbericht of website"
-            >
-              <Code2 className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
-              <span>Insluiten (&lt;/&gt;)</span>
-            </button>
-          </div>
         </section>
 
         {/* DRGL Journey View Panel */}

@@ -5,6 +5,8 @@ import {
   AlertTriangle,
   ChevronRight,
   RefreshCw,
+  Map as MapIcon,
+  X,
 } from 'lucide-react';
 
 interface DRGLDepartureBoardProps {
@@ -16,6 +18,7 @@ interface DRGLDepartureBoardProps {
   isLoading: boolean;
   onRefresh: () => void;
   selectedJourneyUrl?: string | null;
+  onClose?: () => void;
 }
 
 export const DRGL_KEY_STOPS = [
@@ -50,11 +53,12 @@ export const DRGLDepartureBoard: React.FC<DRGLDepartureBoardProps> = ({
   isLoading,
   onRefresh,
   selectedJourneyUrl,
+  onClose,
 }) => {
   return (
     <div className="bg-[var(--bg-card)] rounded-[5px] border border-[var(--border-subtle)] overflow-hidden flex flex-col h-full text-[var(--text-main)] tabular-nums">
       {/* DRGL Panel Header */}
-      <div className="bg-[var(--bg-elevated)] text-[var(--text-main)] p-3 flex items-center justify-between border-b border-[var(--border-subtle)]">
+      <div className="bg-[var(--bg-elevated)] text-[var(--text-main)] p-2.5 flex items-center justify-between gap-2 border-b border-[var(--border-subtle)]">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-2 h-2 rounded-[2px] bg-[var(--accent-gold)] shrink-0" />
           <h3 className="font-bold text-xs tracking-tight truncate">
@@ -62,14 +66,28 @@ export const DRGLDepartureBoard: React.FC<DRGLDepartureBoardProps> = ({
           </h3>
         </div>
 
-        <button
-          onClick={onRefresh}
-          disabled={isLoading}
-          className="p-1.5 rounded-[4px] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] border border-transparent hover:border-[var(--border-subtle)] transition-colors shrink-0 cursor-pointer"
-          title="Ververs vertrektijden"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[var(--accent-gold)]' : ''}`} />
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="p-1.5 rounded-[4px] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] border border-transparent hover:border-[var(--border-subtle)] transition-colors shrink-0 cursor-pointer"
+            title="Ververs vertrektijden"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[var(--accent-gold)]' : ''}`} />
+          </button>
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="px-2 py-1 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] text-[#060e0a] font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+              title="Sluit vertrektijden en bekijk de kaart"
+            >
+              <MapIcon className="w-3 h-3" />
+              <span>Naar Kaart</span>
+              <X className="w-3 h-3 ml-0.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stop Area Selector Dropdown (Plaats — Haltenaam) */}

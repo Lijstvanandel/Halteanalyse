@@ -4,13 +4,14 @@ import {
   Search,
   RefreshCw,
   Bus,
-  SlidersHorizontal,
   Clock,
   Radio,
   ToggleRight,
   BarChart3,
   Bike,
   Code2,
+  Map as MapIcon,
+  ExternalLink,
 } from 'lucide-react';
 
 interface TopNavbarProps {
@@ -18,6 +19,7 @@ interface TopNavbarProps {
   onSelectBus: (bus: BusPosition) => void;
   showDepartureBoard: boolean;
   onToggleDepartureBoard: () => void;
+  onShowMapOnly?: () => void;
   onOpenFleetDrawer: () => void;
   onOpenPunctualityModal: () => void;
   onOpenDeelfietsModal?: () => void;
@@ -40,6 +42,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onSelectBus,
   showDepartureBoard,
   onToggleDepartureBoard,
+  onShowMapOnly,
   onOpenFleetDrawer,
   onOpenPunctualityModal,
   onOpenDeelfietsModal,
@@ -52,6 +55,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onManualRefresh,
   feedMode,
   onToggleFeedMode,
+  isEmbed = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -67,98 +71,83 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     : [];
 
   return (
-    <header className="h-14 bg-[var(--bg-card)] border-b border-[var(--border-subtle)] px-3 md:px-5 flex items-center justify-between gap-3 z-30 select-none shrink-0">
-      {/* Zone 1: Brand title (Lijst van Andel Dataproduct) */}
-      <div className="flex items-center gap-3 shrink-0">
-        <a href="/" className="flex items-center gap-2.5 text-[var(--text-main)] transition-opacity group">
-          <div className="w-8 h-8 rounded-[4px] bg-[var(--accent-gold)] border border-[var(--accent-gold-bright)] flex items-center justify-center shrink-0">
-            <span className="text-xs font-extrabold text-[#060e0a] tracking-tight">LA</span>
-          </div>
-          <div className="flex flex-col leading-tight">
-            <div className="flex items-baseline gap-2">
-              <span className="text-sm font-bold tracking-tight text-[var(--text-main)] whitespace-nowrap">
-                Lijst van Andel
-              </span>
-              <span className="text-xs text-[var(--accent-gold)] font-semibold hidden sm:inline">
-                Steenwijkerland
+    <header className="bg-[var(--bg-card)] border-b border-[var(--border-subtle)] z-30 select-none shrink-0 flex flex-col">
+      {/* Top Row: Brand, Search & Global Actions */}
+      <div className="h-11 px-2.5 md:px-4 flex items-center justify-between gap-2 border-b border-[var(--border-subtle)]/70">
+        {/* Zone 1: Brand title (Lijst van Andel Dataproduct) */}
+        <div className="flex items-center gap-2.5 min-w-0 shrink-0">
+          <a
+            href="/"
+            target={isEmbed ? '_blank' : undefined}
+            rel={isEmbed ? 'noopener noreferrer' : undefined}
+            className="flex items-center gap-2 text-[var(--text-main)] transition-opacity group min-w-0"
+          >
+            <div className="w-7 h-7 rounded-[4px] bg-[var(--accent-gold)] border border-[var(--accent-gold-bright)] flex items-center justify-center shrink-0">
+              <span className="text-[11px] font-extrabold text-[#060e0a] tracking-tight">LA</span>
+            </div>
+            <div className="flex flex-col leading-tight min-w-0">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xs sm:text-sm font-bold tracking-tight text-[var(--text-main)] whitespace-nowrap">
+                  Lijst van Andel
+                </span>
+                <span className="text-[11px] text-[var(--accent-gold)] font-semibold hidden xs:inline whitespace-nowrap">
+                  Steenwijkerland
+                </span>
+              </div>
+              <span className="text-[10px] text-[var(--text-muted)] hidden md:inline truncate">
+                Dataproduct · Actuele Busposities, Vertrektijden &amp; Deelfietsen
               </span>
             </div>
-            <span className="text-[11px] text-[var(--text-muted)] hidden md:inline">
-              Dataproduct · Actuele Busposities &amp; Deelfietsen
-            </span>
-          </div>
-        </a>
-      </div>
+          </a>
+        </div>
 
-      {/* Zone 2: Navigation Controls & Real-Time Filter */}
-      <div className="hidden lg:flex items-center gap-3">
-        <nav className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-main)]">
-          {/* Departures Board Toggle */}
-          <button
-            onClick={onToggleDepartureBoard}
-            className={`px-3 py-1.5 rounded-[4px] border transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold ${
-              showDepartureBoard
-                ? 'bg-[var(--bg-elevated)] text-[var(--accent-gold-bright)] border-[var(--border-focus)]'
-                : 'bg-[var(--bg-main)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)]'
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
-            <span>Vertrektijden Bord</span>
-          </button>
-
-          {/* Punctuality & Delay Logger Modal Button */}
-          <button
-            onClick={onOpenPunctualityModal}
-            className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold tabular-nums"
-            title="Bekijk uitval, vertragingen en te vroege passages per halte en per lijn (Maand / Week) + CSV export"
-          >
-            <BarChart3 className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
-            <span>OV Vertraging (.CSV)</span>
-            {loggedCount > 0 && (
-              <span className="text-[var(--text-muted)] font-mono text-[11px] tabular-nums">
-                · {loggedCount}
-              </span>
-            )}
-          </button>
-
-          {/* Deelfiets Nederland Modal Button */}
-          {onOpenDeelfietsModal && (
-            <button
-              onClick={onOpenDeelfietsModal}
-              className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold tabular-nums"
-              title="Bekijk beschikbare en gehuurde deelfietsen per dag, week en maand voor alle locaties in Steenwijkerland + CSV export"
-            >
-              <Bike className="w-3.5 h-3.5 text-[var(--status-blue)]" />
-              <span>Deelfietsen (.CSV)</span>
-              <span className="text-[var(--status-blue)] font-mono text-[11px] tabular-nums">
-                · {deelfietsAvailableCount} vrij
-              </span>
-            </button>
-          )}
-
-          {/* NS OV-fiets Station Steenwijk Modal Button */}
-          {onOpenOvFietsModal && (
-            <button
-              onClick={onOpenOvFietsModal}
-              className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold tabular-nums"
-              title="Bekijk de actuele en historische beschikbaarheid van NS OV-fietsen op Station Steenwijk (swk002) + CSV export"
-            >
-              <img
-                src="/bicycle_parking_open.png"
-                alt="OV-fiets"
-                className="w-3.5 h-4 object-contain shrink-0"
+        {/* Zone 2: Search & Global Utility Buttons */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Search Input (visible from sm upwards) */}
+          <div className="relative hidden sm:block">
+            <div className="flex items-center bg-[var(--bg-main)] border border-[var(--border-subtle)] rounded-[4px] px-2 py-1 w-36 md:w-44 focus-within:border-[var(--border-focus)] transition-colors">
+              <Search className="w-3.5 h-3.5 text-[var(--text-muted)] mr-1.5 shrink-0" />
+              <input
+                type="text"
+                placeholder="Zoek rit of lijn..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchOpen(true)}
+                className="bg-transparent text-xs text-[var(--text-main)] placeholder:text-[var(--text-dim)] focus:outline-none w-full"
               />
-              <span>OV-fiets (.CSV)</span>
-              <span className="text-[var(--accent-gold-bright)] font-mono text-[11px] tabular-nums">
-                · {ovfietsAvailableCount} vrij
-              </span>
-            </button>
-          )}
+            </div>
 
-          {/* Strict Live vs Demo Mode Toggle */}
+            {isSearchOpen && filteredBuses.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-[5px] shadow-2xl py-1 z-50 max-h-60 overflow-y-auto text-[var(--text-main)]">
+                {filteredBuses.map((bus) => (
+                  <button
+                    key={bus.id}
+                    onClick={() => {
+                      onSelectBus(bus);
+                      setIsSearchOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-[var(--bg-card-hover)] transition-colors flex items-center justify-between text-xs border-b border-[var(--border-subtle)] last:border-b-0 tabular-nums"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[var(--accent-gold)] font-mono">
+                        Lijn {bus.line}
+                      </span>
+                      <span className="text-[var(--text-main)]">→ {bus.destination}</span>
+                    </div>
+                    <span className="font-mono text-[var(--text-muted)] text-[11px] tabular-nums">
+                      #{bus.matnummer}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Live vs Demo Mode Toggle */}
           <button
             onClick={() => onToggleFeedMode(feedMode === 'live' ? 'demo' : 'live')}
-            className={`px-3 py-1.5 rounded-[4px] border transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs font-semibold ${
+            className={`px-2.5 py-1 rounded-[4px] border transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-[11px] font-semibold ${
               feedMode === 'live'
                 ? 'bg-[var(--bg-main)] text-[var(--status-emerald)] border-[var(--border-subtle)] hover:bg-[var(--bg-card-hover)]'
                 : 'bg-[var(--accent-gold-glow)] text-[var(--accent-gold-bright)] border-[var(--accent-gold)]'
@@ -166,109 +155,151 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             title="Wissel tussen uitsluitend echt rijdende bussen en dienstregeling-voorbeeld"
           >
             {feedMode === 'live' ? (
-              <Radio className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
+              <Radio className="w-3 h-3 text-[var(--status-emerald)]" />
             ) : (
-              <ToggleRight className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
+              <ToggleRight className="w-3 h-3 text-[var(--accent-gold)]" />
             )}
-            <span>{feedMode === 'live' ? 'Modus: Echt Live' : 'Modus: Dienstregeling Preview'}</span>
+            <span>{feedMode === 'live' ? 'Echt Live' : 'Preview'}</span>
           </button>
 
-          {/* Fleet count */}
+          {/* Refresh */}
           <button
-            onClick={onOpenFleetDrawer}
-            className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer tabular-nums"
+            onClick={onManualRefresh}
+            disabled={isSyncing}
+            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] rounded-[4px] transition-colors cursor-pointer"
+            title="Ververs live gegevens nu"
           >
-            <Bus className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
-            <span>Vloot ({buses.length})</span>
-          </button>
-        </nav>
-
-        {/* Search */}
-        <div className="relative">
-          <div className="flex items-center bg-[var(--bg-main)] border border-[var(--border-subtle)] rounded-[4px] px-2.5 py-1.5 w-48 focus-within:border-[var(--border-focus)] transition-colors">
-            <Search className="w-3.5 h-3.5 text-[var(--text-muted)] mr-2 shrink-0" />
-            <input
-              type="text"
-              placeholder="Zoek rit of lijn..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchOpen(true)}
-              className="bg-transparent text-xs text-[var(--text-main)] placeholder:text-[var(--text-dim)] focus:outline-none w-full"
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[var(--accent-gold)]' : ''}`}
             />
-          </div>
+          </button>
 
-          {isSearchOpen && filteredBuses.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-[5px] shadow-2xl py-1 z-50 max-h-60 overflow-y-auto text-[var(--text-main)]">
-              {filteredBuses.map((bus) => (
-                <button
-                  key={bus.id}
-                  onClick={() => {
-                    onSelectBus(bus);
-                    setIsSearchOpen(false);
-                    setSearchQuery('');
-                  }}
-                  className="w-full text-left px-3 py-2 hover:bg-[var(--bg-card-hover)] transition-colors flex items-center justify-between text-xs border-b border-[var(--border-subtle)] last:border-b-0 tabular-nums"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-[var(--accent-gold)] font-mono">Lijn {bus.line}</span>
-                    <span className="text-[var(--text-main)]">→ {bus.destination}</span>
-                  </div>
-                  <span className="font-mono text-[var(--text-muted)] text-[11px] tabular-nums">#{bus.matnummer}</span>
-                </button>
-              ))}
-            </div>
+          {/* Embed Button */}
+          {onOpenEmbedModal && !isEmbed && (
+            <button
+              onClick={onOpenEmbedModal}
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap"
+              title="Insluiten als interactief dataproduct in nieuwsberichten (HTML/Iframe)"
+            >
+              <Code2 className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
+              <span>Insluiten (&lt;/&gt;)</span>
+            </button>
+          )}
+
+          {/* Open in New Tab button when inside an iframe */}
+          {isEmbed && (
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2.5 py-1 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--accent-gold-bright)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] text-[11px] font-semibold transition-colors flex items-center gap-1 whitespace-nowrap"
+              title="Open volledig scherm in nieuw tabblad"
+            >
+              <ExternalLink className="w-3 h-3" />
+              <span className="hidden xs:inline">Volledig scherm</span>
+            </a>
           )}
         </div>
       </div>
 
-      {/* Zone 3: Actions */}
-      <div className="flex items-center gap-2 shrink-0">
+      {/* Bottom Row: Always-Visible Navigation Strip for Web, Iframe & Mobile */}
+      <nav
+        aria-label="Hoofdnavigatie dataproduct"
+        className="px-2.5 md:px-4 py-1.5 bg-[var(--bg-main)] flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-medium text-[var(--text-main)]"
+      >
+        {/* 1. Kaart Button (always brings map into view on mobile/iframe) */}
         <button
-          onClick={onOpenPunctualityModal}
-          className="lg:hidden px-2.5 py-1.5 text-xs font-semibold text-[var(--text-main)] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] rounded-[4px] transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer"
-          title="Vertraging & Statistieken (.CSV)"
+          onClick={() => {
+            if (onShowMapOnly) {
+              onShowMapOnly();
+            } else if (showDepartureBoard) {
+              onToggleDepartureBoard();
+            }
+          }}
+          className={`px-2.5 py-1.5 rounded-[4px] border transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold shrink-0 ${
+            !showDepartureBoard
+              ? 'bg-[var(--bg-elevated)] text-[var(--accent-gold-bright)] border-[var(--border-focus)]'
+              : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)]'
+          }`}
+          title="Toon de interactieve kaart met bussen, haltes en deelfietsen"
         >
-          <BarChart3 className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
-          <span>Statistieken</span>
+          <MapIcon className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
+          <span>Kaart</span>
         </button>
 
-        <button
-          onClick={onManualRefresh}
-          disabled={isSyncing}
-          className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] rounded-[4px] transition-colors cursor-pointer"
-          title="Ververs DRGL gegevens nu"
-        >
-          <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-[var(--accent-gold)]' : ''}`} />
-        </button>
-
+        {/* 2. Vertrektijden Bord Toggle */}
         <button
           onClick={onToggleDepartureBoard}
-          className="lg:hidden px-3 py-1.5 text-xs font-semibold text-[#060e0a] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] rounded-[4px] transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+          className={`px-2.5 py-1.5 rounded-[4px] border transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold shrink-0 ${
+            showDepartureBoard
+              ? 'bg-[var(--bg-elevated)] text-[var(--accent-gold-bright)] border-[var(--border-focus)]'
+              : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)]'
+          }`}
+          title="Open of sluit het actuele DRGL vertrektijdenbord per halte"
         >
-          <Clock className="w-3.5 h-3.5" />
-          <span>Tijden</span>
+          <Clock className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
+          <span>Vertrektijden</span>
         </button>
 
-        {onOpenEmbedModal && (
+        {/* 3. Bussen / Vloot Drawer Button */}
+        <button
+          onClick={onOpenFleetDrawer}
+          className="px-2.5 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] text-[#060e0a] border border-[var(--accent-gold-bright)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-bold tabular-nums shrink-0"
+          title="Bekijk alle actueel rijdende bussen in Gemeente Steenwijkerland"
+        >
+          <Bus className="w-3.5 h-3.5" />
+          <span>Bussen ({buses.length})</span>
+        </button>
+
+        {/* 4. Deelfietsen Modal Button */}
+        {onOpenDeelfietsModal && (
           <button
-            onClick={onOpenEmbedModal}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
-            title="Insluiten als interactief dataproduct in nieuwsberichten (HTML/Iframe)"
+            onClick={onOpenDeelfietsModal}
+            className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold tabular-nums shrink-0"
+            title="Bekijk beschikbare en gehuurde deelfietsen per dag, week en maand voor alle 17 locaties in Steenwijkerland + CSV export"
           >
-            <Code2 className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
-            <span>Insluiten (&lt;/&gt;)</span>
+            <Bike className="w-3.5 h-3.5 text-[var(--status-blue)]" />
+            <span>Deelfietsen</span>
+            <span className="text-[var(--status-blue)] font-mono text-[11px] tabular-nums">
+              ({deelfietsAvailableCount} vrij)
+            </span>
           </button>
         )}
 
+        {/* 5. NS OV-fiets Station Steenwijk Modal Button */}
+        {onOpenOvFietsModal && (
+          <button
+            onClick={onOpenOvFietsModal}
+            className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold tabular-nums shrink-0"
+            title="Bekijk de actuele en historische beschikbaarheid van NS OV-fietsen op Station Steenwijk (swk002) + CSV export"
+          >
+            <img
+              src="/bicycle_parking_open.png"
+              alt="OV-fiets"
+              className="w-3.5 h-4 object-contain shrink-0"
+            />
+            <span>OV-fiets</span>
+            <span className="text-[var(--accent-gold-bright)] font-mono text-[11px] tabular-nums">
+              ({ovfietsAvailableCount} vrij)
+            </span>
+          </button>
+        )}
+
+        {/* 6. OV Vertraging & Statistieken Modal Button */}
         <button
-          onClick={onOpenFleetDrawer}
-          className="px-3.5 py-1.5 text-xs font-bold text-[#060e0a] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] rounded-[4px] transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer tabular-nums"
+          onClick={onOpenPunctualityModal}
+          className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold tabular-nums shrink-0"
+          title="Bekijk uitval, vertragingen en te vroege passages per halte en per lijn (Maand / Week) + CSV export"
         >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Vloot</span>
-          <span>({buses.length})</span>
+          <BarChart3 className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
+          <span>OV Statistieken (.CSV)</span>
+          {loggedCount > 0 && (
+            <span className="text-[var(--text-muted)] font-mono text-[11px] tabular-nums">
+              · {loggedCount}
+            </span>
+          )}
         </button>
-      </div>
+      </nav>
     </header>
   );
 };

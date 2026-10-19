@@ -854,11 +854,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         style={{ backgroundColor: 'var(--bg-main)' }}
       />
 
-      {/* Top Left Controls: Forensic Dark styled */}
-      <div className="absolute top-14 left-3 z-[500] flex flex-col gap-2">
-        <div className="flex items-center gap-1.5 bg-[var(--bg-card)]/95 backdrop-blur-xs p-1.5 rounded-[5px] border border-[var(--border-subtle)] shadow-2xl text-[var(--text-main)]">
+      {/* Top Left Controls: Forensic Dark styled, responsive horizontal scroll on narrow screens */}
+      <div className="absolute top-2.5 left-2.5 right-2.5 sm:right-auto z-[500] flex flex-col gap-2 max-w-full">
+        <div className="flex items-center gap-1 bg-[var(--bg-card)]/95 backdrop-blur-xs p-1 rounded-[5px] border border-[var(--border-subtle)] shadow-2xl text-[var(--text-main)] overflow-x-auto no-scrollbar">
           {/* Haltes Checkbox */}
-          <label className="flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-xs font-semibold cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] tabular-nums">
+          <label className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] text-[11px] font-semibold cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] tabular-nums whitespace-nowrap shrink-0">
             <input
               type="checkbox"
               checked={showHaltes}
@@ -868,12 +868,12 @@ export const MapComponent: React.FC<MapComponentProps> = ({
             <span>Haltes ({STEENWIJKERLAND_STOPS.length})</span>
           </label>
 
-          <div className="w-[1px] h-4 bg-[var(--border-subtle)]" />
+          <div className="w-[1px] h-4 bg-[var(--border-subtle)] shrink-0" />
 
           {/* Lines Toggle */}
           <button
             onClick={() => onToggleRoutes(!showRoutes)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] text-xs font-medium transition-colors cursor-pointer border tabular-nums ${
+            className={`flex items-center gap-1 px-2 py-1 rounded-[4px] text-[11px] font-medium transition-colors cursor-pointer border tabular-nums whitespace-nowrap shrink-0 ${
               showRoutes
                 ? 'bg-[var(--bg-elevated)] text-[var(--accent-gold-bright)] font-bold border-[var(--border-focus)]'
                 : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)]'
@@ -881,33 +881,33 @@ export const MapComponent: React.FC<MapComponentProps> = ({
             title="Toon lijnennetwerk (incl. Lijn 26 naar Meppel)"
           >
             {showRoutes ? <Eye className="w-3.5 h-3.5 text-[var(--accent-gold)]" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span>Lijnennet ({BUS_ROUTES.length})</span>
+            <span>Lijnen ({BUS_ROUTES.length})</span>
           </button>
 
-          <div className="w-[1px] h-4 bg-[var(--border-subtle)]" />
+          <div className="w-[1px] h-4 bg-[var(--border-subtle)] shrink-0" />
 
           {/* Deelfietsen Checkbox */}
           {onToggleDeelfietsen && (
             <>
-              <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] text-xs font-semibold cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] tabular-nums">
+              <label className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] text-[11px] font-semibold cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] tabular-nums whitespace-nowrap shrink-0">
                 <input
                   type="checkbox"
                   checked={showDeelfietsen}
                   onChange={(e) => onToggleDeelfietsen(e.target.checked)}
                   className="w-3.5 h-3.5 rounded-[3px] accent-[#38bdf8]"
                 />
-                <Bike className="w-3.5 h-3.5 text-[var(--status-blue)]" />
+                <Bike className="w-3.5 h-3.5 text-[var(--status-blue)] shrink-0" />
                 <span>Deelfietsen ({deelfietsLocations.length})</span>
               </label>
 
-              <div className="w-[1px] h-4 bg-[var(--border-subtle)]" />
+              <div className="w-[1px] h-4 bg-[var(--border-subtle)] shrink-0" />
             </>
           )}
 
           {/* NS OV-fiets Checkbox */}
           {onToggleOvfietsen && (
             <>
-              <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] text-xs font-semibold cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)] text-[var(--text-main)]">
+              <label className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] text-[11px] font-semibold cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] whitespace-nowrap shrink-0">
                 <input
                   type="checkbox"
                   checked={showOvfietsen}
@@ -919,62 +919,62 @@ export const MapComponent: React.FC<MapComponentProps> = ({
                   alt="OV-fiets"
                   className="w-3.5 h-4 object-contain shrink-0"
                 />
-                <span>OV-fiets Steenwijk</span>
+                <span>OV-fiets</span>
               </label>
 
-              <div className="w-[1px] h-4 bg-[var(--border-subtle)]" />
+              <div className="w-[1px] h-4 bg-[var(--border-subtle)] shrink-0" />
             </>
           )}
 
           {/* GPS Crosshair */}
           <button
             onClick={() => setIsFollowingUserGps(!isFollowingUserGps)}
-            className={`p-1.5 rounded-[4px] border transition-colors cursor-pointer ${
+            className={`p-1.5 rounded-[4px] border transition-colors cursor-pointer shrink-0 ${
               isFollowingUserGps
                 ? 'bg-[var(--accent-gold)] text-[#060e0a] border-[var(--accent-gold-bright)]'
                 : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)]'
             }`}
             title="Volg mijn GPS positie"
           >
-            <Crosshair className="w-4 h-4" />
+            <Crosshair className="w-3.5 h-3.5" />
           </button>
 
           {/* Layer switcher */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               onClick={() => setShowLayerMenu(!showLayerMenu)}
               className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] rounded-[4px] transition-colors cursor-pointer"
               title="Kaartlaag wijzigen"
             >
-              <Layers className="w-4 h-4" />
+              <Layers className="w-3.5 h-3.5" />
             </button>
-
-            {showLayerMenu && (
-              <div className="absolute top-full left-0 mt-2 w-56 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-[5px] shadow-2xl p-1.5 z-50 text-xs">
-                <div className="px-2 py-1 text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-wider">
-                  Kaartlagen (Buiten grens donker)
-                </div>
-                {(Object.keys(TILE_LAYERS) as TileLayerKey[]).map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      setActiveTileLayer(key);
-                      setShowLayerMenu(false);
-                    }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-[4px] transition-colors flex items-center justify-between cursor-pointer ${
-                      activeTileLayer === key
-                        ? 'bg-[var(--bg-card)] text-[var(--accent-gold-bright)] font-semibold border border-[var(--border-focus)]'
-                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)]'
-                    }`}
-                  >
-                    <span>{TILE_LAYERS[key].name}</span>
-                    {activeTileLayer === key && <span className="w-2 h-2 rounded-[2px] bg-[var(--accent-gold)]" />}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
+
+        {showLayerMenu && (
+          <div className="w-56 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-[5px] shadow-2xl p-1.5 z-50 text-xs">
+            <div className="px-2 py-1 text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-wider">
+              Kaartlagen (Buiten grens donker)
+            </div>
+            {(Object.keys(TILE_LAYERS) as TileLayerKey[]).map((key) => (
+              <button
+                key={key}
+                onClick={() => {
+                  setActiveTileLayer(key);
+                  setShowLayerMenu(false);
+                }}
+                className={`w-full text-left px-2.5 py-1.5 rounded-[4px] transition-colors flex items-center justify-between cursor-pointer ${
+                  activeTileLayer === key
+                    ? 'bg-[var(--bg-card)] text-[var(--accent-gold-bright)] font-semibold border border-[var(--border-focus)]'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)]'
+                }`}
+              >
+                <span>{TILE_LAYERS[key].name}</span>
+                {activeTileLayer === key && <span className="w-2 h-2 rounded-[2px] bg-[var(--accent-gold)]" />}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Camera Following Banner */}
         {followedBusId && (
@@ -1000,7 +1000,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       </div>
 
       {/* Top Right: Steenwijkerland Hotspots & Lijn 26 Quick Jump */}
-      <div className="absolute top-3 right-3 z-[500] hidden md:flex items-center gap-1 bg-[var(--bg-card)]/95 backdrop-blur-xs p-1.5 rounded-[5px] border border-[var(--border-subtle)] shadow-2xl text-[var(--text-main)]">
+      <div className="absolute top-2.5 right-2.5 z-[500] hidden xl:flex items-center gap-1 bg-[var(--bg-card)]/95 backdrop-blur-xs p-1 rounded-[5px] border border-[var(--border-subtle)] shadow-2xl text-[var(--text-main)]">
         <span className="text-[11px] font-semibold text-[var(--text-muted)] px-2 flex items-center gap-1">
           <MapPin className="w-3 h-3 text-[var(--accent-gold)]" />
           Steenwijkerland:
