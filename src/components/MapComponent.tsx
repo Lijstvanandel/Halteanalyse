@@ -30,7 +30,9 @@ import {
   createGpsLocationIcon,
   createDeelfietsIcon,
   createOvFietsMarkerIcon,
+  createTrainMarkerIcon,
 } from '../utils/markerIcons';
+import { TrainPosition } from '../types/train';
 import {
   Crosshair,
   Layers,
@@ -42,12 +44,18 @@ import {
   ZoomOut,
   Maximize2,
   Bike,
+  Train,
 } from 'lucide-react';
 
 interface MapComponentProps {
   buses: BusPosition[];
   selectedBus: BusPosition | null;
   onSelectBus: (bus: BusPosition | null) => void;
+  trains?: TrainPosition[];
+  selectedTrain?: TrainPosition | null;
+  onSelectTrain?: (train: TrainPosition | null) => void;
+  showTrains?: boolean;
+  onToggleTrains?: (show: boolean) => void;
   onSelectStop?: (stop: BusStop) => void;
   onOpenStopStats?: (stop: BusStop) => void;
   punctualityLogs?: PunctualityLogEntry[];
@@ -98,6 +106,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   buses,
   selectedBus,
   onSelectBus,
+  trains = [],
+  selectedTrain = null,
+  onSelectTrain,
+  showTrains = true,
+  onToggleTrains,
   onSelectStop,
   onOpenStopStats,
   punctualityLogs = [],
@@ -123,6 +136,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const currentTileLayerRef = useRef<L.TileLayer | null>(null);
   const busMarkersRef = useRef<Map<string, L.Marker>>(new Map());
+  const trainMarkersRef = useRef<Map<string, L.Marker>>(new Map());
   const haltesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const deelfietsLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const ovfietsLayerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -768,6 +782,78 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     }
   }, [buses, selectedBus, followedBusId, onSelectBus]);
 
+  // Update NS Train Markers
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+    const trainMarkers = trainMarkersRef.current;
+
+    if (!showTrains) {
+      for (const [, marker] of trainMarkers.entries()) {
+        map.removeLayer(marker);
+      }
+      trainMarkers.clear();
+      return;
+    }
+
+    // Strictly filter trains within Steenwijkerland municipal borders:
+    // Trains outside the municipality boundaries must NOT be marked on the map
+    const activeTrainsInMunicipality = trains.filter((t) =>
+      isPointInSteenwijkerland(t.lat, t.lng)
+    );
+    const activeTrainIds = new Set(activeTrainsInMunicipality.map((t) => t.id));
+
+    // Remove obsolete markers or markers for trains that moved outside the municipal borders
+    for (const [id, marker] of trainMarkers.entries()) {
+      if (!activeTrainIds.has(id)) {
+        map.removeLayer(marker);
+        trainMarkers.delete(id);
+      }
+    }
+
+    // Add or update live trains inside the municipality
+    activeTrainsInMunicipality.forEach((train) => {
+      const isSelected = selectedTrain?.id === train.id;
+      const icon = createTrainMarkerIcon(train, isSelected);
+
+      const delayText =
+        train.delayMinutes > 0
+          ? `<span style="color:#ef4444;font-weight:bold;">+${train.delayMinutes} min vertraagd</span>`
+          : train.delayMinutes < 0
+          ? `<span style="color:#38bdf8;font-weight:bold;">${train.delayMinutes} min vroeger</span>`
+          : `<span style="color:#10b981;font-weight:bold;">op tijd</span>`;
+
+      const tooltipHtml = `<div class="font-sans text-xs text-[#f5f6f4] tabular-nums">
+        <strong class="text-[#38bdf8]">${train.operatorName} · ${train.trainType} ${train.matnummer}</strong><br/>
+        <span class="text-[#f5f6f4]">Richting ${train.destination}</span><br/>
+        <span class="text-[#9bb0a4]">${train.platform || 'Spoor 1/2'} · Snelheid ${train.speedKmH} km/u</span><br/>
+        <span>${delayText} · <span class="text-[#60756a]">${train.lastUpdated}</span></span>
+      </div>`;
+
+      if (trainMarkers.has(train.id)) {
+        const marker = trainMarkers.get(train.id)!;
+        marker.setLatLng([train.lat, train.lng]);
+        marker.setIcon(icon);
+        marker.setTooltipContent(tooltipHtml);
+      } else {
+        const marker = L.marker([train.lat, train.lng], { icon, zIndexOffset: 920 });
+        marker.bindTooltip(tooltipHtml, {
+          direction: 'top',
+          offset: [0, -14],
+        });
+
+        marker.on('click', () => {
+          if (onSelectTrain) {
+            onSelectTrain(train);
+          }
+        });
+
+        marker.addTo(map);
+        trainMarkers.set(train.id, marker);
+      }
+    });
+  }, [trains, showTrains, selectedTrain, onSelectTrain]);
+
   // Geolocation watch
   useEffect(() => {
     if (!isFollowingUserGps || !mapInstanceRef.current) return;
@@ -920,6 +1006,26 @@ export const MapComponent: React.FC<MapComponentProps> = ({
                   className="w-3.5 h-4 object-contain shrink-0"
                 />
                 <span>OV-fiets</span>
+              </label>
+
+              <div className="w-[1px] h-4 bg-[var(--border-subtle)] shrink-0" />
+            </>
+          )}
+
+          {/* NS Treinen Checkbox */}
+          {onToggleTrains && (
+            <>
+              <label className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] text-[11px] font-semibold cursor-pointer transition-colors hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] tabular-nums whitespace-nowrap shrink-0">
+                <input
+                  type="checkbox"
+                  checked={showTrains}
+                  onChange={(e) => onToggleTrains(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded-[3px] accent-[#38bdf8]"
+                />
+                <Train className="w-3.5 h-3.5 text-[var(--status-blue)] shrink-0" />
+                <span>
+                  Treinen ({trains.filter((t) => isPointInSteenwijkerland(t.lat, t.lng)).length})
+                </span>
               </label>
 
               <div className="w-[1px] h-4 bg-[var(--border-subtle)] shrink-0" />

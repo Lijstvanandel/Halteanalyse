@@ -226,3 +226,92 @@ export function createOvFietsMarkerIcon(
     popupAnchor: [0, -44],
   });
 }
+
+/**
+ * Official NS Train Marker Icon using 'NS.png' (matching RRREIS.png and QBUZZ.png)
+ * Keeps 'IC' and 'Sprinter' labels visible in the marker badge.
+ * Premium Forensic Dark style (Zero-Pill discipline, tabular-nums)
+ */
+export function createTrainMarkerIcon(
+  train: {
+    line: string;
+    matnummer: string;
+    heading: number;
+    delayMinutes: number;
+    destination: string;
+    speedKmH: number;
+  },
+  isSelected = false
+): L.DivIcon {
+  const isDelayed = train.delayMinutes > 1;
+  const delayColor = isDelayed ? '#ef4444' : train.delayMinutes < 0 ? '#38bdf8' : '#10b981';
+  const delayBadge =
+    train.delayMinutes > 0
+      ? `+${train.delayMinutes}m`
+      : train.delayMinutes < 0
+      ? `${train.delayMinutes}m`
+      : 'op tijd';
+
+  const isSprinter = train.line.toLowerCase().includes('sprinter');
+  const typeCode = isSprinter ? 'Sprinter' : 'IC';
+  const pointerColor = '#38bdf8';
+  const pointerStroke = '#f5f6f4';
+
+  const html = `
+    <div class="relative group cursor-pointer select-none tabular-nums" style="width: 48px; height: 48px; transform: translate(-50%, -50%);">
+      <!-- Selection frame (Zero-Pill architectural square) -->
+      ${
+        isSelected
+          ? `<div class="absolute -inset-2 rounded-[5px] border-2 border-[#38bdf8] bg-[#38bdf8]/15 pointer-events-none"></div>`
+          : ''
+      }
+
+      <!-- Rotated direction pointer -->
+      <div
+        style="transform: rotate(${train.heading || 0}deg); transform-origin: center center;"
+        class="w-12 h-12 flex items-center justify-center pointer-events-none"
+      >
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="24,1 29,11 19,11" fill="${pointerColor}" stroke="${pointerStroke}" stroke-width="1.5" />
+        </svg>
+      </div>
+
+      <!-- Official NS.png Train Marker Image -->
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none" style="top: 4px;">
+        <img
+          src="/NS.png"
+          alt="NS Trein"
+          class="w-9 h-9 object-contain drop-shadow-md rounded-[4px]"
+          draggable="false"
+        />
+      </div>
+
+      <!-- Train Series (IC / Sprinter) & Material Number Tag -->
+      <div class="absolute -bottom-3.5 left-1/2 -translate-x-1/2 flex items-center shadow-md rounded-[4px] px-1.5 py-0.5 bg-[#0b1a13] border border-[#1b3829] whitespace-nowrap z-10 pointer-events-none tabular-nums">
+        <span class="text-[9px] font-bold px-1 rounded-[3px] mr-1 leading-tight ${
+          isSprinter ? 'bg-[#0284c7] text-[#f5f6f4]' : 'bg-[#eab308] text-[#060e0a]'
+        }">
+          ${typeCode}
+        </span>
+        <span class="text-[9px] font-mono font-bold text-[#f5f6f4] tabular-nums">#${train.matnummer}</span>
+      </div>
+
+      <!-- Delay Tag -->
+      <div
+        class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-[3px] shadow-sm bg-[#060e0a] border whitespace-nowrap pointer-events-none tabular-nums"
+        style="border-color: ${delayColor}; color: ${delayColor};"
+      >
+        <span>${delayBadge}</span>
+      </div>
+    </div>
+  `;
+
+  return L.divIcon({
+    html,
+    className: 'custom-train-marker',
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
+    popupAnchor: [0, -24],
+  });
+}
+

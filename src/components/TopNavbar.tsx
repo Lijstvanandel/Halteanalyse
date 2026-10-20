@@ -12,6 +12,7 @@ import {
   Code2,
   Map as MapIcon,
   ExternalLink,
+  Train,
 } from 'lucide-react';
 
 interface TopNavbarProps {
@@ -25,6 +26,9 @@ interface TopNavbarProps {
   onOpenDeelfietsModal?: () => void;
   onOpenOvFietsModal?: () => void;
   onOpenEmbedModal?: () => void;
+  onOpenAansluitingenModal?: () => void;
+  trainsCount?: number;
+  transferSuccessRate?: number;
   deelfietsAvailableCount?: number;
   ovfietsAvailableCount?: number;
   loggedCount?: number;
@@ -48,6 +52,9 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onOpenDeelfietsModal,
   onOpenOvFietsModal,
   onOpenEmbedModal,
+  onOpenAansluitingenModal,
+  trainsCount = 0,
+  transferSuccessRate = 0,
   deelfietsAvailableCount = 0,
   ovfietsAvailableCount = 0,
   loggedCount = 0,
@@ -285,7 +292,24 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </button>
         )}
 
-        {/* 6. OV Vertraging & Statistieken Modal Button */}
+        {/* 6. Aansluitingen & Overstap Station Steenwijk */}
+        {onOpenAansluitingenModal && (
+          <button
+            onClick={onOpenAansluitingenModal}
+            className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--status-blue)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold tabular-nums shrink-0"
+            title="Bekijk de overstap- en aansluitingsanalyse tussen bussen en treinen op station Steenwijk (per dag, week, maand, per lijn) + CSV export"
+          >
+            <Train className="w-3.5 h-3.5 text-[var(--status-blue)]" />
+            <span>Aansluitingen</span>
+            {transferSuccessRate > 0 && (
+              <span className="text-[var(--status-blue)] font-mono text-[11px] tabular-nums font-bold">
+                ({transferSuccessRate}% gehaald)
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* 7. OV Vertraging & Statistieken Modal Button */}
         <button
           onClick={onOpenPunctualityModal}
           className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer font-semibold tabular-nums shrink-0"

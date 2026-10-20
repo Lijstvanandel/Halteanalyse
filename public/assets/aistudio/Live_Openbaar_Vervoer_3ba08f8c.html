@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<!-- saved from url=(0047)https://ovzoeker.nl/locatie/52.72091:6.12591:12 -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script src="./Live Openbaar Vervoer_files/f(5).txt"></script><script src="./Live Openbaar Vervoer_files/f(6).txt" fetchpriority="high"></script>
+        
+
+        <meta name="viewport" content="initial-scale=0.8, user-scalable=no">
+
+        <title>Live Openbaar Vervoer</title>
+
+        <meta name="description" content="Live bus, tram en trein posities en actuele beschikbaarheid van OV-fietsen, zodat je weet waar je aan toe bent met het openbaar vervoer.">
+
+        <link rel="stylesheet" href="./Live Openbaar Vervoer_files/font-awesome.min.css">
+        <link rel="stylesheet" href="./Live Openbaar Vervoer_files/jquery.qtip.min.css">
+        <link rel="stylesheet" href="./Live Openbaar Vervoer_files/css">
+        <link rel="stylesheet" href="./Live Openbaar Vervoer_files/css(1)">
+        <link rel="stylesheet" href="./Live Openbaar Vervoer_files/leaflet.css" integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ==" crossorigin="">
+        <link rel="stylesheet" href="./Live Openbaar Vervoer_files/style.css">
+        <link rel="icon" href="https://ovzoeker.nl/media/favicon.png">
+
+        <!-- Matomo -->
+        <script type="text/javascript" async="" defer="" src="https://matomo.while.io/piwik.js"></script><script type="text/javascript">
+          var _paq = _paq || [];
+          /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+          _paq.push(['trackPageView']);
+          _paq.push(['enableLinkTracking']);
+          (function() {
+            var u="//matomo.while.io/";
+            _paq.push(['setTrackerUrl', u+'piwik.php']);
+            _paq.push(['setSiteId', '1']);
+            var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+            g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+          })();
+        </script>
+        <!-- End Matomo Code -->
+    <meta http-equiv="origin-trial" content="AlK2UR5SkAlj8jjdEc9p3F3xuFYlF6LYjAML3EOqw1g26eCwWPjdmecULvBH5MVPoqKYrOfPhYVL71xAXI1IBQoAAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3NTgwNjcxOTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="Amm8/NmvvQfhwCib6I7ZsmUxiSCfOxWxHayJwyU1r3gRIItzr7bNQid6O8ZYaE1GSQTa69WwhPC9flq/oYkRBwsAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3NTgwNjcxOTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A9nrunKdU5m96PSN1XsSGr3qOP0lvPFUB2AiAylCDlN5DTl17uDFkpQuHj1AFtgWLxpLaiBZuhrtb2WOu7ofHwEAAACKeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3NzQzMTA0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><meta http-equiv="origin-trial" content="A93bovR+QVXNx2/38qDbmeYYf1wdte9EO37K9eMq3r+541qo0byhYU899BhPB7Cv9QqD7wIbR1B6OAc9kEfYCA4AAACQeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3NzQzMTA0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><meta http-equiv="origin-trial" content="A1S5fojrAunSDrFbD8OfGmFHdRFZymSM/1ss3G+NEttCLfHkXvlcF6LGLH8Mo5PakLO1sCASXU1/gQf6XGuTBgwAAACQeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3NzQzMTA0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><script async="" fetchpriority="high" src="./Live Openbaar Vervoer_files/ca-pub-4259747131061893"></script><script async="" src="./Live Openbaar Vervoer_files/AGSKWxVfflxx5QaoWX1sYGdGiVGHvrbEahfGCERkCaLh-Z-rtFoCYV_xxBOOy_pWue8lhJ1fTV-gkErzTp5-dBedPK0XWzlbXV77nouGLB0B-li0vViry5TZHVVEMP9aG_opOlG2KDmZwg=="></script><script async="" src="./Live Openbaar Vervoer_files/AGSKWxX2O4kvksEvMkM423TGd17yaV5vlkLDLYwqzU4_G4w-z0z2XhvzhbID0B8u037WVz0V8IFOVcxoD07PEsvJJmynYCvLZWEi9yuUlBCbaO5fxjWgfHAnIIqH3GPZbwtOv5Gtt8zE2w=="></script><meta http-equiv="origin-trial" content="AxjhRadLCARYRJawRjMjq4U8V8okQvSnrBIJWdMajuEkN3/DfVAcLcFhMVrUWnOXagwlI8dQD84FwJDGj9ohqAYAAABveyJvcmlnaW4iOiJodHRwczovL2dvb2dsZWFkc2VydmljZXMuY29tOjQ0MyIsImZlYXR1cmUiOiJGZXRjaExhdGVyQVBJIiwiZXhwaXJ5IjoxNzI1NDA3OTk5LCJpc1RoaXJkUGFydHkiOnRydWV9"><script async="" src="./Live Openbaar Vervoer_files/AGSKWxW04QucvtFb6mnoaoIYgUz93P1JmrfL4Tldq-hkXAGbG21RC1pA7zr7Hsm3ZJYcUZgBql2YTipZktIvKr8M3UiP0UBE3wijNJc0S-iQ8UoFJZsBsNZhBBrv4xFk76bq1hMNE5hUBg=="></script><link type="text/css" href="./Live Openbaar Vervoer_files/css(2)" rel="stylesheet"><link type="text/css" href="./Live Openbaar Vervoer_files/css(3)" rel="stylesheet"></head>
+
+    <body class="" style="padding: 0px 0px 154px;">
+        <!-- <div id="notice">
+            Er wordt op dit moment gewerkt aan het oplossen van de storingen op de website.
+        </div> -->
+
+        <div id="controlbox">
+            <div id="searchbox">
+                <input type="text" placeholder="Zoeken naar haltes, voertuigen en OV-fietslocaties" spellcheck="false" id="text-search" data-hasqtip="0" oldtitle="Zoek op&lt;ul&gt;&lt;li&gt;&lt;em&gt;Haltes&lt;/em&gt;: naam, haltenummer&lt;/li&gt;&lt;li&gt;&lt;em&gt;OV-fietslocaties&lt;/em&gt;: naam, code&lt;/li&gt;&lt;li&gt;&lt;em&gt;Voertuigen&lt;/em&gt;: voertuignummer, ritnummer, omloopnummer, lijn, richting, materieeltype&lt;/li&gt;&lt;/ul&gt;&lt;br&gt;Voorbeelden:&lt;ul&gt;&lt;li&gt;intercity richting den haag&lt;/li&gt;&lt;li&gt;utrecht centraal&lt;/li&gt;&lt;li&gt;virm 6&lt;/li&gt;&lt;/ul&gt;" title="" autocomplete="off">
+                <span id="button-search" class="fa fa-search" data-hasqtip="1" oldtitle="Zoeken" title=""></span>
+                <span class="divider"></span>
+                <span id="button-location" class="fa fa-compass" data-hasqtip="2" oldtitle="Ga naar je huidige locatie" title=""></span>
+                <span class="divider"></span>
+                <a href="https://ovzoeker.nl/info.html" target="_blank" class="button-link"><span id="button-info" class="fa fa-info-circle" data-hasqtip="3" oldtitle="Informatie, disclaimer en privacybeleid" title=""></span></a>
+            </div>
+
+            <div id="optionsbox">
+                <input id="check-vehicles" type="checkbox" checked=""> <label for="check-vehicles" data-hasqtip="4" oldtitle="Toon voertuigen op de kaart" title="">Voertuigen</label>
+                <input id="check-no-trip" type="checkbox" checked=""> <label for="check-no-trip" data-hasqtip="5" oldtitle="Toon inactieve voertuigen op de kaart" title="">Voertuigen zonder rit</label>
+                <input id="check-stops" type="checkbox" checked=""> <label for="check-stops" data-hasqtip="6" oldtitle="Toon haltes op de kaart bij inzoomen" title="">Haltes</label>
+                <input id="check-bikes" type="checkbox" checked=""> <label for="check-bikes" data-hasqtip="7" oldtitle="Toon OV-fietslocaties op de kaart" title="">OV-fiets locaties</label>
+
+                <div id="dropdown-agencies">
+                    <span>Vervoerders</span><i class="fa fa-arrow-circle-down"></i>
+
+                    <ul id="dropdown-agencies-list" style="display: none;">
+                        <!-- Populated by code -->
+                    <li><input type="checkbox" id="check-agency-ARR" checked=""> <label for="check-agency-ARR">Arriva</label></li><li><input type="checkbox" id="check-agency-CXX" checked=""> <label for="check-agency-CXX">Connexxion</label></li><li><input type="checkbox" id="check-agency-EBS" checked=""> <label for="check-agency-EBS">EBS</label></li><li><input type="checkbox" id="check-agency-GVB" checked=""> <label for="check-agency-GVB">GVB</label></li><li><input type="checkbox" id="check-agency-HTM" checked=""> <label for="check-agency-HTM">HTM</label></li><li><input type="checkbox" id="check-agency-KEOLIS" checked=""> <label for="check-agency-KEOLIS">Keolis</label></li><li><input type="checkbox" id="check-agency-NS" checked=""> <label for="check-agency-NS">NS</label></li><li><input type="checkbox" id="check-agency-QBUZZ" checked=""> <label for="check-agency-QBUZZ">Qbuzz</label></li><li><input type="checkbox" id="check-agency-RET" checked=""> <label for="check-agency-RET">RET</label></li><li><input type="checkbox" id="check-agency-TEXELHOPPER" checked=""> <label for="check-agency-TEXELHOPPER">Texelhopper</label></li></ul>
+                </div>
+
+                <div id="dropdown-punctuality-container">
+                    <select id="dropdown-punctuality" autocomplete="off">
+                        <optgroup label="Te vroeg">
+                            <option value="-5">≥ 5 min te vroeg</option>
+                            <option value="-10">≥ 10 min te vroeg</option>
+                            <option value="-15">≥ 15 min te vroeg</option>
+                            <option value="-30">≥ 30 min te vroeg</option>
+                            <option value="-60">≥ 1 uur te vroeg</option>
+                        </optgroup>
+                        <optgroup label="Vertraging">
+                            <option value="5">≥ 5 min vertraging</option>
+                            <option value="10">≥ 10 min vertraging</option>
+                            <option value="15">≥ 15 min vertraging</option>
+                            <option value="30">≥ 30 min vertraging</option>
+                            <option value="60">≥ 1 uur vertraging</option>
+                        </optgroup>
+                        <optgroup label="Overige opties">
+                            <option value="any" selected="">Elke punctualiteit</option>
+                            <option value="ontime">Op tijd (± 5 min)</option>
+                        </optgroup>
+                    </select>
+
+                    <i class="fa fa-arrow-circle-down"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- <div id="adbox">
+            <ins class="adsbygoogle" style="display:inline-block;width:728px;height:90px" data-ad-client="ca-pub-4259747131061893" data-ad-slot="7064784143"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div> -->
+
+        <div id="cookieconsent" style="display: none;">
+            <div id="cookieconsent-inner">
+                <p>
+                    Deze website maakt gebruik van Google Adsense om advertenties te laten zien. De opbrengsten hiervan worden gebruikt om de serverkosten en het ontwikkelen van de website te betalen.
+                </p>
+
+                <p>
+                    Voor het functioneren van deze advertenties moeten er cookies in de browser opgeslagen worden. De advertenties zelf zijn <em>niet</em> gepersonaliseerd en er wordt dan ook geen persoonlijke informatie gedeeld.
+                </p>
+
+                <p>
+                    </p><div id="cookieconsent-inner-buttons">
+                        <input id="cookieconsent-button-info" type="button" value="Meer informatie" style="margin-right: 10px">
+                        <input id="cookieconsent-button-accept" type="button" value="Ik ga akkoord" style="flex-grow: 3">
+                    </div>
+                <p></p>
+            </div>
+        </div>
+
+        <div id="map" class="leaflet-container leaflet-touch leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom" tabindex="0" style="position: relative; outline: none;"><div class="leaflet-pane leaflet-map-pane" style="transform: translate3d(341px, -89px, 0px);"><div class="leaflet-pane leaflet-tile-pane"><div class="leaflet-layer " style="z-index: 1; opacity: 1;"><div class="leaflet-tile-container leaflet-zoom-animated" style="z-index: 17; transform: translate3d(-404px, -699px, 0px) scale(2);"></div><div class="leaflet-tile-container leaflet-zoom-animated" style="z-index: 18; transform: translate3d(-584px, -511px, 0px) scale(1);"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1338.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1020px, 680px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1339.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1020px, 936px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1338(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(764px, 680px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1338(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1276px, 680px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1339(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(764px, 936px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1339(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1276px, 936px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1337.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1020px, 424px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1340.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1020px, 1192px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1337(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(764px, 424px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1337(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1276px, 424px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1340(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(764px, 1192px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1340(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1276px, 1192px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1338(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(508px, 680px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1338(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1532px, 680px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1339(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(508px, 936px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1339(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1532px, 936px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1337(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(508px, 424px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1337(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1532px, 424px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1340(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(508px, 1192px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1340(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1532px, 1192px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1338(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(252px, 680px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1338(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1788px, 680px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1339(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(252px, 936px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1339(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1788px, 936px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1337(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(252px, 424px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1337(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1788px, 424px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1340(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(252px, 1192px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1340(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1788px, 1192px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1338(7).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-4px, 680px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1338(8).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(2044px, 680px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1339(7).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-4px, 936px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1339(8).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(2044px, 936px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1337(7).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-4px, 424px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1337(8).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(2044px, 424px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1340(7).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-4px, 1192px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1340(8).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(2044px, 1192px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1341.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1020px, 1448px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1341(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(764px, 1448px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1341(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1276px, 1448px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1341(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(508px, 1448px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1341(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1532px, 1448px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1341(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(252px, 1448px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1341(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1788px, 1448px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1341(7).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-4px, 1448px, 0px); opacity: 1;"><img alt="" role="presentation" src="./Live Openbaar Vervoer_files/1341(8).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(2044px, 1448px, 0px); opacity: 1;"></div></div></div><div class="leaflet-pane leaflet-shadow-pane"></div><div class="leaflet-pane leaflet-overlay-pane"><canvas class="leaflet-canvas-icon-layer leaflet-layer leaflet-zoom-animated" width="1912" height="948" style="z-index: 600; transform: translate3d(-341px, 89px, 0px);"></canvas><div class="leaflet-canvas-tooltip" style="display: none; left: 1191px; top: 825px; transform: translate3d(-341px, 89px, 0px); z-index: 700;">EBS:2141</div><svg pointer-events="none" class="leaflet-zoom-animated" width="2294" height="1138" viewBox="-532 -6 2294 1138" style="transform: translate3d(-532px, -6px, 0px);"><g><path class="leaflet-interactive" stroke="red" stroke-opacity="0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M0 0"></path><path class="leaflet-interactive" stroke="red" stroke-opacity="1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M821 757L835 848L842 868L847 876L873 905L892 929L922 981L944 1008L948 1016L953 1059L953 1074L929 1132"></path><path class="leaflet-interactive" stroke="red" stroke-opacity="0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M0 0"></path><path class="leaflet-interactive" stroke="red" stroke-opacity="0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M403 -6L466 101L553 209L563 217L575 222L579 222L679 250L694 253L706 259L714 266L721 277L844 605L844 622L830 672L818 737L829 814L836 852L842 868L847 876L873 905L892 929L922 981L944 1008L949 1020L953 1059L953 1074L929 1132"></path><path class="leaflet-interactive" stroke="red" stroke-opacity="0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M794 654L818 662L827 677L824 698L821 706L822 704"></path></g></svg></div><div class="leaflet-pane leaflet-marker-pane"></div><div class="leaflet-pane leaflet-tooltip-pane"></div><div class="leaflet-pane leaflet-popup-pane"><div class="leaflet-popup  leaflet-zoom-animated" style="opacity: 1; transform: translate3d(821px, 757px, 0px); bottom: 28px; left: -190px;"><div class="leaflet-popup-content-wrapper"><div class="leaflet-popup-content" style="width: 348px;">
+            <div id="vehicle-info-NS:734" class="vehicle-info-container" style="display: block;">
+                <div class="infowindow-header">
+                    <span class="vehicle-header-route" style="background: rgb(255, 204, 51); color: rgb(0, 0, 0);">
+                        <span>NS Intercity <span class="fa fa-arrow-right"></span> Schiphol Airport</span>
+                        
+                    </span>
+                </div>
+
+                <div class="vehicle-details">
+                    <ul>
+                        <li><nobr><!-- Ignore spacing
+                                --><span>Treinstel 3319</span>
+                                
+
+                                <span>(ICNG 8B)</span>
+                            </nobr></li>
+                        
+
+                        
+                        <li><nobr>Serie <a target="_blank" href="http://wiki.ovinnederland.nl/wiki/Treinserie_700_(2026)">700</a></nobr></li>
+                        
+                        
+
+                        <li><nobr>111 km/h</nobr></li>
+
+                        <li><nobr><span class="fa fa-bicycle"></span> toegestaan</nobr></li>
+                            
+
+                            
+                            
+
+                            <li class="negative"><nobr>59 sec later</nobr></li>
+                            
+                            
+
+                        <li><nobr>10:30:05</nobr></li>
+
+                        <li>
+                                <nobr>
+                                    Permalink
+                                    <a href="https://ovzoeker.nl/voertuig/NS:734" title="Klik hier om de trein te volgen" onclick="history.replaceState(null, null, this.href); handleLink(); return false;">trein</a>
+                                </nobr>
+
+                                <span> of </span>
+                                
+
+                                <a title="Klik hier om het treinstel te volgen" onclick="history.replaceState(null, null, this.href); handleLink(); return false;" href="https://ovzoeker.nl/treinstel/3319">treinstel 3319</a>
+                                    
+                                    
+                            </li>
+                        
+                    </ul>
+                </div>
+
+                <table class="vehicle-stops">
+                        <thead>
+                            <tr>
+                                <td class="vehicle-stop">Halte</td>
+                                <td>Verwachte aankomsttijd</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="vehicle-stop"><a onclick="history.replaceState(null, null, this.href); handleLink(); return false;" href="https://ovzoeker.nl/halte/2994291">Zwolle</a></td>
+
+                                <td><span title="10:44:59">14:42 min</span></td>
+                                
+                            </tr><tr>
+                                <td class="vehicle-stop"><a onclick="history.replaceState(null, null, this.href); handleLink(); return false;" href="https://ovzoeker.nl/halte/3670881">Lelystad Centrum</a></td>
+
+                                <td><span title="11:11:59">41:42 min</span></td>
+                                
+                            </tr><tr>
+                                <td class="vehicle-stop"><a onclick="history.replaceState(null, null, this.href); handleLink(); return false;" href="https://ovzoeker.nl/halte/3065336">Almere Centrum</a></td>
+
+                                <td><span title="11:26:59">56:42 min</span></td>
+                                
+                            </tr><tr>
+                                <td class="vehicle-stop"><a onclick="history.replaceState(null, null, this.href); handleLink(); return false;" href="https://ovzoeker.nl/halte/2992212">Amsterdam Zuid</a></td>
+
+                                <td><span title="11:48:59">11:48:59</span></td>
+                                
+                            </tr><tr>
+                                <td class="vehicle-stop"><a onclick="history.replaceState(null, null, this.href); handleLink(); return false;" href="https://ovzoeker.nl/halte/3065391">Schiphol Airport</a></td>
+
+                                <td><span title="12:00:59">12:00:59</span></td>
+                                
+                            </tr>
+
+                            
+                        </tbody>
+                    </table>
+
+                <p id="vehicle-chart-info-NS:734" class="vehicle-chart-info" style="display: block;">Punctualiteit gedurende de rit (negatief is vroeger):</p>
+                    <canvas id="vehicle-chart-NS:734" style="width: 250pt; height: 90pt; padding-top: 10pt; display: block;" width="333" height="133"></canvas>
+            </div>
+        </div></div><div class="leaflet-popup-tip-container"><div class="leaflet-popup-tip"></div></div><a class="leaflet-popup-close-button" href="https://ovzoeker.nl/locatie/52.72091:6.12591:12#close" style="">×</a></div></div><div class="leaflet-proxy leaflet-zoom-animated" style="transform: translate3d(542131px, 342922px, 0px) scale(2048);"></div></div><div class="leaflet-control-container"><div class="leaflet-top leaflet-left"></div><div class="leaflet-top leaflet-right"></div><div class="leaflet-bottom leaflet-left"></div><div class="leaflet-bottom leaflet-right"><div class="leaflet-control-attribution leaflet-control"><a href="http://leafletjs.com/" title="A JS library for interactive maps">Leaflet</a> | © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors</div></div></div></div>
+
+        <script id="vue-stop-template" type="text/html">
+            <div id="stop-info-{{STOPID}}" class="stop-info-container" style="display: none">
+                <div class="infowindow-header">
+                    <span v-if="stop.platform_code && stop.stop_name.indexOf('(') === -1" class="stop-header-name">{{stop.stop_name}} (platform {{stop.platform_code}})</span>
+                    <span v-else class="stop-header-name">{{stop.stop_name}}</span>
+                </div>
+
+                <div class="stop-details">
+                    <ul>
+                        <li v-if="stop.wheelchair_boarding == 1"><nobr><span class="fa fa-wheelchair"></span> toegankelijk</nobr></li>
+                        <li v-if="stop.wheelchair_boarding == 2" class="negative"><nobr><span class="fa fa-wheelchair"></span> niet toegankelijk</nobr></li>
+
+                        <li v-if="stop.stop_code"><nobr>Haltenummer {{stop.stop_code}}</nobr></li>
+
+                        <li><nobr><a href="/halte/{{stop.persistent_id}}" onclick="history.replaceState(null, null, this.href); handleLink(); return false;">Permalink</a></nobr></li>
+                    </ul>
+                </div>
+
+                <table v-if="arrivals.length > 0" class="stop-arrivals">
+                    <thead>
+                        <tr>
+                            <td class="stop-route">Lijn</td>
+                            <td class="stop-heading">Richting</td>
+                            <td>Verwachte aankomsttijd</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="arrival in arrivals" track-by="trip_id">
+                            <td class="stop-route">{{arrival.route_short_name}}</td>
+
+                            <td class="stop-heading">{{arrival.stop_headsign || arrival.trip_headsign}}</td>
+
+                            <td v-if="arrival.ts">
+                                <span v-if="arrival.vehicle_id" title="{{arrival.ts | timeText}}"><a href="/voertuig/{{arrival.vehicle_id}}" onclick="history.replaceState(null, null, this.href); handleLink(); return false;">{{(arrival.ts - currentTime) / 1000 | intervalText}}</a></span>
+                                <span v-else title="{{arrival.ts | timeText}}">{{(arrival.ts - currentTime) / 1000 | intervalText}}</span>
+
+                                <span class="negative" v-if="arrival.punctuality > 0">({{arrival.punctuality | intervalText}} later)</span>
+                                <span class="positive" v-if="arrival.punctuality < 0">({{-arrival.punctuality | intervalText}} vroeger)</span>
+                            </td>
+
+                            <td v-if="arrival.status === 0">Aangekomen</td>
+                            <td v-if="arrival.status === 1">Bij halte</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <span v-else class="negative"><br />Geen geplande ritten in de komende 3 uur.</span>
+            </div>
+        </script>
+
+        <script id="vue-vehicle-template" type="text/html">
+            <div id="vehicle-info-{{VEHICLEID}}" class="vehicle-info-container" style="display: none">
+                <div class="infowindow-header">
+                    <span class="vehicle-header-route" v-bind:style="{ background: color, color: textColor }">
+                        <span v-if="trip">{{route.agency_name}} {{route.route_short_name}} <span class="fa fa-arrow-right"></span> {{currentHeading}}</span>
+                        <template v-else>
+                            <span v-if="vehpos.vehicle.id.indexOf('TEXELHOPPER') === 0"><span class="fa fa-bus"></span> Texelhopper</span>
+                            <span v-else><span class="fa fa-ban"></span> Geen bekende rit</span>
+                        </template>
+                    </span>
+                </div>
+
+                <div class="vehicle-details">
+                    <ul>
+                        <template v-if="(route && route.route_type == 2) || train_series">
+                            <li><nobr><!-- Ignore spacing
+                                --><span v-if="vehpos.vehicle.label">{{vehpos.vehicle.label.indexOf(' + ') !== -1 ? 'Treinstellen' : 'Treinstel'}} {{vehpos.vehicle.label}}</span>
+                                <span v-else>Treinnummer {{vehpos.vehicle.id.split(':')[1]}}</span>
+
+                                <span v-if="train_type">({{train_type}})</span>
+                            </nobr></li>
+                        </template>
+                        <template v-else>
+                            <li v-if="vehpos.vehicle.label && vehpos.vehicle.id.indexOf('TEXELHOPPER') !== 0"><nobr>{{vehicleType}} {{vehpos.vehicle.label}}</nobr></li>
+                            <li v-if="vehpos.vehicle.label && vehpos.vehicle.id.indexOf('TEXELHOPPER') === 0"><nobr>{{vehpos.vehicle.label}}</nobr></li>
+                            <li v-if="vehpos.vehicle.fake"><nobr>Onbekende {{vehicleType.toLowerCase()}}</nobr></li>
+                        </template>
+
+                        <li v-if="journey && journey.journey_id && !train_series"><nobr>Rit {{journey.journey_id}}</nobr></li>
+                        <li v-if="train_series && train_series.series"><nobr>Serie <a href="{{train_series.url}}" target="_blank">{{train_series.series}}</a></nobr></li>
+                        <li v-if="journey && journey.circulation_id"><nobr>Omloopnummer {{journey.circulation_id}}</nobr></li>
+                        <li v-if="journey && journey.numberofcoaches"><nobr>{{journey.numberofcoaches}} {{journey.numberofcoaches == 1 ? 'rijtuig' : 'rijtuigen'}}</nobr></li>
+
+                        <li v-if="vehpos.position.speed !== undefined"><nobr>{{Math.floor(vehpos.position.speed * 3.6)}} km/h</nobr></li>
+
+                        <template v-if="trip">
+                            <li v-if="trip.bikes_allowed == 1"><nobr><span class="fa fa-bicycle"></span> toegestaan</nobr></li>
+                            <li v-if="trip.bikes_allowed == 2" class="negative"><nobr><span class="fa fa-bicycle"></span> niet toegestaan</nobr></li>
+
+                            <li v-if="trip.wheelchair_accessible == 1"><nobr><span class="fa fa-wheelchair"></span> toegankelijk</nobr></li>
+                            <li v-if="trip.wheelchair_accessible == 2" class="negative"><nobr><span class="fa fa-wheelchair"></span> niet toegankelijk</nobr></li>
+
+                            <li v-if="latestPunctuality > 0" class="negative"><nobr>{{latestPunctuality | intervalText}} later</nobr></li>
+                            <li v-if="latestPunctuality < 0" class="positive"><nobr>{{-latestPunctuality | intervalText}} vroeger</nobr></li>
+                            <li v-if="latestPunctuality == 0"><nobr>op tijd</nobr></li>
+                        </template>
+
+                        <li><nobr>{{vehpos.timestamp | timeText}}</nobr></li>
+
+                        <template v-if="trainUnits.length > 0">
+                            <li>
+                                <nobr>
+                                    Permalink
+                                    <a href="/voertuig/{{VEHICLEID}}" title="Klik hier om de trein te volgen" onclick="history.replaceState(null, null, this.href); handleLink(); return false;">trein</a>
+                                </nobr>
+
+                                <span v-if="trainUnits.length == 1"> of </span>
+                                <span v-if="trainUnits.length > 1">, </span>
+
+                                <template v-for="trainUnit in trainUnits">
+                                    <a href="/treinstel/{{trainUnit}}" title="Klik hier om het treinstel te volgen" onclick="history.replaceState(null, null, this.href); handleLink(); return false;">treinstel {{trainUnit}}</a>
+                                    <span v-if="$index < trainUnits.length - 2">, </span>
+                                    <span v-if="$index == trainUnits.length - 2"> of </span>
+                                </template>
+                            </li>
+                        </template>
+                        <template v-else>
+                            <li v-if="!vehpos.vehicle.fake"><nobr><a href="/voertuig/{{VEHICLEID}}" title="Klik hier om het voertuig te volgen" onclick="history.replaceState(null, null, this.href); handleLink(); return false;">Permalink</a></nobr></li>
+                        </template>
+                    </ul>
+                </div>
+
+                <template v-if="arrivals && arrivals.length > 0">
+                    <table class="vehicle-stops">
+                        <thead>
+                            <tr>
+                                <td class="vehicle-stop">Halte</td>
+                                <td>Verwachte aankomsttijd</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="arrival in arrivals" track-by="stop_id">
+                                <td class="vehicle-stop"><a href="/halte/{{arrival.stop_id}}" onclick="history.replaceState(null, null, this.href); handleLink(); return false;">{{arrival.stopName}}</a></td>
+
+                                <td v-if="arrival.time">{{arrival.time}}</td>
+                                <td v-else><span title="{{arrival.ts | timeText}}">{{(arrival.ts - currentTime) / 1000 | intervalText}}</span></td>
+                            </tr>
+
+                            <tr v-if="moreStops"><td><a onclick="showAllStops('{{VEHICLEID}}')" style="font-weight: 600; cursor: pointer">Toon alle haltes</a></td><td></td></tr>
+                        </tbody>
+                    </table>
+                </template>
+
+                <template v-if="showChart">
+                    <p id="vehicle-chart-info-{{VEHICLEID}}" class="vehicle-chart-info" style="display: block;">Punctualiteit gedurende de rit (negatief is vroeger):</p>
+                    <canvas id="vehicle-chart-{{VEHICLEID}}" style="width: 250pt; height: 90pt; padding-top: 10pt; display: block;" width="333" height="116"></canvas>
+                </template>
+            </div>
+        </script>
+
+        <script id="vue-ovfiets-template" type="text/html">
+            <div id="ovfiets-info-{{OVFIETSID}}" style="display: none">
+                <div class="infowindow-header">
+                    <span class="ovf-title">{{ovf.description}}</span><!-- Ignore spacing
+
+                    --><template v-if="ovf.open == 'Yes'"><!--
+                        --><span v-if="ovf.extra.rentalBikes == 0" class="ovf-availability ovf-closed"><span class="fa fa-bicycle"></span> 0</span><!--
+                        --><span v-if="ovf.extra.rentalBikes > 0" class="ovf-availability"><span class="fa fa-bicycle"></span> {{ovf.extra.rentalBikes}}</span><!--
+                        --><span v-if="ovf.extra.rentalBikes === undefined" class="ovf-availability"><span class="fa fa-bicycle"></span> Open</span>
+                    </template>
+                    <span v-else class="ovf-availability ovf-closed">Gesloten</span>
+                </div>
+
+                <div class="vehicle-details">
+                    <ul>
+                        <li><nobr><a href="/ovfiets/{{OVFIETSID}}" onclick="history.replaceState(null, null, this.href); handleLink(); return false;">Permalink</a></nobr></li>
+                    </ul>
+                </div>
+
+                <ul class="ovf-days">
+                    <li v-for="(day, hours) in openingHours" track-by="$index">
+                        <input v-if="selectedWeekday == day" type="radio" id="{{OVFIETSID}}:{{day}}" name="ovf-day-{{OVFIETSID}}" value="{{day}}" onchange="loadOVFietsChart('{{OVFIETSID}}')" checked>
+                        <input v-else type="radio" id="{{OVFIETSID}}:{{day}}" name="ovf-day-{{OVFIETSID}}" value="{{day}}" onchange="loadOVFietsChart('{{OVFIETSID}}')">
+
+                        <label for="{{OVFIETSID}}:{{day}}">
+                            <span class="ovf-day">{{day | dayText}}</span>
+
+                            <span v-if="hours">{{hours}}</span>
+                            <span v-else class="ovf-hours-closed">Gesloten</span>
+                        </label>
+                    </li>
+                </ul>
+
+                <p id="ovf-chart-info-{{OVFIETSID}}" class="ovf-chart-info" style="display: block;">Verwacht aantal (<span class="ovf-disclaimer" onclick="showOVFDisclaimer()">disclaimer</span>):</p>
+
+                <canvas id="ovf-chart-{{OVFIETSID}}" style="width: 200pt; height: 120pt; padding-top: 10pt; display: block;" width="300" height="173"></canvas>
+            </div>
+        </script>
+
+        <script src="./Live Openbaar Vervoer_files/jquery-1.11.3.min.js.downloaden"></script>
+        <script src="./Live Openbaar Vervoer_files/jquery.autocomplete.min.js.downloaden"></script>
+        <script src="./Live Openbaar Vervoer_files/jquery.qtip.min.js.downloaden"></script>
+        <script src="./Live Openbaar Vervoer_files/leaflet.js.downloaden" integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw==" crossorigin=""></script>
+        <script src="./Live Openbaar Vervoer_files/tinycolor-min.js.downloaden"></script>
+        <script src="./Live Openbaar Vervoer_files/Chart.min.js.downloaden"></script>
+        <script src="./Live Openbaar Vervoer_files/vue.min.js.downloaden"></script>
+        <script src="./Live Openbaar Vervoer_files/pako_inflate.min.js.downloaden"></script>
+        <script src="./Live Openbaar Vervoer_files/leaflet.canvas-markers.js.downloaden"></script>
+        <script src="./Live Openbaar Vervoer_files/code.js.downloaden"></script><div class="autocomplete-suggestions" style="position: absolute; display: none; max-height: 300px; z-index: 9999;"></div>
+
+        <script>
+            if (hasCookieConsent()) {
+                // Initialize AdSense
+                var adsenseScript = document.createElement('script');
+                adsenseScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4259747131061893';
+                $('body').append(adsenseScript);
+
+                // Initialize the application itself
+                init();
+            }
+        </script><script src="./Live Openbaar Vervoer_files/f(7).txt"></script>
+    
+
+<iframe name="__tcfapiLocator" style="display: none; width: 0px; height: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; z-index: -1000; left: -1000px; top: -1000px;" src="./Live Openbaar Vervoer_files/saved_resource(1).html"></iframe><ins class="adsbygoogle adsbygoogle-noablate" data-ad-hi="true" data-adsbygoogle-status="done" style="display: none !important;" data-ad-status="unfilled"><div id="aswift_0_host" style="border-width: medium; border-style: none; border-color: currentcolor; border-image: none; height: 0px; width: 0px; margin: 0px; padding: 0px; position: relative; visibility: visible; background-color: transparent; display: inline-block;"><iframe id="aswift_0" name="aswift_0" style="left:0;position:absolute;top:0;border:0;width:undefinedpx;height:undefinedpx;min-height:auto;max-height:none;min-width:auto;max-width:none;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./Live Openbaar Vervoer_files/ads.html" data-google-container-id="a!1" tabindex="0" title="Advertisement" aria-label="Advertisement" data-load-complete="true"></iframe></div></ins><iframe name="googlefcPresent" style="display: none; width: 0px; height: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; z-index: -1000; left: -1000px; top: -1000px;" src="./Live Openbaar Vervoer_files/saved_resource(2).html"></iframe><iframe name="googlefcInactive" src="./Live Openbaar Vervoer_files/saved_resource(3).html" style="display: none; width: 0px; height: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; z-index: -1000; left: -1000px; top: -1000px;"></iframe><iframe name="googlefcLoaded" src="./Live Openbaar Vervoer_files/saved_resource(4).html" style="display: none; width: 0px; height: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; z-index: -1000; left: -1000px; top: -1000px;"></iframe><div style="color-scheme: initial !important; forced-color-adjust: initial !important; math-depth: initial !important; position: initial !important; position-anchor: initial !important; text-size-adjust: initial !important; appearance: initial !important; color: initial !important; font: initial !important; font-palette: initial !important; font-synthesis: initial !important; position-area: initial !important; text-orientation: initial !important; text-rendering: initial !important; text-spacing-trim: initial !important; -webkit-font-smoothing: initial !important; -webkit-locale: initial !important; -webkit-text-orientation: initial !important; -webkit-writing-mode: initial !important; writing-mode: initial !important; zoom: initial !important; accent-color: initial !important; place-content: initial !important; place-items: initial !important; place-self: initial !important; alignment-baseline: initial !important; anchor-name: initial !important; anchor-scope: initial !important; animation-composition: initial !important; animation: initial !important; animation-trigger: initial !important; app-region: initial !important; aspect-ratio: initial !important; backdrop-filter: initial !important; backface-visibility: initial !important; background: initial !important; background-blend-mode: initial !important; baseline-shift: initial !important; baseline-source: initial !important; block-size: initial !important; border-block: initial !important; border: initial !important; border-radius: initial !important; border-collapse: initial !important; border-end-end-radius: initial !important; border-end-start-radius: initial !important; border-inline: initial !important; border-shape: initial !important; border-start-end-radius: initial !important; border-start-start-radius: initial !important; inset: initial !important; box-decoration-break: initial !important; box-shadow: initial !important; box-sizing: initial !important; break-after: initial !important; break-before: initial !important; break-inside: initial !important; buffered-rendering: initial !important; caption-side: initial !important; caret-animation: initial !important; caret-color: initial !important; caret-shape: initial !important; clear: initial !important; clip: initial !important; clip-path: initial !important; clip-rule: initial !important; color-interpolation: initial !important; color-interpolation-filters: initial !important; color-rendering: initial !important; columns: initial !important; column-fill: initial !important; gap: initial !important; rule-break: initial !important; rule: initial !important; rule-inset: initial !important; rule-visibility-items: initial !important; column-span: initial !important; contain: initial !important; contain-intrinsic-block-size: initial !important; contain-intrinsic-size: initial !important; contain-intrinsic-inline-size: initial !important; container: initial !important; content: initial !important; content-visibility: initial !important; corner-shape: initial !important; corner-block-end-shape: initial !important; corner-block-start-shape: initial !important; counter-increment: initial !important; counter-reset: initial !important; counter-set: initial !important; cursor: initial !important; cx: initial !important; cy: initial !important; d: initial !important; display: initial !important; dominant-baseline: initial !important; dynamic-range-limit: initial !important; empty-cells: initial !important; field-sizing: initial !important; fill: initial !important; fill-opacity: initial !important; fill-rule: initial !important; filter: initial !important; flex: initial !important; flex-flow: initial !important; flex-line-count: initial !important; float: initial !important; flood-color: initial !important; flood-opacity: initial !important; frame-sizing: initial !important; grid: initial !important; grid-area: initial !important; height: initial !important; hyphenate-character: initial !important; hyphenate-limit-chars: initial !important; hyphens: initial !important; image-orientation: initial !important; image-rendering: initial !important; initial-letter: initial !important; inline-size: initial !important; inset-block: initial !important; inset-inline: initial !important; interactivity: initial !important; interest-delay: initial !important; interpolate-size: initial !important; isolation: initial !important; letter-spacing: initial !important; lighting-color: initial !important; line-break: initial !important; list-style: initial !important; margin-block: initial !important; margin: initial !important; margin-inline: initial !important; margin-trim: initial !important; marker: initial !important; mask: initial !important; mask-type: initial !important; math-shift: initial !important; math-style: initial !important; max-block-size: initial !important; max-height: initial !important; max-inline-size: initial !important; max-width: initial !important; min-block-size: initial !important; min-height: initial !important; min-inline-size: initial !important; min-width: initial !important; mix-blend-mode: initial !important; object-fit: initial !important; object-position: initial !important; object-view-box: initial !important; offset: initial !important; opacity: initial !important; order: initial !important; orphans: initial !important; outline: initial !important; outline-offset: initial !important; overflow-anchor: initial !important; overflow-block: initial !important; overflow-clip-margin: initial !important; overflow-inline: initial !important; overflow-wrap: initial !important; overflow: initial !important; overlay: initial !important; overscroll-behavior-block: initial !important; overscroll-behavior-inline: initial !important; overscroll-behavior: initial !important; padding-block: initial !important; padding: initial !important; padding-inline: initial !important; page: initial !important; page-margin-safety: initial !important; page-orientation: initial !important; paint-order: initial !important; perspective: initial !important; perspective-origin: initial !important; pointer-events: initial !important; position-try: initial !important; position-visibility: initial !important; print-color-adjust: initial !important; quotes: initial !important; r: initial !important; reading-flow: initial !important; reading-order: initial !important; resize: initial !important; rotate: initial !important; ruby-align: initial !important; ruby-overhang: initial !important; ruby-position: initial !important; rule-overlap: initial !important; rx: initial !important; ry: initial !important; scale: initial !important; scroll-axis-lock: initial !important; scroll-behavior: initial !important; scroll-initial-target: initial !important; scroll-margin-block: initial !important; scroll-margin: initial !important; scroll-margin-inline: initial !important; scroll-marker-group: initial !important; scroll-padding-block: initial !important; scroll-padding: initial !important; scroll-padding-inline: initial !important; scroll-snap-align: initial !important; scroll-snap-stop: initial !important; scroll-snap-type: initial !important; scroll-target-group: initial !important; scroll-timeline: initial !important; scrollbar-color: initial !important; scrollbar-gutter: initial !important; scrollbar-width: initial !important; shape-image-threshold: initial !important; shape-margin: initial !important; shape-outside: initial !important; shape-rendering: initial !important; size: initial !important; speak: initial !important; stop-color: initial !important; stop-opacity: initial !important; stroke: initial !important; stroke-dasharray: initial !important; stroke-dashoffset: initial !important; stroke-linecap: initial !important; stroke-linejoin: initial !important; stroke-miterlimit: initial !important; stroke-opacity: initial !important; stroke-width: initial !important; tab-size: initial !important; table-layout: initial !important; text-align: initial !important; text-align-last: initial !important; text-anchor: initial !important; text-autospace: initial !important; text-box: initial !important; text-combine-upright: initial !important; text-decoration: initial !important; text-decoration-skip-ink: initial !important; text-decoration-skip-spaces: initial !important; text-emphasis: initial !important; text-emphasis-position: initial !important; text-fit: initial !important; text-indent: initial !important; text-justify: initial !important; text-overflow: initial !important; text-shadow: initial !important; text-transform: initial !important; text-underline-offset: initial !important; text-underline-position: initial !important; text-wrap: initial !important; timeline-scope: initial !important; timeline-trigger: initial !important; touch-action: initial !important; transform: initial !important; transform-box: initial !important; transform-origin: initial !important; transform-style: initial !important; transition: initial !important; translate: initial !important; trigger-scope: initial !important; user-select: initial !important; vector-effect: initial !important; vertical-align: initial !important; view-timeline: initial !important; view-transition-class: initial !important; view-transition-group: initial !important; view-transition-name: initial !important; view-transition-scope: initial !important; visibility: initial !important; border-spacing: initial !important; -webkit-box-align: initial !important; -webkit-box-decoration-break: initial !important; -webkit-box-direction: initial !important; -webkit-box-flex: initial !important; -webkit-box-ordinal-group: initial !important; -webkit-box-orient: initial !important; -webkit-box-pack: initial !important; -webkit-box-reflect: initial !important; -webkit-line-break: initial !important; -webkit-line-clamp: initial !important; -webkit-mask-box-image: initial !important; -webkit-rtl-ordering: initial !important; -webkit-ruby-position: initial !important; -webkit-tap-highlight-color: initial !important; -webkit-text-combine: initial !important; -webkit-text-decorations-in-effect: initial !important; -webkit-text-security: initial !important; -webkit-text-stroke: initial !important; -webkit-user-drag: initial !important; white-space-collapse: initial !important; widows: initial !important; width: initial !important; will-change: initial !important; window-drag: initial !important; word-break: initial !important; word-spacing: initial !important; x: initial !important; y: initial !important; z-index: initial !important; -webkit-text-fill-color: unset !important;"><template shadowrootmode="open"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Symbols:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"><link href="https://fonts.googleapis.com/css?family=Google+Sans+Text:400,500,700" rel="stylesheet"><style>.ft-styless-button {border: none; background: none; user-select: none; cursor: pointer; border-radius: 16px;}.ft-container {position: fixed;}.ft-menu {position: absolute; bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 4px 8px 3px rgba(60, 64, 67, 0.15), 0 1px 3px rgba(60, 64, 67, 0.3); min-height: 50px;}.ft-menu:not(.ft-multiple-buttons *) {transition: padding 0.25s 0.25s, margin 0.25s 0.25s, border-radius 0.25s 0.25s, background-color 0s 0.5s; padding: 0; margin: 5px; border-radius: 16px; background-color: rgba(255, 255, 255, 0);}.ft-multiple-buttons .ft-menu {transition: margin 0.25s, padding 0.25s, border-radius 0.25s 0.25s, background-color 0s; padding: 5px; margin: 0; border-radius: 21px; background-color: rgba(255, 255, 255, 1);}.ft-left-pos .ft-menu {left: 0;}.ft-right-pos .ft-menu {right: 0;}.ft-container.ft-hidden {transition: opacity 0.25s, visibility 0.5s 0s; opacity: 0; visibility: hidden;}.ft-container:not(.ft-hidden) {transition: opacity 0.25s, bottom 0.5s ease; opacity: 1;}.google-symbols {font-size: 26px; color: #3c4043;}.ft-button-holder {display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0;}.ft-flip-vertically {transform: scaleY(-1);}.ft-expand-toggle {width: 50px; height: 50px;}.ft-collapsed .ft-expand-icon {transition: transform 0.25s; transform: rotate(180deg);}.ft-expand-icon:not(.ft-collapsed *) {transition: transform 0.25s; transform: rotate(0deg);}.ft-button {position: relative; height: 50px; margin-bottom: 10px; transform: margin 0.25s 0.25s;}.ft-button.ft-last-button {margin-bottom: 0;}.ft-button > button {position: relative; height: 50px; width: 50px; margin: 0; padding: 0; border: none;}.ft-button > button > * {position: relative;}.ft-button .ft-highlighter {position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); height: 44px; width: 44px; border-radius: 25px; background-color: #d2e3fc; opacity: 0; transition: opacity 0.25s;}.ft-button.ft-highlighted .ft-highlighter {opacity: 1;}.ft-button-corner-info {display: none;}.ft-button.ft-show-corner-info .ft-button-corner-info {position: absolute; left: -5px; top: 4px; background: #b3261e; border: 1.5px solid #ffffff; box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15); border-radius: 100px; color: ffffff; font-family: 'Google Sans Text'; font-style: normal; font-weight: 700; font-size: 11px; line-height: 14px; min-width: 16px; height: 16px; display: flex; flex-direction: row; justify-content: center; align-items: center;}.ft-separator {display: block; width: 100%; height: 11px;}.ft-separator > span {display: block; width: 28px; margin: 0 auto 10px auto; height: 0; border-bottom: 1px solid #dadce0;}.ft-expand-toggle-container {height: 50px;}.ft-hidden {transition: opacity 0.25s, visibility 0.5s 0s; opacity: 0; visibility: hidden;}:not(.ft-hidden) {transition: opacity 0.25s; opacity: 1;}.ft-collapsed .ft-collapsible, .ft-collapsible.ft-collapsed, .ft-expand-toggle-container.ft-collapsed {transition: opacity 0.25s, margin 0.25s 0.25s, height 0.25s 0.25s, overflow 0.25s 0s, visibility 1s 0s; height: 0; opacity: 0; overflow: hidden; visibility: hidden; margin: 0;}.ft-collapsible:not(.ft-collapsed *):not(.ft-collapsed), .ft-expand-toggle-container:not(.ft-collapsed) {transition: margin 0.25s, height 0.25s, opacity 0.25s 0.25s; opacity: 1;}.ft-symbol-font-load-test {position: fixed; left: -1000px; top: -1000px; font-size: 26px; visibility: hidden;}.ft-reg-bubble {position: absolute; bottom: 0; padding: 10px; background: #fff; box-shadow: 0 4px 8px 3px rgba(60, 64, 67, 0.15), 0 1px 3px rgba(60, 64, 67, 0.3); border-radius: 16px; max-width: calc(90vw - 100px); width: 300px; height: 200px;}.ft-left-pos .ft-reg-bubble {left: 65px;}.ft-right-pos .ft-reg-bubble {right: 65px;}.ft-collapsed .ft-reg-bubble, .ft-reg-bubble.ft-collapsed {transition: width 0.25s ease-in 0.25s, height 0.25s ease-in 0.25s, opacity 0.05s linear 0.45s, overflow 0s 0.25s, visibility 0s 0.5s; width: 0; overflow: hidden; opacity: 0; visibility: hidden;}.ft-collapsed .ft-reg-bubble, .ft-reg-bubble.ft-no-messages {height: 0 !important;}.ft-reg-bubble:not(.ft-collapsed *):not(.ft-collapsed) {transition: width 0.25s ease-out, height 0.25s ease-out, opacity 0.05s linear;}.ft-reg-bubble-content {display: flex; flex-direction: row; max-width: calc(90vw - 100px); width: 300px;}.ft-collapsed .ft-reg-bubble-content {transition: opacity 0.25s; opacity: 0;}.ft-reg-bubble-content:not(.ft-collapsed *) {transition: opacity 0.25s 0.25s; opacity: 1;}.ft-reg-message-holder {flex-grow: 1; display: flex; flex-direction: column; height: auto; max-height: calc(100vh - var(--ft-toolbar-bottom-position) - 40px); overflow-y: auto;}.ft-reg-controls {flex-grow: 0; padding-left: 5px;}.ft-reg-bubble-close-icon {font-size: 16px;}.ft-reg-message {font-family: 'Google Sans Text'; font-style: normal; font-weight: 400; font-size: 12px; line-height: 14px; padding-bottom: 5px; margin-bottom: 5px; border-bottom: 1px solid #dadce0;}.ft-reg-message-custom h1 {display: flex; align-items: center; gap: 5px; font-weight: 500; font-size: 14px; line-height: 14px; margin: 0 0 10px 0; padding: 0;}.ft-reg-message-custom p {margin: 10px 0 0 0; padding: 0;}.ft-reg-message-custom a, .ft-reg-message-custom a:link, .ft-reg-message-custom a:visited, .ft-reg-message-custom a:hover, .ft-reg-message-custom a:active {color: #0b57d0; text-decoration: none;}.ft-reg-message:last-of-type {border-bottom: none; padding-bottom: 0; margin-bottom: 0;}.ft-reg-message-button {border: none; background: none; font-family: 'Google Sans Text'; color: #0b57d0; font-weight: 500; font-size: 14px; line-height: 22px; cursor: pointer; margin: 0; padding: 0; text-align: start;}.ft-display-none {display: none;}</style><toolbar id="ft-floating-toolbar" class="ft-container ft-hidden ft-left-pos" style="z-index: 2147483647; bottom: 50px; left: 10px; --ft-toolbar-bottom-position: 50px;"><div class="ft-menu"><div class="ft-button-holder"></div><div class="ft-separator ft-collapsible ft-collapsed"><span></span></div><div class="ft-bottom-button-holder"></div><div class="ft-expand-toggle-container ft-collapsed"><button class="ft-expand-toggle ft-styless-button" aria-controls="ft-floating-toolbar" aria-label="Werkbalkuitbreiding aan-/uitzetten" aria-expanded="true"><span class="google-symbols ft-expand-icon" aria-hidden="true">expand_more</span></button></div></div><div id="ft-reg-bubble" class="ft-reg-bubble ft-collapsed ft-no-messages" style="height: 21px;"><div class="ft-reg-bubble-content"><div class="ft-reg-message-holder"></div><div class="ft-reg-controls"><button class="ft-reg-bubble-close ft-styless-button" aria-controls="ft-reg-bubble" aria-label="Weergave van privacy- en juridische instellingen sluiten"><span class="google-symbols ft-reg-bubble-close-icon" aria-hidden="true">close</span></button></div></div></div></toolbar></template></div><iframe src="./Live Openbaar Vervoer_files/aframe.html" width="0" height="0" style="display: none;"></iframe></body><iframe id="google_esf" name="google_esf" src="./Live Openbaar Vervoer_files/zrt_lookup_fy2021.html" style="display: none;"></iframe><ins class="adsbygoogle adsbygoogle-noablate" data-adsbygoogle-status="done" data-anchor-status="displayed" data-anchor-shown="true" data-ad-status="filled" style="display: block; bottom: 0px; clear: none !important; float: none !important; height: 124px; left: 50%; margin: 0px !important; max-height: none !important; max-width: none !important; opacity: 1; overflow: visible !important; padding: 0px !important; position: fixed; right: auto !important; top: auto !important; vertical-align: baseline !important; visibility: visible !important; width: auto; z-index: 2147483647; transform: translateX(-50%); box-shadow: rgba(0, 0, 0, 0.5) 0px -4px 12px -4px, rgba(0, 0, 0, 0.3) 0px 4px 8px -3px; border-radius: 5px; background: rgb(250, 250, 250) !important;"><div class="grippy-host"><template shadowrootmode="closed"><ins class="ee" style="inset: auto !important; clear: none !important; display: block !important; float: none !important; height: 5px !important; margin: 0px !important; max-height: none !important; max-width: none !important; opacity: 1 !important; overflow: visible !important; padding: 0px !important; position: relative !important; vertical-align: baseline !important; visibility: visible !important; width: auto !important; z-index: 1 !important; background-color: rgb(250, 250, 250) !important; box-shadow: rgba(0, 0, 0, 0.5) 0px -4px 12px -4px, rgba(0, 0, 0, 0.3) 0px 4px 8px -3px !important; border-top-left-radius: 5px !important; border-top-right-radius: 5px !important;"><span style="display: block !important; width: 80px !important; height: 45px !important; bottom: 0px !important; left: 50% !important; pointer-events: none !important; position: absolute !important; transform: translateX(-50%) !important;"><svg style="margin: 0px !important; position: absolute !important; bottom: 0px !important; left: 0% !important; display: block !important; width: 80px !important; height: 30px !important; transform: none !important; pointer-events: initial !important;"><defs><filter id="dropShadowTop" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><fecomponenttransfer in="SourceAlpha" result="TransferredAlpha"><fefuncr type="discrete" tableValues="0.5"></fefuncr><fefuncg type="discrete" tableValues="0.5"></fefuncg><fefuncb type="discrete" tableValues="0.5"></fefuncb></fecomponenttransfer><fegaussianblur in="TransferredAlpha" stdDeviation="2"></fegaussianblur><feoffset dx="0" dy="0" result="offsetblur"></feoffset><femerge><femergenode></femergenode><femergenode in="SourceGraphic"></femergenode></femerge></filter></defs><path d="M10,26 L10,6 A6,6 0 0,1 16,1 L60,1 A6,6 0 0,1 66,6 L66,20 66,26 Z" stroke="#FAFAFA" stroke-width="1" fill="#FAFAFA" style="filter: url(&quot;#dropShadowTop&quot;);"></path><rect x="0" y="25" width="80" height="5" style="fill: rgb(250, 250, 250);"></rect><g class="down" stroke="#616161" stroke-width="2px" stroke-linecap="square"><line x1="32" y1="12" x2="38" y2="18"></line><line x1="38" y1="18" x2="44" y2="12"></line></g></svg></span></ins></template></div><div id="aswift_1_host" style="border-width: medium !important; border-style: none !important; border-color: currentcolor !important; border-image: none !important; height: 124px; width: 1005px !important; margin: 0px !important; padding: 0px !important; position: relative !important; visibility: visible !important; background-color: transparent !important; display: inline-block !important; inset: auto !important; clear: none !important; float: none !important; max-height: none !important; max-width: none !important; opacity: 1 !important; overflow: visible !important; vertical-align: baseline !important; z-index: auto !important;"><iframe id="aswift_1" name="aswift_1" style="min-height: auto; max-height: 30vh; min-width: auto; max-width: none; width: 1005px !important; display: block; margin: 0px auto; height: 124px;" sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation" width="1005" height="124" frameborder="0" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" src="./Live Openbaar Vervoer_files/zrt_lookup_fy2021(1).html" data-google-container-id="a!2" tabindex="0" title="Advertisement" aria-label="Advertisement" data-google-query-id="CLzhvuKWyJcDFRHoygAdJKoetg" data-load-complete="true"></iframe></div><div id="click-protector" style="position: relative; width: 65px; height: 25px; left: 50%; transform: translateX(-50%); top: -100%;"></div></ins></html>

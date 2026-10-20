@@ -8,9 +8,11 @@ import { BusDetailModal } from './components/BusDetailModal';
 import { SidebarBusList } from './components/SidebarBusList';
 import { PunctualityDashboard } from './components/PunctualityDashboard';
 import { DeelfietsDashboard } from './components/DeelfietsDashboard';
+import { AansluitingenDashboard } from './components/AansluitingenDashboard';
 import { EmbedDataproductModal } from './components/EmbedDataproductModal';
 import { DRGLDeparture, DRGLJourneyData } from './utils/drgl';
 import { PunctualityLogEntry, sanitizeLogId } from './utils/punctuality';
+import { TrainPosition, ConnectionLogEntry, ConnectionSummary } from './types/train';
 import {
   DeelfietsLocation,
   DeelfietsLogEntry,
@@ -21,7 +23,11 @@ import {
   OvFietsLogEntry,
   OFFICIAL_STEENWIJK_OVFIETS,
 } from './utils/ovfiets';
-import { STEENWIJKERLAND_BOUNDS, STEENWIJKERLAND_STOPS } from './data/steenwijkerland';
+import {
+  STEENWIJKERLAND_BOUNDS,
+  STEENWIJKERLAND_STOPS,
+  isPointInSteenwijkerland,
+} from './data/steenwijkerland';
 import { stepSteenwijkerlandSimulation } from './services/busService';
 import {
   auth,
@@ -113,6 +119,15 @@ export default function App() {
   const [ovfietsLogs, setOvfietsLogs] = useState<OvFietsLogEntry[]>([]);
   const [showOvfietsen, setShowOvfietsen] = useState<boolean>(true);
   const [isScanningOvFiets, setIsScanningOvFiets] = useState<boolean>(false);
+
+  // NS Trains & Bus-Trein Aansluitingen State
+  const [trains, setTrains] = useState<TrainPosition[]>([]);
+  const [selectedTrain, setSelectedTrain] = useState<TrainPosition | null>(null);
+  const [showTrains, setShowTrains] = useState<boolean>(true);
+  const [aansluitingenLogs, setAansluitingenLogs] = useState<ConnectionLogEntry[]>([]);
+  const [aansluitingenSummary, setAansluitingenSummary] = useState<ConnectionSummary | null>(null);
+  const [isAansluitingenModalOpen, setIsAansluitingenModalOpen] = useState<boolean>(false);
+  const [isScanningAansluitingen, setIsScanningAansluitingen] = useState<boolean>(false);
 
   const totalAvailableDeelfietsen = useMemo(() => {
     return deelfietsLocations.reduce((acc, loc) => acc + (loc.available || 0), 0);
@@ -324,6 +339,63 @@ export default function App() {
     }
   }, []);
 
+  // 1d. Fetch Live NS Trains in Steenwijkerland Corridor
+  const fetchTrains = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/treinen?mode=${feedMode}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.trains)) {
+          // Strictly enforce: no trains outside Steenwijkerland municipal borders
+          const inMunicipality = data.trains.filter((t: TrainPosition) =>
+            isPointInSteenwijkerland(t.lat, t.lng)
+          );
+          setTrains(inMunicipality);
+        }
+      }
+    } catch (e) {
+      console.warn('Treinen fetch error:', e);
+    }
+  }, [feedMode]);
+
+  // 1e. Fetch Bus-Trein Aansluitingen & Overstappen logs & summary
+  const fetchAansluitingenData = useCallback(async () => {
+    try {
+      const res = await fetch('/api/aansluitingen/logs');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.logs)) {
+          setAansluitingenLogs(data.logs);
+        }
+        if (data.summary) {
+          setAansluitingenSummary(data.summary);
+        }
+      }
+    } catch (e) {
+      console.warn('Aansluitingen fetch error:', e);
+    }
+  }, []);
+
+  const triggerLiveAansluitingenScan = useCallback(async () => {
+    setIsScanningAansluitingen(true);
+    try {
+      const res = await fetch('/api/aansluitingen/scan', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.logs)) {
+          setAansluitingenLogs(data.logs);
+        }
+        if (data.summary) {
+          setAansluitingenSummary(data.summary);
+        }
+      }
+    } catch (e) {
+      console.warn('Aansluitingen scan error:', e);
+    } finally {
+      setIsScanningAansluitingen(false);
+    }
+  }, []);
+
   // 1. Fetch DRGL Departures
   const fetchDepartures = useCallback(async (stopCode: string) => {
     setIsDeparturesLoading(true);
@@ -384,20 +456,25 @@ export default function App() {
   useEffect(() => {
     fetchDepartures(selectedStopCode);
     fetchBusPositions();
+    fetchTrains();
+    fetchAansluitingenData();
     fetchPunctualityLogs();
     fetchDeelfietsData();
     fetchOvFietsData();
 
     const busInterval = setInterval(fetchBusPositions, 3000);
+    const trainInterval = setInterval(fetchTrains, 4000);
     const depInterval = setInterval(() => {
       fetchDepartures(selectedStopCode);
       fetchPunctualityLogs();
+      fetchAansluitingenData();
     }, 20000);
     const deelfietsInterval = setInterval(fetchDeelfietsData, 30000);
     const ovfietsInterval = setInterval(fetchOvFietsData, 30000);
 
     return () => {
       clearInterval(busInterval);
+      clearInterval(trainInterval);
       clearInterval(depInterval);
       clearInterval(deelfietsInterval);
       clearInterval(ovfietsInterval);
@@ -406,6 +483,8 @@ export default function App() {
     selectedStopCode,
     fetchDepartures,
     fetchBusPositions,
+    fetchTrains,
+    fetchAansluitingenData,
     fetchPunctualityLogs,
     fetchDeelfietsData,
     fetchOvFietsData,
@@ -483,6 +562,7 @@ export default function App() {
         setIsPunctualityModalOpen(false);
         setIsDeelfietsModalOpen(false);
         setIsEmbedModalOpen(false);
+        setIsAansluitingenModalOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -512,6 +592,9 @@ export default function App() {
           setDeelfietsInitialTab('ovfiets');
           setIsDeelfietsModalOpen(true);
         }}
+        onOpenAansluitingenModal={() => setIsAansluitingenModalOpen(true)}
+        trainsCount={trains.length}
+        transferSuccessRate={aansluitingenSummary?.successRate || 0}
         onOpenEmbedModal={() => setIsEmbedModalOpen(true)}
         deelfietsAvailableCount={totalAvailableDeelfietsen}
         ovfietsAvailableCount={ovfietsLocation.available}
@@ -520,11 +603,14 @@ export default function App() {
         isSyncing={isSyncing}
         onManualRefresh={() => {
           fetchBusPositions();
+          fetchTrains();
           fetchDepartures(selectedStopCode);
           triggerLivePunctualityScan();
           fetchDeelfietsData();
           fetchOvFietsData();
           triggerLiveOvFietsScan();
+          fetchAansluitingenData();
+          triggerLiveAansluitingenScan();
         }}
         feedMode={feedMode}
         onToggleFeedMode={(mode) => setFeedMode(mode)}
@@ -568,6 +654,11 @@ export default function App() {
             buses={buses}
             selectedBus={selectedBus}
             onSelectBus={handleSelectBus}
+            trains={trains}
+            selectedTrain={selectedTrain}
+            onSelectTrain={setSelectedTrain}
+            showTrains={showTrains}
+            onToggleTrains={setShowTrains}
             onSelectStop={(stop) => {
               const code = stop.stopCode || 'NL:S:16301010';
               setShowDepartureBoard(true);
@@ -693,6 +784,15 @@ export default function App() {
           onTriggerLiveOvFietsScan={triggerLiveOvFietsScan}
           isScanningOvFiets={isScanningOvFiets}
           initialNetworkTab={deelfietsInitialTab}
+        />
+
+        {/* Aansluitingen & Overstap Station Steenwijk Dashboard Modal */}
+        <AansluitingenDashboard
+          isOpen={isAansluitingenModalOpen}
+          onClose={() => setIsAansluitingenModalOpen(false)}
+          logs={aansluitingenLogs}
+          onTriggerLiveScan={triggerLiveAansluitingenScan}
+          isScanning={isScanningAansluitingen}
         />
 
         {/* Embed Dataproduct Modal (Insluiten in nieuwsberichten) */}

@@ -42,6 +42,14 @@ import {
   exportRawOvFietsLogsToCSV,
 } from './src/utils/ovfiets';
 import { BusPosition } from './src/types/bus';
+import { TrainPosition, ConnectionLogEntry } from './src/types/train';
+import {
+  evaluateConnection,
+  evaluateBusTrainConnection,
+  aggregateConnectionStats,
+  exportRawConnectionsToCSV,
+  sanitizeConnectionLogId,
+} from './src/utils/aansluitingen';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,10 +62,19 @@ const DEELFIETS_LOG_FILE = path.resolve(__dirname, 'src/data/deelfietsLogs.json'
 const DEELFIETS_BACKUP_FILE = path.resolve(__dirname, 'src/data/deelfietsLogs.backup.json');
 const OVFIETS_LOG_FILE = path.resolve(__dirname, 'src/data/ovfietsLogs.json');
 const OVFIETS_BACKUP_FILE = path.resolve(__dirname, 'src/data/ovfietsLogs.backup.json');
+const AANSLUITINGEN_LOG_FILE = path.resolve(__dirname, 'src/data/aansluitingenLogs.json');
+const AANSLUITINGEN_BACKUP_FILE = path.resolve(__dirname, 'src/data/aansluitingenLogs.backup.json');
 
 // Cache for DRGL departures and journeys
 const departuresCache: Map<string, { timestamp: number; data: { title: string; departures: DRGLDeparture[] } }> = new Map();
 const journeyCache: Map<string, { timestamp: number; data: DRGLJourneyData }> = new Map();
+
+// Train positions cache & persistent Aansluitingen transfer store
+const aansluitingenStore: Map<string, ConnectionLogEntry> = new Map();
+let cachedOvzoekerTrains: { timestamp: number; trains: TrainPosition[] } = {
+  timestamp: 0,
+  trains: [],
+};
 
 // Persistent Punctuality Log Store (keyed by entry.id) — strictly additive, never wipes existing logs
 const punctualityStore: Map<string, PunctualityLogEntry> = new Map();
@@ -105,6 +122,293 @@ function addMinuteOffset(timeHHMM: string, deltaMin: number): string {
   const mm = String(total % 60).padStart(2, '0');
   return `${hh}:${mm}`;
 }
+
+function loadAansluitingenStore() {
+  for (const filePath of [AANSLUITINGEN_BACKUP_FILE, AANSLUITINGEN_LOG_FILE]) {
+    try {
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, 'utf8');
+        const parsed: ConnectionLogEntry[] = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((entry) => {
+            if (entry && entry.id) {
+              aansluitingenStore.set(entry.id, entry);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn(`Could not load ${path.basename(filePath)}:`, e);
+    }
+  }
+}
+
+function saveAansluitingenStore() {
+  try {
+    const arr = Array.from(aansluitingenStore.values()).sort((a, b) =>
+      b.timestamp.localeCompare(a.timestamp)
+    );
+    const json = JSON.stringify(arr, null, 2);
+    const tmpFile = `${AANSLUITINGEN_LOG_FILE}.tmp`;
+    fs.writeFileSync(tmpFile, json, 'utf8');
+    fs.renameSync(tmpFile, AANSLUITINGEN_LOG_FILE);
+    fs.writeFileSync(AANSLUITINGEN_BACKUP_FILE, json, 'utf8');
+  } catch (e) {
+    console.warn('Could not save aansluitingenLogs.json:', e);
+  }
+}
+
+// Seed historical 30-day transfer data across day, week, month for all connecting lines at Station Steenwijk
+function ensureInitialAansluitingenLogs() {
+  const now = new Date();
+
+  // Normalize any existing entries to have direction and normalized vehicles
+  for (const entry of aansluitingenStore.values()) {
+    if (!entry.direction) {
+      entry.direction = 'bus_naar_trein';
+      entry.originVehicle = `Bus ${entry.busLine}`;
+      entry.connectingVehicle = `${entry.trainType} ${entry.trainNumber}`;
+      entry.plannedOriginArrival = entry.busPlannedArrival || '00:00';
+      entry.actualOriginArrival = entry.busActualArrival || '00:00';
+      entry.plannedConnectingDeparture = entry.trainPlannedDeparture || '00:00';
+      entry.actualConnectingDeparture = entry.trainActualDeparture || '00:00';
+    }
+  }
+
+  const hasTrainToBus = Array.from(aansluitingenStore.values()).some(
+    (e) => e.direction === 'trein_naar_bus'
+  );
+  const needsBusToTrain = aansluitingenStore.size === 0;
+
+  if (hasTrainToBus && !needsBusToTrain) return;
+
+  // 1. Bus -> Trein connecting pairs (Bus arrives at Stationsplein, connects to departing IC or Sprinter at Spoorpad)
+  const busToTrainPairs = [
+    { line: '70', operator: 'RRReis', dest: 'Steenwijk Station', busArr: '02', trainType: 'Intercity' as const, trainNum: '800', trainDest: 'Schiphol Airport', spoor: 'Spoor 1', trainDep: '06', buffer: 4 },
+    { line: '70', operator: 'RRReis', dest: 'Steenwijk Station', busArr: '32', trainType: 'Intercity' as const, trainNum: '800', trainDest: 'Rotterdam Centraal', spoor: 'Spoor 1', trainDep: '36', buffer: 4 },
+    { line: '270', operator: 'RRReis', dest: 'Steenwijk Station', busArr: '18', trainType: 'Sprinter' as const, trainNum: '9000', trainDest: 'Lelystad Centrum', spoor: 'Spoor 1', trainDep: '22', buffer: 4 },
+    { line: '270', operator: 'RRReis', dest: 'Steenwijk Station', busArr: '48', trainType: 'Sprinter' as const, trainNum: '9000', trainDest: 'Zwolle', spoor: 'Spoor 1', trainDep: '52', buffer: 4 },
+    { line: '76', operator: 'RRReis', dest: 'Steenwijk Station', busArr: '20', trainType: 'Intercity' as const, trainNum: '800', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainDep: '24', buffer: 4 },
+    { line: '76', operator: 'RRReis', dest: 'Steenwijk Station', busArr: '50', trainType: 'Intercity' as const, trainNum: '800', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainDep: '54', buffer: 4 },
+    { line: '214', operator: 'RRReis', dest: 'Steenwijk Station', busArr: '16', trainType: 'Sprinter' as const, trainNum: '9000', trainDest: 'Lelystad Centrum', spoor: 'Spoor 1', trainDep: '22', buffer: 6 },
+    { line: '214', operator: 'RRReis', dest: 'Steenwijk Station', busArr: '46', trainType: 'Intercity' as const, trainNum: '800', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainDep: '54', buffer: 8 },
+    { line: '18', operator: 'Qbuzz', dest: 'Steenwijk Station', busArr: '02', trainType: 'Intercity' as const, trainNum: '800', trainDest: 'Schiphol Airport', spoor: 'Spoor 1', trainDep: '06', buffer: 4 },
+    { line: '20', operator: 'Qbuzz', dest: 'Steenwijk Station', busArr: '18', trainType: 'Sprinter' as const, trainNum: '9000', trainDest: 'Zwolle', spoor: 'Spoor 1', trainDep: '22', buffer: 4 },
+    { line: '26', operator: 'Qbuzz', dest: 'Steenwijk Station', busArr: '22', trainType: 'Intercity' as const, trainNum: '800', trainDest: 'Rotterdam Centraal', spoor: 'Spoor 1', trainDep: '36', buffer: 14 },
+    { line: '217', operator: 'Qbuzz', dest: 'Steenwijk Station', busArr: '15', trainType: 'Sprinter' as const, trainNum: '9000', trainDest: 'Lelystad Centrum', spoor: 'Spoor 1', trainDep: '22', buffer: 7 },
+    { line: '524', operator: 'Qbuzz', dest: 'Steenwijk Station', busArr: '05', trainType: 'Sprinter' as const, trainNum: '9000', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainDep: '08', buffer: 3 },
+  ];
+
+  // 2. Trein -> Bus connecting pairs (IC or Sprinter arrives at Spoor 1/2, connects to departing bus at Stationsplein)
+  const trainToBusPairs = [
+    // IC (Spoor 1, from Leeuwarden) arr :04 -> connecting to outbound buses
+    { line: '70', operator: 'RRReis', dest: 'Zwartsluis / Zwolle', busDep: '10', trainType: 'Intercity' as const, trainNum: '800', trainOrigin: 'Leeuwarden', trainDest: 'Schiphol Airport', spoor: 'Spoor 1', trainArr: '04', buffer: 6 },
+    { line: '18', operator: 'Qbuzz', dest: 'Meppel Station', busDep: '10', trainType: 'Intercity' as const, trainNum: '800', trainOrigin: 'Leeuwarden', trainDest: 'Schiphol Airport', spoor: 'Spoor 1', trainArr: '04', buffer: 6 },
+    { line: '76', operator: 'RRReis', dest: 'Marknesse / Emmeloord', busDep: '12', trainType: 'Intercity' as const, trainNum: '800', trainOrigin: 'Leeuwarden', trainDest: 'Schiphol Airport', spoor: 'Spoor 1', trainArr: '04', buffer: 8 },
+    { line: '26', operator: 'Qbuzz', dest: 'Noordwolde / Oosterwolde', busDep: '12', trainType: 'Intercity' as const, trainNum: '800', trainOrigin: 'Leeuwarden', trainDest: 'Schiphol Airport', spoor: 'Spoor 1', trainArr: '04', buffer: 8 },
+    { line: '270', operator: 'RRReis', dest: 'Giethoorn Dominee Hylkemaweg', busDep: '15', trainType: 'Intercity' as const, trainNum: '800', trainOrigin: 'Leeuwarden', trainDest: 'Schiphol Airport', spoor: 'Spoor 1', trainArr: '04', buffer: 11 },
+    { line: '214', operator: 'RRReis', dest: 'Vollenhove / Emmeloord', busDep: '15', trainType: 'Intercity' as const, trainNum: '800', trainOrigin: 'Leeuwarden', trainDest: 'Schiphol Airport', spoor: 'Spoor 1', trainArr: '04', buffer: 11 },
+    
+    // IC (Spoor 2, from Zwolle/Schiphol) arr :22 -> connecting to outbound buses
+    { line: '217', operator: 'Qbuzz', dest: 'Hoogeveen Station', busDep: '25', trainType: 'Intercity' as const, trainNum: '800', trainOrigin: 'Schiphol Airport', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainArr: '22', buffer: 3 },
+    { line: '20', operator: 'Qbuzz', dest: 'Assen Station', busDep: '28', trainType: 'Intercity' as const, trainNum: '800', trainOrigin: 'Schiphol Airport', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainArr: '22', buffer: 6 },
+
+    // Sprinter (Spoor 2, from Zwolle) arr :06 -> connecting to outbound buses
+    { line: '70', operator: 'RRReis', dest: 'Zwartsluis / Zwolle', busDep: '10', trainType: 'Sprinter' as const, trainNum: '9000', trainOrigin: 'Zwolle', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainArr: '06', buffer: 4 },
+    { line: '18', operator: 'Qbuzz', dest: 'Meppel Station', busDep: '10', trainType: 'Sprinter' as const, trainNum: '9000', trainOrigin: 'Zwolle', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainArr: '06', buffer: 4 },
+    { line: '76', operator: 'RRReis', dest: 'Marknesse / Emmeloord', busDep: '12', trainType: 'Sprinter' as const, trainNum: '9000', trainOrigin: 'Zwolle', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainArr: '06', buffer: 6 },
+    { line: '26', operator: 'Qbuzz', dest: 'Noordwolde / Oosterwolde', busDep: '12', trainType: 'Sprinter' as const, trainNum: '9000', trainOrigin: 'Zwolle', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainArr: '06', buffer: 6 },
+    { line: '270', operator: 'RRReis', dest: 'Giethoorn Dominee Hylkemaweg', busDep: '15', trainType: 'Sprinter' as const, trainNum: '9000', trainOrigin: 'Zwolle', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainArr: '06', buffer: 9 },
+    { line: '214', operator: 'RRReis', dest: 'Vollenhove / Emmeloord', busDep: '15', trainType: 'Sprinter' as const, trainNum: '9000', trainOrigin: 'Zwolle', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainArr: '06', buffer: 9 },
+    { line: '524', operator: 'Qbuzz', dest: 'Wanneperveen / Dinxterveen', busDep: '15', trainType: 'Sprinter' as const, trainNum: '9000', trainOrigin: 'Zwolle', trainDest: 'Leeuwarden', spoor: 'Spoor 2', trainArr: '06', buffer: 9 },
+
+    // Sprinter (Spoor 1, from Leeuwarden) arr :20 -> connecting to outbound buses
+    { line: '217', operator: 'Qbuzz', dest: 'Hoogeveen Station', busDep: '25', trainType: 'Sprinter' as const, trainNum: '9000', trainOrigin: 'Leeuwarden', trainDest: 'Lelystad Centrum', spoor: 'Spoor 1', trainArr: '20', buffer: 5 },
+    { line: '20', operator: 'Qbuzz', dest: 'Assen Station', busDep: '28', trainType: 'Sprinter' as const, trainNum: '9000', trainOrigin: 'Leeuwarden', trainDest: 'Lelystad Centrum', spoor: 'Spoor 1', trainArr: '20', buffer: 8 },
+  ];
+
+  const operatingHours = ['07', '08', '09', '11', '13', '15', '16', '17', '18', '20'];
+
+  for (let dayOffset = 29; dayOffset >= 0; dayOffset--) {
+    const d = new Date(now.getTime() - dayOffset * 24 * 60 * 60 * 1000);
+    const weekInfo = getISOWeekInfo(d);
+    let seed = dayOffset * 23;
+
+    for (const hour of operatingHours) {
+      // Generate Bus -> Trein (if needed)
+      if (needsBusToTrain) {
+        for (const pair of busToTrainPairs) {
+          seed++;
+          const busPlanned = `${hour}:${pair.busArr}`;
+          const trainPlanned = `${hour}:${pair.trainDep}`;
+
+          let busDelay = 0;
+          let trainDelay = 0;
+          const mod = seed % 20;
+          if (mod === 0) {
+            busDelay = 5.5;
+            trainDelay = 0; // Missed
+          } else if (mod === 1) {
+            busDelay = 6.0;
+            trainDelay = 5.0; // Bus late but train ALSO late by 5m -> SAVED!
+          } else if (mod === 2) {
+            busDelay = 4.0;
+            trainDelay = 1.0;
+          } else if (mod === 3) {
+            busDelay = 2.5;
+            trainDelay = 0;
+          } else if (mod >= 4 && mod <= 8) {
+            busDelay = 1.0;
+            trainDelay = 0;
+          } else if (mod === 9) {
+            busDelay = 0;
+            trainDelay = 3.0;
+          }
+
+          const evalResult = evaluateConnection(
+            'bus_naar_trein',
+            busPlanned,
+            busDelay,
+            trainPlanned,
+            trainDelay,
+            pair.trainType
+          );
+
+          if (evalResult.isValidPlannedTransfer) {
+            const actualBus = addMinuteOffset(busPlanned, busDelay);
+            const actualTrain = addMinuteOffset(trainPlanned, trainDelay);
+            const trainNumber = `${pair.trainType === 'Intercity' ? '8' : '90'}${10 + (seed % 70)}`;
+            const id = sanitizeConnectionLogId(
+              `${weekInfo.dateStr}_B2T_${pair.line}_${busPlanned}_${trainNumber}_${trainPlanned}`
+            );
+            const timestamp = new Date(`${weekInfo.dateStr}T${busPlanned}:00`).toISOString();
+
+            aansluitingenStore.set(id, {
+              id,
+              direction: 'bus_naar_trein',
+              timestamp: isNaN(new Date(timestamp).getTime()) ? d.toISOString() : timestamp,
+              date: weekInfo.dateStr,
+              yearMonth: weekInfo.yearMonth,
+              isoYear: weekInfo.isoYear,
+              isoWeek: weekInfo.isoWeek,
+              yearWeek: weekInfo.yearWeek,
+              busLine: pair.line,
+              busOperator: pair.operator,
+              busDestination: pair.dest,
+              busPlannedArrival: busPlanned,
+              busActualArrival: actualBus,
+              busDelayMinutes: busDelay,
+              trainNumber,
+              trainType: pair.trainType,
+              trainDestination: pair.trainDest,
+              trainPlatform: pair.spoor,
+              trainPlannedDeparture: trainPlanned,
+              trainActualDeparture: actualTrain,
+              trainDelayMinutes: trainDelay,
+              originVehicle: `Bus ${pair.line}`,
+              connectingVehicle: `${pair.trainType} ${trainNumber}`,
+              plannedOriginArrival: busPlanned,
+              actualOriginArrival: actualBus,
+              plannedConnectingDeparture: trainPlanned,
+              actualConnectingDeparture: actualTrain,
+              plannedTransferMinutes: evalResult.plannedTransferMinutes,
+              realizedTransferMinutes: evalResult.realizedTransferMinutes,
+              status: evalResult.status,
+              notes: evalResult.notes,
+            });
+          }
+        }
+      }
+
+      // Generate Trein -> Bus (Intercity & Sprinter arrivals to departing buses)
+      for (const pair of trainToBusPairs) {
+        seed++;
+        const trainPlanned = `${hour}:${pair.trainArr}`;
+        const busPlanned = `${hour}:${pair.busDep}`;
+
+        let trainDelay = 0;
+        let busDelay = 0;
+        const mod = seed % 20;
+        if (mod === 0) {
+          trainDelay = 5.5; // Train late, bus left on time -> Missed
+          busDelay = 0;
+        } else if (mod === 1) {
+          trainDelay = 6.0; // Train late, but bus ALSO late by 5m -> SAVED!
+          busDelay = 5.0;
+        } else if (mod === 2) {
+          trainDelay = 4.0;
+          busDelay = 0.5;
+        } else if (mod === 3) {
+          trainDelay = 2.5;
+          busDelay = 0;
+        } else if (mod >= 4 && mod <= 8) {
+          trainDelay = 1.0;
+          busDelay = 0;
+        } else if (mod === 9) {
+          trainDelay = 0;
+          busDelay = 2.0; // Bus arrived late at platform, ample margin
+        }
+
+        const evalResult = evaluateConnection(
+          'trein_naar_bus',
+          trainPlanned,
+          trainDelay,
+          busPlanned,
+          busDelay,
+          pair.trainType
+        );
+
+        if (evalResult.isValidPlannedTransfer) {
+          const actualTrain = addMinuteOffset(trainPlanned, trainDelay);
+          const actualBus = addMinuteOffset(busPlanned, busDelay);
+          const trainNumber = `${pair.trainType === 'Intercity' ? '8' : '90'}${10 + (seed % 70)}`;
+          const id = sanitizeConnectionLogId(
+            `${weekInfo.dateStr}_T2B_${trainNumber}_${trainPlanned}_${pair.line}_${busPlanned}`
+          );
+          const timestamp = new Date(`${weekInfo.dateStr}T${trainPlanned}:00`).toISOString();
+
+          aansluitingenStore.set(id, {
+            id,
+            direction: 'trein_naar_bus',
+            timestamp: isNaN(new Date(timestamp).getTime()) ? d.toISOString() : timestamp,
+            date: weekInfo.dateStr,
+            yearMonth: weekInfo.yearMonth,
+            isoYear: weekInfo.isoYear,
+            isoWeek: weekInfo.isoWeek,
+            yearWeek: weekInfo.yearWeek,
+            busLine: pair.line,
+            busOperator: pair.operator,
+            busDestination: pair.dest,
+            busPlannedDeparture: busPlanned,
+            busActualDeparture: actualBus,
+            busDelayMinutes: busDelay,
+            trainNumber,
+            trainType: pair.trainType,
+            trainOrigin: pair.trainOrigin,
+            trainDestination: pair.trainDest,
+            trainPlatform: pair.spoor,
+            trainPlannedArrival: trainPlanned,
+            trainActualArrival: actualTrain,
+            trainDelayMinutes: trainDelay,
+            originVehicle: `${pair.trainType} ${trainNumber}`,
+            connectingVehicle: `Bus ${pair.line}`,
+            plannedOriginArrival: trainPlanned,
+            actualOriginArrival: actualTrain,
+            plannedConnectingDeparture: busPlanned,
+            actualConnectingDeparture: actualBus,
+            plannedTransferMinutes: evalResult.plannedTransferMinutes,
+            realizedTransferMinutes: evalResult.realizedTransferMinutes,
+            status: evalResult.status,
+            notes: evalResult.notes,
+          });
+        }
+      }
+    }
+  }
+
+  saveAansluitingenStore();
+}
+
 
 // Record departures from a stop into the persistent punctuality log
 function logStopDepartures(stopCode: string, departures: DRGLDeparture[]) {
@@ -694,16 +998,25 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
   }
 
   const candidateEntities: any[] = [];
+  const candidateTrainEntities: any[] = [];
 
   for (const ent of liveOvzoekerEntityMap.values()) {
     const vehpos = ent.vehicle;
     const vehId = String(vehpos.vehicle?.id || ent.id || '');
-    // Exclude OV-fiets and NS trains so only public transit buses are returned
-    if (!vehId || vehId.startsWith('OVF:') || vehId.startsWith('NS:')) continue;
+    if (!vehId || vehId.startsWith('OVF:')) continue;
 
     const lat = Number(vehpos.position.latitude);
     const lng = Number(vehpos.position.longitude);
     if (isNaN(lat) || isNaN(lng)) continue;
+
+    // NS Trains strictly within Steenwijkerland municipal borders:
+    // Trains outside the municipality must NOT be tracked or marked on the map
+    if (vehId.startsWith('NS:')) {
+      if (isPointInSteenwijkerland(lat, lng)) {
+        candidateTrainEntities.push(ent);
+      }
+      continue;
+    }
 
     const line = String(vehpos.trip?.start_date || '');
 
@@ -830,6 +1143,104 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
       return busObj;
     })
   );
+
+  const trainsResult: TrainPosition[] = await Promise.all(
+    candidateTrainEntities.map(async (ent) => {
+      const vehpos = ent.vehicle;
+      const vehId = String(vehpos.vehicle?.id || ent.id);
+      const label = String(vehpos.vehicle?.label || vehId.replace('NS:', ''));
+      const fallbackLine = String(vehpos.trip?.start_date || 'Intercity');
+      const tripId = String(vehpos.trip?.trip_id || '');
+      const tripInfo = await resolveOvzoekerTripInfo(tripId, fallbackLine, vehId);
+
+      const lat = Number(vehpos.position.latitude);
+      const lng = Number(vehpos.position.longitude);
+      const tsMs = Number(vehpos.timestamp) * 1000;
+
+      const prev = prevVehiclePositions.get(vehId);
+      let heading =
+        vehpos.position.bearing !== undefined
+          ? Math.round(Number(vehpos.position.bearing))
+          : prev?.heading ?? 0;
+      let speedKmH =
+        vehpos.position.speed !== undefined
+          ? Math.round(Number(vehpos.position.speed) * 3.6)
+          : prev?.speedKmH ?? 0;
+
+      if (prev && tsMs > prev.timestampMs) {
+        const distM = haversineMeters(prev.lat, prev.lng, lat, lng);
+        const dtSec = (tsMs - prev.timestampMs) / 1000;
+        if (distM > 5) {
+          if (vehpos.position.bearing === undefined) {
+            heading = computeBearingDeg(prev.lat, prev.lng, lat, lng);
+          }
+          if (vehpos.position.speed === undefined && dtSec > 0) {
+            speedKmH = Math.min(140, Math.round((distM / dtSec) * 3.6));
+          }
+        }
+      }
+      prevVehiclePositions.set(vehId, { lat, lng, timestampMs: tsMs, heading, speedKmH });
+
+      const delaySeconds =
+        vehpos.vehicle?.license_plate !== undefined && !isNaN(Number(vehpos.vehicle.license_plate))
+          ? Number(vehpos.vehicle.license_plate)
+          : 0;
+      const delayMinutes = Number((delaySeconds / 60).toFixed(1));
+
+      const isSprinter =
+        fallbackLine.toLowerCase().includes('sprinter') ||
+        tripInfo.headsign.toLowerCase().includes('sprinter') ||
+        label.startsWith('90') ||
+        label.startsWith('61');
+      const trainType: 'Intercity' | 'Sprinter' = isSprinter ? 'Sprinter' : 'Intercity';
+
+      // Heading ~100 to 240 -> southbound towards Zwolle/Lelystad/Schiphol (Spoor 1)
+      // Heading ~280 to 45 -> northbound towards Leeuwarden/Heerenveen (Spoor 2)
+      const isSouthbound = heading >= 100 && heading <= 240;
+      const platform = isSouthbound ? 'Spoor 1' : 'Spoor 2';
+      const defaultDest = isSouthbound
+        ? (trainType === 'Intercity' ? 'Schiphol Airport / Rotterdam C' : 'Lelystad Centrum')
+        : 'Leeuwarden';
+      const destination =
+        tripInfo.headsign && !tripInfo.headsign.includes('In dienst') && !tripInfo.headsign.includes('Lijn')
+          ? tripInfo.headsign
+          : defaultDest;
+
+      const origin = isSouthbound ? 'Leeuwarden' : 'Zwolle';
+      const timeDate = new Date(tsMs);
+      const lastUpdated = timeDate.toLocaleTimeString('nl-NL', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+
+      return {
+        id: vehId,
+        matnummer: label,
+        operator: 'NS' as const,
+        operatorName: 'Nederlandse Spoorwegen',
+        line: trainType,
+        trainType,
+        destination,
+        origin,
+        lat,
+        lng,
+        speedKmH,
+        heading,
+        delayMinutes,
+        delaySeconds,
+        status: vehpos.current_status === 1 ? ('Halteert' as const) : delayMinutes > 2 ? ('Vertraagd' as const) : ('Rijdend' as const),
+        platform,
+        lastUpdated,
+        nextStation: 'Steenwijk',
+      };
+    })
+  );
+
+  cachedOvzoekerTrains = {
+    timestamp: Date.now(),
+    trains: trainsResult,
+  };
 
   cachedOvzoekerVehicles = {
     timestamp: Date.now(),
@@ -1215,12 +1626,205 @@ async function runLiveOvFietsScan(): Promise<OvFietsLocation> {
   return currentOvFietsLocation;
 }
 
+// -------------------------------------------------------------
+// Live Bus-Trein Aansluitingen Scanner & Matching Engine
+// -------------------------------------------------------------
+async function runLiveAansluitingenScan() {
+  try {
+    const [p1Res, p2Res, busDepRes] = await Promise.allSettled([
+      fetch('https://ovzoeker.nl/api/arrivals/2993931', {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(4500),
+      }),
+      fetch('https://ovzoeker.nl/api/arrivals/2993932', {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(4500),
+      }),
+      fetch('https://drgl.nl/stop/NL:S:16301010/departurespanel', {
+        headers: { 'User-Agent': 'DRGL-Steenwijkerland-App/1.0' },
+        signal: AbortSignal.timeout(4500),
+      }),
+    ]);
+
+    const trainArrivals: any[] = [];
+    if (p1Res.status === 'fulfilled' && p1Res.value.ok) {
+      const p1Data: any = await p1Res.value.json();
+      if (Array.isArray(p1Data.arrivals)) {
+        p1Data.arrivals.forEach((a: any) => trainArrivals.push({ ...a, platform: 'Spoor 1' }));
+      }
+    }
+    if (p2Res.status === 'fulfilled' && p2Res.value.ok) {
+      const p2Data: any = await p2Res.value.json();
+      if (Array.isArray(p2Data.arrivals)) {
+        p2Data.arrivals.forEach((a: any) => trainArrivals.push({ ...a, platform: 'Spoor 2' }));
+      }
+    }
+
+    let busDepartures: DRGLDeparture[] = [];
+    if (busDepRes.status === 'fulfilled' && busDepRes.value.ok) {
+      const html = await busDepRes.value.text();
+      busDepartures = parseDRGLDeparturesPanel(html).departures;
+    }
+
+    const now = new Date();
+    const weekInfo = getISOWeekInfo(now);
+    let changed = false;
+
+    // Cross-match buses and trains passing Station Steenwijk
+    for (const b of busDepartures) {
+      if (!b.plannedTime) continue;
+      const busPlannedTime = b.plannedTime.slice(0, 5);
+      const busDelay = b.delayMinutes || 0;
+      const busOperator =
+        b.operator ||
+        (['18', '20', '26', '217', '524'].includes(b.lineCode) ? 'Qbuzz' : 'RRReis');
+
+      for (const t of trainArrivals) {
+        const trainPlannedDate = new Date((t.ts - (t.punctuality || 0)) * 1000);
+        const trainPlannedTime = `${String(trainPlannedDate.getHours()).padStart(2, '0')}:${String(
+          trainPlannedDate.getMinutes()
+        ).padStart(2, '0')}`;
+        const trainDelayMin = Number(((t.punctuality || 0) / 60).toFixed(1));
+        const trainNumber =
+          String(t.vehicle_id || '').replace('NS:', '') || String(t.trip_id || '');
+        const trainType = String(t.route_short_name || '')
+          .toLowerCase()
+          .includes('sprinter')
+          ? 'Sprinter'
+          : 'Intercity';
+        const trainDest =
+          t.trip_headsign || (t.platform === 'Spoor 1' ? 'Zwolle / Schiphol' : 'Leeuwarden');
+
+        // 1. Bus -> Trein (Bus arrives, Train departs)
+        const busToTrainEval = evaluateConnection(
+          'bus_naar_trein',
+          busPlannedTime,
+          busDelay,
+          trainPlannedTime,
+          trainDelayMin,
+          trainType
+        );
+
+        if (busToTrainEval.isValidPlannedTransfer) {
+          const id = sanitizeConnectionLogId(
+            `${weekInfo.dateStr}_B2T_${b.lineCode}_${busPlannedTime}_${trainNumber}_${trainPlannedTime}`
+          );
+
+          if (!aansluitingenStore.has(id)) {
+            const actualBusArr = addMinuteOffset(busPlannedTime, busDelay);
+            const actualTrainDep = addMinuteOffset(trainPlannedTime, trainDelayMin);
+
+            aansluitingenStore.set(id, {
+              id,
+              direction: 'bus_naar_trein',
+              timestamp: now.toISOString(),
+              date: weekInfo.dateStr,
+              yearMonth: weekInfo.yearMonth,
+              isoYear: weekInfo.isoYear,
+              isoWeek: weekInfo.isoWeek,
+              yearWeek: weekInfo.yearWeek,
+              busLine: b.lineCode,
+              busOperator,
+              busDestination: b.destination,
+              busPlannedArrival: busPlannedTime,
+              busActualArrival: actualBusArr,
+              busDelayMinutes: busDelay,
+              trainNumber,
+              trainType,
+              trainDestination: trainDest,
+              trainPlatform: t.platform,
+              trainPlannedDeparture: trainPlannedTime,
+              trainActualDeparture: actualTrainDep,
+              trainDelayMinutes: trainDelayMin,
+              originVehicle: `Bus ${b.lineCode}`,
+              connectingVehicle: `${trainType} ${trainNumber}`,
+              plannedOriginArrival: busPlannedTime,
+              actualOriginArrival: actualBusArr,
+              plannedConnectingDeparture: trainPlannedTime,
+              actualConnectingDeparture: actualTrainDep,
+              plannedTransferMinutes: busToTrainEval.plannedTransferMinutes,
+              realizedTransferMinutes: busToTrainEval.realizedTransferMinutes,
+              status: busToTrainEval.status,
+              notes: busToTrainEval.notes,
+            });
+            changed = true;
+          }
+        }
+
+        // 2. Trein -> Bus (Train arrives, Bus departs)
+        const trainToBusEval = evaluateConnection(
+          'trein_naar_bus',
+          trainPlannedTime,
+          trainDelayMin,
+          busPlannedTime,
+          busDelay,
+          trainType
+        );
+
+        if (trainToBusEval.isValidPlannedTransfer) {
+          const id = sanitizeConnectionLogId(
+            `${weekInfo.dateStr}_T2B_${trainNumber}_${trainPlannedTime}_${b.lineCode}_${busPlannedTime}`
+          );
+
+          if (!aansluitingenStore.has(id)) {
+            const actualTrainArr = addMinuteOffset(trainPlannedTime, trainDelayMin);
+            const actualBusDep = addMinuteOffset(busPlannedTime, busDelay);
+
+            aansluitingenStore.set(id, {
+              id,
+              direction: 'trein_naar_bus',
+              timestamp: now.toISOString(),
+              date: weekInfo.dateStr,
+              yearMonth: weekInfo.yearMonth,
+              isoYear: weekInfo.isoYear,
+              isoWeek: weekInfo.isoWeek,
+              yearWeek: weekInfo.yearWeek,
+              busLine: b.lineCode,
+              busOperator,
+              busDestination: b.destination,
+              busPlannedDeparture: busPlannedTime,
+              busActualDeparture: actualBusDep,
+              busDelayMinutes: busDelay,
+              trainNumber,
+              trainType,
+              trainDestination: trainDest,
+              trainPlatform: t.platform,
+              trainPlannedArrival: trainPlannedTime,
+              trainActualArrival: actualTrainArr,
+              trainDelayMinutes: trainDelayMin,
+              originVehicle: `${trainType} ${trainNumber}`,
+              connectingVehicle: `Bus ${b.lineCode}`,
+              plannedOriginArrival: trainPlannedTime,
+              actualOriginArrival: actualTrainArr,
+              plannedConnectingDeparture: busPlannedTime,
+              actualConnectingDeparture: actualBusDep,
+              plannedTransferMinutes: trainToBusEval.plannedTransferMinutes,
+              realizedTransferMinutes: trainToBusEval.realizedTransferMinutes,
+              status: trainToBusEval.status,
+              notes: trainToBusEval.notes,
+            });
+            changed = true;
+          }
+        }
+      }
+    }
+
+    if (changed) {
+      saveAansluitingenStore();
+    }
+  } catch (e) {
+    console.warn('runLiveAansluitingenScan warning:', e);
+  }
+}
+
 async function startServer() {
   loadPunctualityStore();
   ensureInitialTodayLogs();
   loadDeelfietsStore();
   ensureInitialDeelfietsLogs();
   loadOvfietsStore();
+  loadAansluitingenStore();
+  ensureInitialAansluitingenLogs();
 
   const app = express();
   app.use(express.json());
@@ -1236,9 +1840,24 @@ async function startServer() {
       '/qbuzz.png',
       '/QBUZZ-1.png',
       '/qbuzz-1.png',
+      '/NS.png',
+      '/ns.png',
       '/bicycle_parking_open.png',
     ],
     (req, res, next) => {
+      if (req.path.toUpperCase().includes('NS.PNG')) {
+        const candidates = [
+          path.resolve(__dirname, 'public', 'NS.png'),
+          path.resolve(__dirname, 'NS.png'),
+          path.resolve(__dirname, 'dist', 'NS.png'),
+        ];
+        for (const candidate of candidates) {
+          if (fs.existsSync(candidate)) {
+            res.setHeader('Content-Type', 'image/png');
+            return res.sendFile(candidate);
+          }
+        }
+      }
       if (req.path.includes('bicycle_parking_open')) {
         const candidates = [
           path.resolve(__dirname, 'public', 'bicycle_parking_open.png'),
@@ -1305,6 +1924,12 @@ async function startServer() {
     runLiveOvFietsScan().catch(() => {});
   }, 60000);
   runLiveOvFietsScan().catch(() => {});
+
+  // Run active Bus-Trein Aansluitingen matching every 45 seconds
+  setInterval(() => {
+    runLiveAansluitingenScan().catch(() => {});
+  }, 45000);
+  runLiveAansluitingenScan().catch(() => {});
 
   // -------------------------------------------------------------
   // 1. DRGL Stop Departures API (e.g. NL:S:16301010 for Steenwijk)
@@ -1769,6 +2394,124 @@ async function startServer() {
     res.json({
       routes: BUS_ROUTES,
     });
+  });
+
+  // -------------------------------------------------------------
+  // 6. NS Treinen in Steenwijkerland Corridor
+  // -------------------------------------------------------------
+  app.get('/api/treinen', async (req, res) => {
+    const mode = (req.query.mode as string) || 'live';
+    if (mode === 'live') {
+      let trains = cachedOvzoekerTrains.trains;
+      if (trains.length === 0 || Date.now() - cachedOvzoekerTrains.timestamp > 8000) {
+        await fetchLiveOvzoekerVehicles(true).catch(() => {});
+        trains = cachedOvzoekerTrains.trains;
+      }
+      // Strictly enforce municipal borders: only trains within Steenwijkerland
+      const filteredTrains = trains.filter((t) => isPointInSteenwijkerland(t.lat, t.lng));
+      return res.json({
+        success: true,
+        count: filteredTrains.length,
+        trains: filteredTrains,
+        source: 'Live NS Treinposities (OVzoeker & GTFS-RT)',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Demo Mode trains on the Steenwijkerland corridor
+    const demoTrains: TrainPosition[] = [
+      {
+        id: 'NS:836',
+        matnummer: '836',
+        operator: 'NS',
+        operatorName: 'Nederlandse Spoorwegen',
+        line: 'Intercity',
+        trainType: 'Intercity',
+        destination: 'Schiphol Airport',
+        origin: 'Leeuwarden',
+        lat: 52.7915,
+        lng: 6.1160,
+        speedKmH: 128,
+        heading: 160,
+        delayMinutes: 0,
+        delaySeconds: 0,
+        status: 'Rijdend',
+        platform: 'Spoor 1',
+        lastUpdated: new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
+        nextStation: 'Steenwijk',
+      },
+      {
+        id: 'NS:9031',
+        matnummer: '9031',
+        operator: 'NS',
+        operatorName: 'Nederlandse Spoorwegen',
+        line: 'Sprinter',
+        trainType: 'Sprinter',
+        destination: 'Leeuwarden',
+        origin: 'Zwolle',
+        lat: 52.7780,
+        lng: 6.1320,
+        speedKmH: 98,
+        heading: 335,
+        delayMinutes: 1,
+        delaySeconds: 60,
+        status: 'Rijdend',
+        platform: 'Spoor 2',
+        lastUpdated: new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
+        nextStation: 'Steenwijk',
+      },
+    ];
+
+    return res.json({
+      success: true,
+      count: demoTrains.length,
+      trains: demoTrains,
+      source: 'Dienstregeling Voorbeeld Treinen',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // -------------------------------------------------------------
+  // 7. Bus-Trein Aansluitingen & Overstap API (Station Steenwijk)
+  // -------------------------------------------------------------
+  app.get('/api/aansluitingen/logs', (_req, res) => {
+    const logs = Array.from(aansluitingenStore.values()).sort((a, b) =>
+      b.timestamp.localeCompare(a.timestamp)
+    );
+    const summary = aggregateConnectionStats(logs);
+    res.json({
+      success: true,
+      count: logs.length,
+      logs,
+      summary,
+    });
+  });
+
+  app.post('/api/aansluitingen/scan', async (_req, res) => {
+    await runLiveAansluitingenScan();
+    const logs = Array.from(aansluitingenStore.values()).sort((a, b) =>
+      b.timestamp.localeCompare(a.timestamp)
+    );
+    const summary = aggregateConnectionStats(logs);
+    res.json({
+      success: true,
+      count: logs.length,
+      logs,
+      summary,
+    });
+  });
+
+  app.get('/api/aansluitingen/export.csv', (_req, res) => {
+    const logs = Array.from(aansluitingenStore.values()).sort((a, b) =>
+      b.timestamp.localeCompare(a.timestamp)
+    );
+    const csv = exportRawConnectionsToCSV(logs);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="station_steenwijk_overstap_aansluitingen.csv"'
+    );
+    res.send(csv);
   });
 
   if (!isProduction) {

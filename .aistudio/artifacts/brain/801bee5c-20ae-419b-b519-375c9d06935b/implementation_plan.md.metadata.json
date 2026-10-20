@@ -1,0 +1,6 @@
+{
+  "summary": "Implementatieplan voor live NS treinen in Steenwijkerland en de overstap- en aansluitingsanalyse tussen streekbussen en treinen op station Steenwijk, inclusief realtime matching, persistente logging per dag/week/maand per lijn en een dedicated forensic dark dashboard.",
+  "updatedAt": "2026-10-20T08:47:15.006312456Z",
+  "requestFeedback": true,
+  "userFacing": true
+}
