@@ -1,17 +1,12 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   DeelfietsLocation,
-  DeelfietsLogEntry,
-  aggregateDeelfietsStats,
-  exportDeelfietsStatsToCSV,
-  exportRawDeelfietsLogsToCSV,
+  DeelfietsPeriodStats,
 } from '../utils/deelfiets';
 import {
   OvFietsLocation,
   OvFietsLogEntry,
-  aggregateOvFietsStats,
-  exportOvFietsStatsToCSV,
-  exportRawOvFietsLogsToCSV,
+  OvFietsPeriodStats,
   OFFICIAL_STEENWIJK_OVFIETS,
 } from '../utils/ovfiets';
 import { getISOWeekInfo } from '../utils/punctuality';
@@ -29,36 +24,62 @@ import {
   Clock,
   ExternalLink,
   ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
+
+interface DeelfietsSummaryKpi {
+  currentAvailable: number;
+  currentRented: number;
+  totalCapacity: number;
+  avgAvailDay: number;
+  avgAvailWeek: number;
+  avgAvailMonth: number;
+  avgRentedDay: number;
+  avgRentedWeek: number;
+  avgRentedMonth: number;
+  totalRentedDay: number;
+  totalRentedWeek: number;
+  totalRentedMonth: number;
+}
 
 interface DeelfietsDashboardProps {
   isOpen: boolean;
   onClose: () => void;
   locations: DeelfietsLocation[];
-  logs: DeelfietsLogEntry[];
   initialLocationFilter?: string;
-  onTriggerLiveScan: () => void;
-  isScanning: boolean;
   ovfietsLocation?: OvFietsLocation | null;
-  ovfietsLogs?: OvFietsLogEntry[];
-  onTriggerLiveOvFietsScan?: () => void;
-  isScanningOvFiets?: boolean;
   initialNetworkTab?: 'deelfiets' | 'ovfiets';
+  onDeelfietsUpdated?: (
+    locations: DeelfietsLocation[],
+    allStats: DeelfietsPeriodStats[]
+  ) => void;
+  onOvFietsUpdated?: (
+    location: OvFietsLocation,
+    stats: OvFietsPeriodStats
+  ) => void;
+  refreshNonce?: number;
+}
+
+function triggerServerCsvDownload(url: string) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', '');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
   isOpen,
   onClose,
-  locations,
-  logs,
+  locations: propLocations,
   initialLocationFilter = '',
-  onTriggerLiveScan,
-  isScanning,
-  ovfietsLocation,
-  ovfietsLogs = [],
-  onTriggerLiveOvFietsScan,
-  isScanningOvFiets = false,
+  ovfietsLocation: propOvFietsLocation,
   initialNetworkTab = 'deelfiets',
+  onDeelfietsUpdated,
+  onOvFietsUpdated,
+  refreshNonce = 0,
 }) => {
   const [networkTab, setNetworkTab] = useState<'deelfiets' | 'ovfiets'>(initialNetworkTab);
 
@@ -79,34 +100,219 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
   // Deelfiets specific filters
   const [selectedTown, setSelectedTown] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>(initialLocationFilter);
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(initialLocationFilter);
 
   useEffect(() => {
     if (initialLocationFilter !== undefined) {
       setSearchQuery(initialLocationFilter);
+      setDebouncedSearch(initialLocationFilter);
     }
   }, [initialLocationFilter]);
 
-  // Available dates
-  const availableDays = useMemo(() => {
-    const s = new Set<string>([nowInfo.dateStr]);
-    logs.forEach((l) => s.add(l.date));
-    ovfietsLogs.forEach((l) => s.add(l.date));
-    return Array.from(s).sort().reverse();
-  }, [logs, ovfietsLogs, nowInfo.dateStr]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  const availableWeeks = useMemo(() => {
-    const s = new Set<string>([nowInfo.yearWeek]);
-    logs.forEach((l) => s.add(l.yearWeek));
-    ovfietsLogs.forEach((l) => s.add(l.yearWeek));
-    return Array.from(s).sort().reverse();
-  }, [logs, ovfietsLogs, nowInfo.yearWeek]);
+  // Deelfiets server state
+  const [locations, setLocations] = useState<DeelfietsLocation[]>(propLocations);
+  const [statsList, setStatsList] = useState<DeelfietsPeriodStats[]>([]);
+  const [dfDays, setDfDays] = useState<string[]>([nowInfo.dateStr]);
+  const [dfWeeks, setDfWeeks] = useState<string[]>([nowInfo.yearWeek]);
+  const [dfMonths, setDfMonths] = useState<string[]>([nowInfo.yearMonth]);
+  const [summary, setSummary] = useState<DeelfietsSummaryKpi>({
+    currentAvailable: 0,
+    currentRented: 0,
+    totalCapacity: 0,
+    avgAvailDay: 0,
+    avgAvailWeek: 0,
+    avgAvailMonth: 0,
+    avgRentedDay: 0,
+    avgRentedWeek: 0,
+    avgRentedMonth: 0,
+    totalRentedDay: 0,
+    totalRentedWeek: 0,
+    totalRentedMonth: 0,
+  });
+  const [isScanningDeelfiets, setIsScanningDeelfiets] = useState<boolean>(false);
 
-  const availableMonths = useMemo(() => {
-    const s = new Set<string>([nowInfo.yearMonth]);
-    logs.forEach((l) => s.add(l.yearMonth));
-    ovfietsLogs.forEach((l) => s.add(l.yearMonth));
-    return Array.from(s).sort().reverse();
-  }, [logs, ovfietsLogs, nowInfo.yearMonth]);
+  // OV-fiets server state
+  const [activeOvFiets, setActiveOvFiets] = useState<OvFietsLocation>(
+    propOvFietsLocation || OFFICIAL_STEENWIJK_OVFIETS
+  );
+  const [ovfietsStats, setOvfietsStats] = useState<OvFietsPeriodStats>({
+    stationCode: activeOvFiets.stationCode,
+    name: activeOvFiets.name,
+    town: activeOvFiets.town,
+    streetAddress: activeOvFiets.streetAddress,
+    currentAvailable: activeOvFiets.available,
+    currentRented: activeOvFiets.rented,
+    capacity: activeOvFiets.totalCapacity,
+    avgAvailableDay: activeOvFiets.available,
+    avgAvailableWeek: activeOvFiets.available,
+    avgAvailableMonth: activeOvFiets.available,
+    avgRentedDay: activeOvFiets.rented,
+    avgRentedWeek: activeOvFiets.rented,
+    avgRentedMonth: activeOvFiets.rented,
+    totalRentedDay: activeOvFiets.rented,
+    totalRentedWeek: activeOvFiets.rented,
+    totalRentedMonth: activeOvFiets.rented,
+  });
+  const [ovfietsLogs, setOvfietsLogs] = useState<OvFietsLogEntry[]>([]);
+  const [ovTotalCount, setOvTotalCount] = useState<number>(0);
+  const [ovPage, setOvPage] = useState<number>(1);
+  const [ovTotalPages, setOvTotalPages] = useState<number>(1);
+  const [ovDays, setOvDays] = useState<string[]>([nowInfo.dateStr]);
+  const [ovWeeks, setOvWeeks] = useState<string[]>([nowInfo.yearWeek]);
+  const [ovMonths, setOvMonths] = useState<string[]>([nowInfo.yearMonth]);
+  const [isScanningOvFiets, setIsScanningOvFiets] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (propLocations.length > 0 && locations.length === 0) {
+      setLocations(propLocations);
+    }
+  }, [propLocations, locations.length]);
+
+  useEffect(() => {
+    if (propOvFietsLocation) {
+      setActiveOvFiets(propOvFietsLocation);
+    }
+  }, [propOvFietsLocation]);
+
+  const buildDeelfietsQuery = useCallback(() => {
+    return new URLSearchParams({
+      day: selectedDay,
+      week: selectedWeek,
+      month: selectedMonth,
+      mode: periodMode,
+      town: selectedTown,
+      search: debouncedSearch,
+    }).toString();
+  }, [selectedDay, selectedWeek, selectedMonth, periodMode, selectedTown, debouncedSearch]);
+
+  const buildOvQuery = useCallback(
+    (includePaging = true) => {
+      const qs = new URLSearchParams({
+        day: selectedDay,
+        week: selectedWeek,
+        month: selectedMonth,
+      });
+      if (includePaging) {
+        qs.set('page', String(ovPage));
+        qs.set('pageSize', '50');
+      }
+      return qs.toString();
+    },
+    [selectedDay, selectedWeek, selectedMonth, ovPage]
+  );
+
+  // Fetch Deelfiets rollups from server
+  useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    fetch(`/api/deelfiets/locations?${buildDeelfietsQuery()}`, { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) return;
+        if (Array.isArray(data.locations)) setLocations(data.locations);
+        if (Array.isArray(data.statsList)) setStatsList(data.statsList);
+        if (data.summary) setSummary(data.summary);
+        if (Array.isArray(data.availableDays)) setDfDays(data.availableDays);
+        if (Array.isArray(data.availableWeeks)) setDfWeeks(data.availableWeeks);
+        if (Array.isArray(data.availableMonths)) setDfMonths(data.availableMonths);
+      })
+      .catch((err) => {
+        if (err?.name !== 'AbortError') {
+          console.warn('Deelfiets dashboard fetch error:', err);
+        }
+      });
+    return () => controller.abort();
+  }, [isOpen, buildDeelfietsQuery, refreshNonce]);
+
+  // Fetch OV-fiets rollups + paginated 50-row measurements from server
+  useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    fetch(`/api/ovfiets/steenwijk?${buildOvQuery(true)}`, { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) return;
+        if (data.location) setActiveOvFiets(data.location);
+        if (data.stats) setOvfietsStats(data.stats);
+        if (Array.isArray(data.logs)) setOvfietsLogs(data.logs);
+        if (typeof data.totalCount === 'number') setOvTotalCount(data.totalCount);
+        if (typeof data.totalPages === 'number') setOvTotalPages(Math.max(1, data.totalPages));
+        if (typeof data.page === 'number') setOvPage(data.page);
+        if (Array.isArray(data.availableDays)) setOvDays(data.availableDays);
+        if (Array.isArray(data.availableWeeks)) setOvWeeks(data.availableWeeks);
+        if (Array.isArray(data.availableMonths)) setOvMonths(data.availableMonths);
+      })
+      .catch((err) => {
+        if (err?.name !== 'AbortError') {
+          console.warn('OV-fiets dashboard fetch error:', err);
+        }
+      });
+    return () => controller.abort();
+  }, [isOpen, buildOvQuery, refreshNonce]);
+
+  const handleTriggerLiveDeelfietsScan = async () => {
+    setIsScanningDeelfiets(true);
+    try {
+      const res = await fetch(`/api/deelfiets/scan?${buildDeelfietsQuery()}`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.locations)) setLocations(data.locations);
+        if (Array.isArray(data.statsList)) setStatsList(data.statsList);
+        if (data.summary) setSummary(data.summary);
+        if (onDeelfietsUpdated && Array.isArray(data.locations) && Array.isArray(data.allStats)) {
+          onDeelfietsUpdated(data.locations, data.allStats);
+        }
+      }
+    } catch (e) {
+      console.warn('Deelfiets live scan error:', e);
+    } finally {
+      setIsScanningDeelfiets(false);
+    }
+  };
+
+  const handleTriggerLiveOvFietsScan = async () => {
+    setIsScanningOvFiets(true);
+    try {
+      const res = await fetch(`/api/ovfiets/scan?${buildOvQuery(true)}`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.location) setActiveOvFiets(data.location);
+        if (data.stats) setOvfietsStats(data.stats);
+        if (Array.isArray(data.logs)) setOvfietsLogs(data.logs);
+        if (typeof data.totalCount === 'number') setOvTotalCount(data.totalCount);
+        if (typeof data.totalPages === 'number') setOvTotalPages(Math.max(1, data.totalPages));
+        if (onOvFietsUpdated && data.location && data.stats) {
+          onOvFietsUpdated(data.location, data.stats);
+        }
+      }
+    } catch (e) {
+      console.warn('OV-fiets live scan error:', e);
+    } finally {
+      setIsScanningOvFiets(false);
+    }
+  };
+
+  const availableDays = useMemo(
+    () => Array.from(new Set([nowInfo.dateStr, ...dfDays, ...ovDays])).sort().reverse(),
+    [dfDays, ovDays, nowInfo.dateStr]
+  );
+
+  const availableWeeks = useMemo(
+    () => Array.from(new Set([nowInfo.yearWeek, ...dfWeeks, ...ovWeeks])).sort().reverse(),
+    [dfWeeks, ovWeeks, nowInfo.yearWeek]
+  );
+
+  const availableMonths = useMemo(
+    () => Array.from(new Set([nowInfo.yearMonth, ...dfMonths, ...ovMonths])).sort().reverse(),
+    [dfMonths, ovMonths, nowInfo.yearMonth]
+  );
 
   const availableTowns = useMemo(() => {
     const s = new Set<string>();
@@ -114,142 +320,23 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
     return Array.from(s).sort((a, b) => a.localeCompare(b, 'nl'));
   }, [locations]);
 
-  // Deelfiets Nederland aggregate
-  const statsList = useMemo(() => {
-    const allStats = aggregateDeelfietsStats(
-      locations,
-      logs,
-      selectedDay,
-      selectedWeek,
-      selectedMonth,
-      periodMode
-    );
-    return allStats.filter((st) => {
-      if (selectedTown !== 'ALL' && st.town !== selectedTown) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        return (
-          st.locationName.toLowerCase().includes(q) ||
-          st.town.toLowerCase().includes(q) ||
-          st.streetAddress.toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
-  }, [
-    locations,
-    logs,
-    selectedDay,
-    selectedWeek,
-    selectedMonth,
-    periodMode,
-    selectedTown,
-    searchQuery,
-  ]);
-
-  const summary = useMemo(() => {
-    const currentAvailable = statsList.reduce((a, b) => a + b.currentAvailable, 0);
-    const currentRented = statsList.reduce((a, b) => a + b.currentRented, 0);
-    const totalCapacity = statsList.reduce((a, b) => a + b.capacity, 0);
-
-    const avgAvailDay = Number(
-      statsList.reduce((a, b) => a + b.avgAvailableDay, 0).toFixed(1)
-    );
-    const avgAvailWeek = Number(
-      statsList.reduce((a, b) => a + b.avgAvailableWeek, 0).toFixed(1)
-    );
-    const avgAvailMonth = Number(
-      statsList.reduce((a, b) => a + b.avgAvailableMonth, 0).toFixed(1)
-    );
-
-    const avgRentedDay = Number(
-      statsList.reduce((a, b) => a + b.avgRentedDay, 0).toFixed(1)
-    );
-    const avgRentedWeek = Number(
-      statsList.reduce((a, b) => a + b.avgRentedWeek, 0).toFixed(1)
-    );
-    const avgRentedMonth = Number(
-      statsList.reduce((a, b) => a + b.avgRentedMonth, 0).toFixed(1)
-    );
-
-    const totalRentedDay = statsList.reduce((a, b) => a + b.totalRentedDay, 0);
-    const totalRentedWeek = statsList.reduce((a, b) => a + b.totalRentedWeek, 0);
-    const totalRentedMonth = statsList.reduce((a, b) => a + b.totalRentedMonth, 0);
-
-    return {
-      currentAvailable,
-      currentRented,
-      totalCapacity,
-      avgAvailDay,
-      avgAvailWeek,
-      avgAvailMonth,
-      avgRentedDay,
-      avgRentedWeek,
-      avgRentedMonth,
-      totalRentedDay,
-      totalRentedWeek,
-      totalRentedMonth,
-    };
-  }, [statsList]);
-
-  // NS OV-fiets Station Steenwijk aggregate
-  const activeOvFiets = ovfietsLocation || OFFICIAL_STEENWIJK_OVFIETS;
-  const ovfietsStats = useMemo(() => {
-    return aggregateOvFietsStats(
-      activeOvFiets,
-      ovfietsLogs,
-      selectedDay,
-      selectedWeek,
-      selectedMonth
-    );
-  }, [activeOvFiets, ovfietsLogs, selectedDay, selectedWeek, selectedMonth]);
-
   if (!isOpen) return null;
 
-  const downloadCSV = (content: string, filename: string) => {
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  // CSV Handlers - Deelfiets Nederland
+  // CSV Handlers (Direct Server Streaming Downloads)
   const handleExportDeelfietsStatsCSV = () => {
-    const periodTag =
-      periodMode === 'day'
-        ? selectedDay
-        : periodMode === 'week'
-        ? selectedWeek
-        : selectedMonth;
-    const csv = exportDeelfietsStatsToCSV(statsList);
-    downloadCSV(csv, `steenwijkerland_deelfietsen_statistieken_${periodTag}.csv`);
+    triggerServerCsvDownload(`/api/deelfiets/export.csv?type=stats&${buildDeelfietsQuery()}`);
   };
 
   const handleExportDeelfietsRawCSV = () => {
-    const csv = exportRawDeelfietsLogsToCSV(logs);
-    downloadCSV(csv, `steenwijkerland_deelfietsen_ruwe_metingen.csv`);
+    triggerServerCsvDownload('/api/deelfiets/export.csv?type=raw');
   };
 
-  // CSV Handlers - NS OV-fiets Station Steenwijk
   const handleExportOvFietsStatsCSV = () => {
-    const periodTag =
-      periodMode === 'day'
-        ? selectedDay
-        : periodMode === 'week'
-        ? selectedWeek
-        : selectedMonth;
-    const csv = exportOvFietsStatsToCSV(ovfietsStats);
-    downloadCSV(csv, `station_steenwijk_ovfiets_statistieken_${periodTag}.csv`);
+    triggerServerCsvDownload(`/api/ovfiets/export.csv?type=stats&${buildOvQuery(false)}`);
   };
 
   const handleExportOvFietsRawCSV = () => {
-    const csv = exportRawOvFietsLogsToCSV(ovfietsLogs);
-    downloadCSV(csv, `station_steenwijk_ovfiets_ruwe_metingen.csv`);
+    triggerServerCsvDownload('/api/ovfiets/export.csv?type=raw');
   };
 
   const ovPercentAvailable =
@@ -293,7 +380,7 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
             {networkTab === 'ovfiets' ? (
               <button
                 type="button"
-                onClick={onTriggerLiveOvFietsScan}
+                onClick={handleTriggerLiveOvFietsScan}
                 disabled={isScanningOvFiets}
                 className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Haal direct actuele voorraad op van ovfietsbeschikbaar.nl"
@@ -306,19 +393,19 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
             ) : (
               <button
                 type="button"
-                onClick={onTriggerLiveScan}
-                disabled={isScanning}
+                onClick={handleTriggerLiveDeelfietsScan}
+                disabled={isScanningDeelfiets}
                 className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Haal direct actuele voorraad op van deelfietsnederland.nl"
               >
                 <RefreshCw
-                  className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin text-[var(--accent-gold)]' : ''}`}
+                  className={`w-3.5 h-3.5 ${isScanningDeelfiets ? 'animate-spin text-[var(--accent-gold)]' : ''}`}
                 />
-                <span>{isScanning ? 'Scannen...' : 'Nu Live Scannen'}</span>
+                <span>{isScanningDeelfiets ? 'Scannen...' : 'Nu Live Scannen'}</span>
               </button>
             )}
 
-            {/* CSV Export Buttons */}
+            {/* CSV Export Buttons (Direct Streaming Server Download) */}
             {networkTab === 'ovfiets' ? (
               <>
                 <button
@@ -333,6 +420,7 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
                   type="button"
                   onClick={handleExportOvFietsRawCSV}
                   className="hidden sm:flex px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Streamt alle ruwe metingen direct vanaf de server"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
                   <span>Alle Metingen (.CSV)</span>
@@ -352,6 +440,7 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
                   type="button"
                   onClick={handleExportDeelfietsRawCSV}
                   className="hidden sm:flex px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Streamt alle ruwe metingen direct vanaf de server"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
                   <span>Alle Metingen (.CSV)</span>
@@ -539,8 +628,11 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setDebouncedSearch('');
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"
                   >
                     ×
                   </button>
@@ -626,11 +718,12 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
                   <TrendingUp className="w-4 h-4 text-[var(--status-emerald)]" />
                 </div>
                 <div className="text-xl font-extrabold font-mono text-[var(--status-emerald)] tabular-nums">
-                  {periodMode === 'day'
+                  {(periodMode === 'day'
                     ? summary.totalRentedDay
                     : periodMode === 'week'
                     ? summary.totalRentedWeek
-                    : summary.totalRentedMonth}{' '}
+                    : summary.totalRentedMonth
+                  ).toLocaleString('nl-NL')}{' '}
                   <span className="text-xs font-normal text-[var(--text-muted)]">
                     verhuringen ({periodMode === 'day' ? 'dag' : periodMode === 'week' ? 'week' : 'maand'})
                   </span>
@@ -776,7 +869,7 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
                     </span>
                   </div>
 
-                  {/* Architectural Linear Bar (no rounded-full) */}
+                  {/* Architectural Linear Bar */}
                   <div className="w-full h-3 bg-[var(--bg-main)] border border-[var(--border-subtle)] rounded-[3px] overflow-hidden flex">
                     <div
                       className="h-full bg-[var(--accent-gold)] transition-all duration-500"
@@ -902,11 +995,12 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
                   </div>
                   <div className="my-2">
                     <div className="text-2xl font-extrabold font-mono text-[var(--status-emerald)] tabular-nums">
-                      {periodMode === 'day'
+                      {(periodMode === 'day'
                         ? ovfietsStats.totalRentedDay
                         : periodMode === 'week'
                         ? ovfietsStats.totalRentedWeek
-                        : ovfietsStats.totalRentedMonth}{' '}
+                        : ovfietsStats.totalRentedMonth
+                      ).toLocaleString('nl-NL')}{' '}
                       <span className="text-xs font-normal text-[var(--text-muted)]">
                         verhuringen
                       </span>
@@ -988,14 +1082,14 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
               </div>
             </div>
 
-            {/* Bottom: Hourly Historical Log Table */}
+            {/* Bottom: Hourly Historical Log Table (Server-Paginated 50 rows/page) */}
             <div className="bg-[var(--bg-card)] rounded-[5px] border border-[var(--border-subtle)] overflow-hidden">
               <div className="px-4 py-2.5 bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)] flex items-center justify-between">
                 <span className="font-bold text-xs text-[var(--text-main)]">
                   Uurlijkse Metingen &amp; Historie (Station Steenwijk, swk002)
                 </span>
                 <span className="text-[11px] font-mono text-[var(--text-muted)] tabular-nums">
-                  {ovfietsLogs.length} geregistreerde snapshots
+                  {ovTotalCount.toLocaleString('nl-NL')} geregistreerde snapshots
                 </span>
               </div>
               <div className="max-h-60 overflow-auto">
@@ -1017,7 +1111,7 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border-subtle)] font-mono tabular-nums">
-                    {ovfietsLogs.slice(0, 50).map((l) => (
+                    {ovfietsLogs.map((l) => (
                       <tr key={l.id} className="hover:bg-[var(--bg-card-hover)]">
                         <td className="py-1.5 px-3 font-sans text-[var(--text-main)] tabular-nums">
                           {l.date} {l.hour}
@@ -1037,6 +1131,34 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* OV-fiets Pagination Footer */}
+              <div className="px-4 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border-subtle)] flex items-center justify-between text-xs">
+                <span className="text-[var(--text-muted)] font-mono">
+                  Pagina <strong className="text-[var(--text-main)]">{ovPage}</strong> van{' '}
+                  <strong className="text-[var(--text-main)]">{ovTotalPages.toLocaleString('nl-NL')}</strong>
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={ovPage <= 1}
+                    onClick={() => setOvPage((p) => Math.max(1, p - 1))}
+                    className="px-2.5 py-1 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] disabled:opacity-40 disabled:cursor-not-allowed border border-[var(--border-subtle)] text-[var(--text-main)] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Vorige</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={ovPage >= ovTotalPages}
+                    onClick={() => setOvPage((p) => Math.min(ovTotalPages, p + 1))}
+                    className="px-2.5 py-1 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] disabled:opacity-40 disabled:cursor-not-allowed border border-[var(--border-subtle)] text-[var(--text-main)] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <span>Volgende</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

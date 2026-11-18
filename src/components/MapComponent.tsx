@@ -12,16 +12,19 @@ import {
 } from '../data/steenwijkerland';
 import {
   PunctualityLogEntry,
+  StopPopupSummary,
   getISOWeekInfo,
 } from '../utils/punctuality';
 import {
   DeelfietsLocation,
   DeelfietsLogEntry,
+  DeelfietsPeriodStats,
   aggregateDeelfietsStats,
 } from '../utils/deelfiets';
 import {
   OvFietsLocation,
   OvFietsLogEntry,
+  OvFietsPeriodStats,
   aggregateOvFietsStats,
 } from '../utils/ovfiets';
 import {
@@ -59,13 +62,16 @@ interface MapComponentProps {
   onSelectStop?: (stop: BusStop) => void;
   onOpenStopStats?: (stop: BusStop) => void;
   punctualityLogs?: PunctualityLogEntry[];
+  stopPopupStats?: Record<string, StopPopupSummary>;
   deelfietsLocations?: DeelfietsLocation[];
   deelfietsLogs?: DeelfietsLogEntry[];
+  deelfietsStatsList?: DeelfietsPeriodStats[];
   showDeelfietsen?: boolean;
   onToggleDeelfietsen?: (show: boolean) => void;
   onOpenDeelfietsStats?: (location: DeelfietsLocation) => void;
   ovfietsLocation?: OvFietsLocation | null;
   ovfietsLogs?: OvFietsLogEntry[];
+  ovfietsStats?: OvFietsPeriodStats | null;
   showOvfietsen?: boolean;
   onToggleOvfietsen?: (show: boolean) => void;
   onOpenOvfietsStats?: () => void;
@@ -114,13 +120,16 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   onSelectStop,
   onOpenStopStats,
   punctualityLogs = [],
+  stopPopupStats,
   deelfietsLocations = [],
   deelfietsLogs = [],
+  deelfietsStatsList,
   showDeelfietsen = true,
   onToggleDeelfietsen,
   onOpenDeelfietsStats,
   ovfietsLocation,
   ovfietsLogs = [],
+  ovfietsStats,
   showOvfietsen = true,
   onToggleOvfietsen,
   onOpenOvfietsStats,
@@ -367,37 +376,54 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         icon: createHalteIcon(),
       });
 
-      // Compute punctuality stats for this stop from punctualityLogs
-      const stopLogs = punctualityLogs.filter(
-        (l) => l.town === stop.town && l.stopName === stop.name
-      );
-      const totalTrips = stopLogs.length;
-      const cancelledTrips = stopLogs.filter((l) => l.status === 'cancelled').length;
-      const operatedTrips = stopLogs.filter((l) => l.status !== 'cancelled');
-      const delayedTrips = operatedTrips.filter((l) => l.status === 'delayed' || l.delayMinutes > 0);
-      const earlyTrips = operatedTrips.filter((l) => l.status === 'early' || l.delayMinutes < 0);
+      // O(1) lookup from server-aggregated rollup summary when available
+      const preAgg = stopPopupStats?.[`${stop.town}::${stop.name}`];
+      let totalTrips = 0;
+      let cancelledTrips = 0;
+      let delayedCount = 0;
+      let avgDelayMin = '0.0';
+      let earlyCount = 0;
+      let avgEarlyMin = '0.0';
 
-      const avgDelayMin =
-        delayedTrips.length > 0
-          ? (
-              delayedTrips.reduce((a, b) => a + Math.max(0, b.delayMinutes), 0) /
-              delayedTrips.length
-            ).toFixed(1)
-          : '0.0';
-
-      const avgEarlyMin =
-        earlyTrips.length > 0
-          ? (
-              earlyTrips.reduce((a, b) => a + Math.abs(Math.min(0, b.delayMinutes)), 0) /
-              earlyTrips.length
-            ).toFixed(1)
-          : '0.0';
+      if (preAgg) {
+        totalTrips = preAgg.totalTrips;
+        cancelledTrips = preAgg.cancelledTrips;
+        delayedCount = preAgg.delayedCount;
+        avgDelayMin = preAgg.avgDelayMin;
+        earlyCount = preAgg.earlyCount;
+        avgEarlyMin = preAgg.avgEarlyMin;
+      } else if (punctualityLogs.length > 0) {
+        const stopLogs = punctualityLogs.filter(
+          (l) => l.town === stop.town && l.stopName === stop.name
+        );
+        totalTrips = stopLogs.length;
+        cancelledTrips = stopLogs.filter((l) => l.status === 'cancelled').length;
+        const operatedTrips = stopLogs.filter((l) => l.status !== 'cancelled');
+        const delayedTrips = operatedTrips.filter((l) => l.status === 'delayed' || l.delayMinutes > 0);
+        const earlyTrips = operatedTrips.filter((l) => l.status === 'early' || l.delayMinutes < 0);
+        delayedCount = delayedTrips.length;
+        earlyCount = earlyTrips.length;
+        avgDelayMin =
+          delayedTrips.length > 0
+            ? (
+                delayedTrips.reduce((a, b) => a + Math.max(0, b.delayMinutes), 0) /
+                delayedTrips.length
+              ).toFixed(1)
+            : '0.0';
+        avgEarlyMin =
+          earlyTrips.length > 0
+            ? (
+                earlyTrips.reduce((a, b) => a + Math.abs(Math.min(0, b.delayMinutes)), 0) /
+                earlyTrips.length
+              ).toFixed(1)
+            : '0.0';
+      }
 
       marker.bindTooltip(
         `<div class="font-sans text-xs text-[#f5f6f4] tabular-nums">
           <strong>${stop.town} — Halte ${stop.name}</strong><br/>
           <span class="text-[#9bb0a4]">Lijnen: ${stop.lines.join(', ')}</span><br/>
-          <span class="text-[10px] text-[#60756a]">Uitval: ${cancelledTrips} · Gem. vertraging: +${avgDelayMin}m · Te vroeg: ${earlyTrips.length}x (-${avgEarlyMin}m)</span>
+          <span class="text-[10px] text-[#60756a]">Uitval: ${cancelledTrips} · Gem. vertraging: +${avgDelayMin}m · Te vroeg: ${earlyCount}x (-${avgEarlyMin}m)</span>
         </div>`,
         {
           direction: 'top',
@@ -453,11 +479,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           </div>
           <div class="flex justify-between">
             <span class="text-[#9bb0a4]">Gemiddelde vertraging:</span>
-            <span class="font-mono font-bold text-[#fbbf24]">+${avgDelayMin} min (${delayedTrips.length}x te laat)</span>
+            <span class="font-mono font-bold text-[#fbbf24]">+${avgDelayMin} min (${delayedCount}x te laat)</span>
           </div>
           <div class="flex justify-between">
             <span class="text-[#9bb0a4]">Te vroeg gepasseerd:</span>
-            <span class="font-mono font-bold text-[#38bdf8]">${earlyTrips.length}x (gem. -${avgEarlyMin} min)</span>
+            <span class="font-mono font-bold text-[#38bdf8]">${earlyCount}x (gem. -${avgEarlyMin} min)</span>
           </div>
         </div>
         <div class="text-[10px] font-semibold text-[#9bb0a4] uppercase tracking-wider mb-1">
@@ -499,7 +525,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       marker.bindPopup(popupContainer);
       layer.addLayer(marker);
     });
-  }, [showHaltes, onSelectStop, onOpenStopStats, punctualityLogs]);
+  }, [showHaltes, onSelectStop, onOpenStopStats, stopPopupStats, punctualityLogs]);
 
   // Draw 17 Deelfiets Nederland Hubs in Gemeente Steenwijkerland
   useEffect(() => {
@@ -509,15 +535,20 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
     if (!showDeelfietsen || deelfietsLocations.length === 0) return;
 
-    const nowInfo = getISOWeekInfo(new Date());
-    const statsList = aggregateDeelfietsStats(
-      deelfietsLocations,
-      deelfietsLogs,
-      nowInfo.dateStr,
-      nowInfo.yearWeek,
-      nowInfo.yearMonth,
-      'day'
-    );
+    const statsList =
+      deelfietsStatsList && deelfietsStatsList.length > 0
+        ? deelfietsStatsList
+        : (() => {
+            const nowInfo = getISOWeekInfo(new Date());
+            return aggregateDeelfietsStats(
+              deelfietsLocations,
+              deelfietsLogs,
+              nowInfo.dateStr,
+              nowInfo.yearWeek,
+              nowInfo.yearMonth,
+              'day'
+            );
+          })();
     const statsById = new Map(statsList.map((s) => [s.stationId, s]));
 
     deelfietsLocations.forEach((loc) => {
@@ -614,7 +645,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       marker.bindPopup(popupContainer);
       layer.addLayer(marker);
     });
-  }, [showDeelfietsen, deelfietsLocations, deelfietsLogs, onOpenDeelfietsStats]);
+  }, [showDeelfietsen, deelfietsLocations, deelfietsStatsList, deelfietsLogs, onOpenDeelfietsStats]);
 
   // Update NS OV-fiets Marker on Station Steenwijk (using bicycle_parking_open.png)
   useEffect(() => {
@@ -639,7 +670,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       offset: [0, -44],
     });
 
-    const st = ovfietsLogs && ovfietsLogs.length > 0 ? aggregateOvFietsStats(loc, ovfietsLogs) : null;
+    const st =
+      ovfietsStats ||
+      (ovfietsLogs && ovfietsLogs.length > 0
+        ? aggregateOvFietsStats(loc, ovfietsLogs)
+        : null);
 
     const popupContainer = document.createElement('div');
     popupContainer.className = 'font-sans text-[#f5f6f4] min-w-[270px] max-w-[320px] p-3 tabular-nums';
@@ -718,7 +753,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
     marker.bindPopup(popupContainer);
     layer.addLayer(marker);
-  }, [showOvfietsen, ovfietsLocation, ovfietsLogs, onOpenOvfietsStats]);
+  }, [showOvfietsen, ovfietsLocation, ovfietsStats, ovfietsLogs, onOpenOvfietsStats]);
 
   // Update Bus Markers
   useEffect(() => {

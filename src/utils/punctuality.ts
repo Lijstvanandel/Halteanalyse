@@ -222,7 +222,18 @@ export function computeStopStats(
   });
 }
 
-const LINE_DESCRIPTIONS: Record<string, { operator: string; summary: string }> = {
+export interface StopPopupSummary {
+  town: string;
+  stopName: string;
+  totalTrips: number;
+  cancelledTrips: number;
+  delayedCount: number;
+  avgDelayMin: string;
+  earlyCount: number;
+  avgEarlyMin: string;
+}
+
+export const LINE_DESCRIPTIONS: Record<string, { operator: string; summary: string }> = {
   '26': { operator: 'Qbuzz', summary: 'Steenwijk Station ⇔ Kallenkote ⇔ Nijeveen ⇔ Meppel Station' },
   '70': { operator: 'RRReis (EBS)', summary: 'Oldemarkt ⇔ Steenwijk Station ⇔ Giethoorn ⇔ Zwartsluis' },
   '214': { operator: 'snelRRReis (EBS)', summary: 'Steenwijk Station ⇔ Scheerwolde ⇔ Wetering ⇔ Blokzijl ⇔ Lelystad' },

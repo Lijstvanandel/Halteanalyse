@@ -26,93 +26,47 @@ import {
   PunctualityLogEntry,
   TripPassStatus,
   getISOWeekInfo,
-  exportRawLogsToCSV,
   sanitizeLogId,
+  exportStopStatsToCSV,
+  exportLineStatsToCSV,
 } from './src/utils/punctuality';
 import {
   DeelfietsLocation,
   DeelfietsLogEntry,
   STEENWIJKERLAND_DEELFIETS_HUBS,
-  exportRawDeelfietsLogsToCSV,
+  exportDeelfietsStatsToCSV,
 } from './src/utils/deelfiets';
 import {
   OvFietsLocation,
   OvFietsLogEntry,
   OFFICIAL_STEENWIJK_OVFIETS,
-  exportRawOvFietsLogsToCSV,
+  exportOvFietsStatsToCSV,
 } from './src/utils/ovfiets';
 import { BusPosition } from './src/types/bus';
 import { TrainPosition, ConnectionLogEntry } from './src/types/train';
 import {
   evaluateConnection,
-  evaluateBusTrainConnection,
-  aggregateConnectionStats,
-  exportRawConnectionsToCSV,
   sanitizeConnectionLogId,
 } from './src/utils/aansluitingen';
+import { SteenwijkerlandDB } from './src/server/db';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isProduction = process.env.NODE_ENV === 'production';
 const PORT = Number(process.env.PORT) || 3000;
 
-const PUNCTUALITY_LOG_FILE = path.resolve(__dirname, 'src/data/punctualityLogs.json');
-const PUNCTUALITY_BACKUP_FILE = path.resolve(__dirname, 'src/data/punctualityLogs.backup.json');
-const DEELFIETS_LOG_FILE = path.resolve(__dirname, 'src/data/deelfietsLogs.json');
-const DEELFIETS_BACKUP_FILE = path.resolve(__dirname, 'src/data/deelfietsLogs.backup.json');
-const OVFIETS_LOG_FILE = path.resolve(__dirname, 'src/data/ovfietsLogs.json');
-const OVFIETS_BACKUP_FILE = path.resolve(__dirname, 'src/data/ovfietsLogs.backup.json');
-const AANSLUITINGEN_LOG_FILE = path.resolve(__dirname, 'src/data/aansluitingenLogs.json');
-const AANSLUITINGEN_BACKUP_FILE = path.resolve(__dirname, 'src/data/aansluitingenLogs.backup.json');
+const DB_FILE = path.resolve(__dirname, 'src/data/steenwijkerland.db');
+const storeDb = new SteenwijkerlandDB(DB_FILE);
 
 // Cache for DRGL departures and journeys
 const departuresCache: Map<string, { timestamp: number; data: { title: string; departures: DRGLDeparture[] } }> = new Map();
 const journeyCache: Map<string, { timestamp: number; data: DRGLJourneyData }> = new Map();
 
-// Train positions cache & persistent Aansluitingen transfer store
-const aansluitingenStore: Map<string, ConnectionLogEntry> = new Map();
+// Train positions cache
 let cachedOvzoekerTrains: { timestamp: number; trains: TrainPosition[] } = {
   timestamp: 0,
   trains: [],
 };
-
-// Persistent Punctuality Log Store (keyed by entry.id) — strictly additive, never wipes existing logs
-const punctualityStore: Map<string, PunctualityLogEntry> = new Map();
-
-function loadPunctualityStore() {
-  for (const filePath of [PUNCTUALITY_BACKUP_FILE, PUNCTUALITY_LOG_FILE]) {
-    try {
-      if (fs.existsSync(filePath)) {
-        const raw = fs.readFileSync(filePath, 'utf8');
-        const parsed: PunctualityLogEntry[] = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((entry) => {
-            if (entry && entry.id) {
-              punctualityStore.set(entry.id, entry);
-            }
-          });
-        }
-      }
-    } catch (e) {
-      console.warn(`Could not load ${path.basename(filePath)}:`, e);
-    }
-  }
-}
-
-function savePunctualityStore() {
-  try {
-    const arr = Array.from(punctualityStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
-    const json = JSON.stringify(arr, null, 2);
-    const tmpFile = `${PUNCTUALITY_LOG_FILE}.tmp`;
-    fs.writeFileSync(tmpFile, json, 'utf8');
-    fs.renameSync(tmpFile, PUNCTUALITY_LOG_FILE);
-    fs.writeFileSync(PUNCTUALITY_BACKUP_FILE, json, 'utf8');
-  } catch (e) {
-    console.warn('Could not save punctualityLogs.json:', e);
-  }
-}
 
 function addMinuteOffset(timeHHMM: string, deltaMin: number): string {
   const m = timeHHMM.match(/^(\d{1,2}):(\d{2})/);
@@ -123,64 +77,15 @@ function addMinuteOffset(timeHHMM: string, deltaMin: number): string {
   return `${hh}:${mm}`;
 }
 
-function loadAansluitingenStore() {
-  for (const filePath of [AANSLUITINGEN_BACKUP_FILE, AANSLUITINGEN_LOG_FILE]) {
-    try {
-      if (fs.existsSync(filePath)) {
-        const raw = fs.readFileSync(filePath, 'utf8');
-        const parsed: ConnectionLogEntry[] = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((entry) => {
-            if (entry && entry.id) {
-              aansluitingenStore.set(entry.id, entry);
-            }
-          });
-        }
-      }
-    } catch (e) {
-      console.warn(`Could not load ${path.basename(filePath)}:`, e);
-    }
-  }
-}
-
-function saveAansluitingenStore() {
-  try {
-    const arr = Array.from(aansluitingenStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
-    const json = JSON.stringify(arr, null, 2);
-    const tmpFile = `${AANSLUITINGEN_LOG_FILE}.tmp`;
-    fs.writeFileSync(tmpFile, json, 'utf8');
-    fs.renameSync(tmpFile, AANSLUITINGEN_LOG_FILE);
-    fs.writeFileSync(AANSLUITINGEN_BACKUP_FILE, json, 'utf8');
-  } catch (e) {
-    console.warn('Could not save aansluitingenLogs.json:', e);
-  }
-}
-
 // Seed historical 30-day transfer data across day, week, month for all connecting lines at Station Steenwijk
 function ensureInitialAansluitingenLogs() {
   const now = new Date();
-
-  // Normalize any existing entries to have direction and normalized vehicles
-  for (const entry of aansluitingenStore.values()) {
-    if (!entry.direction) {
-      entry.direction = 'bus_naar_trein';
-      entry.originVehicle = `Bus ${entry.busLine}`;
-      entry.connectingVehicle = `${entry.trainType} ${entry.trainNumber}`;
-      entry.plannedOriginArrival = entry.busPlannedArrival || '00:00';
-      entry.actualOriginArrival = entry.busActualArrival || '00:00';
-      entry.plannedConnectingDeparture = entry.trainPlannedDeparture || '00:00';
-      entry.actualConnectingDeparture = entry.trainActualDeparture || '00:00';
-    }
-  }
-
-  const hasTrainToBus = Array.from(aansluitingenStore.values()).some(
-    (e) => e.direction === 'trein_naar_bus'
-  );
-  const needsBusToTrain = aansluitingenStore.size === 0;
+  const hasTrainToBus = storeDb.hasTrainToBusAansluitingen();
+  const needsBusToTrain = storeDb.getTotalCount('aansluitingen_logs') === 0;
 
   if (hasTrainToBus && !needsBusToTrain) return;
+
+  const seedBatch: ConnectionLogEntry[] = [];
 
   // 1. Bus -> Trein connecting pairs (Bus arrives at Stationsplein, connects to departing IC or Sprinter at Spoorpad)
   const busToTrainPairs = [
@@ -283,7 +188,7 @@ function ensureInitialAansluitingenLogs() {
             );
             const timestamp = new Date(`${weekInfo.dateStr}T${busPlanned}:00`).toISOString();
 
-            aansluitingenStore.set(id, {
+            seedBatch.push({
               id,
               direction: 'bus_naar_trein',
               timestamp: isNaN(new Date(timestamp).getTime()) ? d.toISOString() : timestamp,
@@ -367,7 +272,7 @@ function ensureInitialAansluitingenLogs() {
           );
           const timestamp = new Date(`${weekInfo.dateStr}T${trainPlanned}:00`).toISOString();
 
-          aansluitingenStore.set(id, {
+          seedBatch.push({
             id,
             direction: 'trein_naar_bus',
             timestamp: isNaN(new Date(timestamp).getTime()) ? d.toISOString() : timestamp,
@@ -406,11 +311,11 @@ function ensureInitialAansluitingenLogs() {
     }
   }
 
-  saveAansluitingenStore();
+  storeDb.upsertAansluitingenBatch(seedBatch);
 }
 
 
-// Record departures from a stop into the persistent punctuality log
+// Record departures from a stop into the persistent SQLite punctuality log
 function logStopDepartures(stopCode: string, departures: DRGLDeparture[]) {
   const now = new Date();
   const weekInfo = getISOWeekInfo(now);
@@ -418,7 +323,7 @@ function logStopDepartures(stopCode: string, departures: DRGLDeparture[]) {
   const primaryStop = matchingStops[0];
   if (!primaryStop) return;
 
-  let changed = false;
+  const batch: PunctualityLogEntry[] = [];
   for (const dep of departures) {
     const cleanJourney = dep.journeyUrl.replace(/^\/journey\//, '').replace(/\/+$/, '');
     const id = sanitizeLogId(
@@ -447,7 +352,7 @@ function logStopDepartures(stopCode: string, departures: DRGLDeparture[]) {
         ? addMinuteOffset(plannedTime, delayMinutes)
         : plannedTime;
 
-    punctualityStore.set(id, {
+    batch.push({
       id,
       timestamp: now.toISOString(),
       date: weekInfo.dateStr,
@@ -468,17 +373,17 @@ function logStopDepartures(stopCode: string, departures: DRGLDeparture[]) {
       delayMinutes,
       status,
     });
-    changed = true;
   }
 
-  if (changed) {
-    savePunctualityStore();
+  if (batch.length > 0) {
+    storeDb.upsertPunctualityBatch(batch);
   }
 }
 
 // Seed initial active day log across all Steenwijkerland stops & lines starting today if store is empty
 function ensureInitialTodayLogs() {
-  if (punctualityStore.size > 0) return;
+  if (storeDb.getTotalCount('punctuality_logs') > 0) return;
+  const seedBatch: PunctualityLogEntry[] = [];
 
   const now = new Date();
   const weekInfo = getISOWeekInfo(now);
@@ -537,7 +442,7 @@ function ensureInitialTodayLogs() {
             ? addMinuteOffset(plannedTime, delayMinutes)
             : plannedTime;
 
-        punctualityStore.set(id, {
+        seedBatch.push({
           id,
           timestamp: now.toISOString(),
           date: weekInfo.dateStr,
@@ -562,7 +467,7 @@ function ensureInitialTodayLogs() {
     }
   }
 
-  savePunctualityStore();
+  storeDb.upsertPunctualityBatch(seedBatch);
 }
 
 // All unique DRGL stop codes in Gemeente Steenwijkerland for 24/7 background polling
@@ -762,8 +667,8 @@ async function resolveOvzoekerTripInfo(
   return fallbackInfo;
 }
 
-// Record real-time GPS passage of a live ovzoeker.nl bus near a Steenwijkerland bus stop into punctualityStore
-function logOvzoekerStopPassage(bus: BusPosition) {
+// Build a real-time GPS passage entry of a live ovzoeker.nl bus near a Steenwijkerland bus stop
+function buildOvzoekerStopPassage(bus: BusPosition): PunctualityLogEntry | null {
   let closestStop: (typeof STEENWIJKERLAND_STOPS)[0] | null = null;
   let closestDist = 280; // meters threshold for stop passage
 
@@ -777,7 +682,7 @@ function logOvzoekerStopPassage(bus: BusPosition) {
     }
   }
 
-  if (!closestStop) return;
+  if (!closestStop) return null;
 
   const now = new Date();
   const weekInfo = getISOWeekInfo(now);
@@ -801,7 +706,7 @@ function logOvzoekerStopPassage(bus: BusPosition) {
   const actualTime = `${hh}:${mm}`;
   const plannedTime = addMinuteOffset(actualTime, -delayMinutes);
 
-  punctualityStore.set(id, {
+  return {
     id,
     timestamp: now.toISOString(),
     date: weekInfo.dateStr,
@@ -821,8 +726,7 @@ function logOvzoekerStopPassage(bus: BusPosition) {
     actualTime,
     delayMinutes,
     status,
-  });
-  savePunctualityStore();
+  };
 }
 
 const STEENWIJKERLAND_LINES = new Set([
@@ -1135,14 +1039,21 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
         lastUpdated,
       };
 
-      // If this live bus is inside Gemeente Steenwijkerland, also log its stop passage if near a stop
-      if (isPointInSteenwijkerland(lat, lng)) {
-        logOvzoekerStopPassage(busObj);
-      }
-
       return busObj;
     })
   );
+
+  // Batch-record any live stop passages inside Gemeente Steenwijkerland in a single SQLite transaction
+  const passageBatch: PunctualityLogEntry[] = [];
+  for (const busObj of results) {
+    if (isPointInSteenwijkerland(busObj.lat, busObj.lng)) {
+      const passage = buildOvzoekerStopPassage(busObj);
+      if (passage) passageBatch.push(passage);
+    }
+  }
+  if (passageBatch.length > 0) {
+    storeDb.upsertPunctualityBatch(passageBatch);
+  }
 
   const trainsResult: TrainPosition[] = await Promise.all(
     candidateTrainEntities.map(async (ent) => {
@@ -1251,9 +1162,8 @@ async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosit
 }
 
 // -------------------------------------------------------------
-// Live Deelfiets Nederland (deelfietsnederland.nl) Engine & Persistent Store
+// Live Deelfiets Nederland (deelfietsnederland.nl) Engine & SQLite Store
 // -------------------------------------------------------------
-const deelfietsStore: Map<string, DeelfietsLogEntry> = new Map();
 const prevDeelfietsAvailable: Map<string, number> = new Map();
 let currentDeelfietsLocations: DeelfietsLocation[] = STEENWIJKERLAND_DEELFIETS_HUBS.map((h) => ({
   ...h,
@@ -1264,47 +1174,12 @@ let currentDeelfietsLocations: DeelfietsLocation[] = STEENWIJKERLAND_DEELFIETS_H
   }),
 }));
 
-function loadDeelfietsStore() {
-  for (const filePath of [DEELFIETS_BACKUP_FILE, DEELFIETS_LOG_FILE]) {
-    try {
-      if (fs.existsSync(filePath)) {
-        const raw = fs.readFileSync(filePath, 'utf8');
-        const parsed: DeelfietsLogEntry[] = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((entry) => {
-            if (entry && entry.id) {
-              deelfietsStore.set(entry.id, entry);
-            }
-          });
-        }
-      }
-    } catch (e) {
-      console.warn(`Could not load ${path.basename(filePath)}:`, e);
-    }
-  }
-}
-
-function saveDeelfietsStore() {
-  try {
-    const arr = Array.from(deelfietsStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
-    const json = JSON.stringify(arr, null, 2);
-    const tmpFile = `${DEELFIETS_LOG_FILE}.tmp`;
-    fs.writeFileSync(tmpFile, json, 'utf8');
-    fs.renameSync(tmpFile, DEELFIETS_LOG_FILE);
-    fs.writeFileSync(DEELFIETS_BACKUP_FILE, json, 'utf8');
-  } catch (e) {
-    console.warn('Could not save deelfietsLogs.json:', e);
-  }
-}
-
 function ensureInitialDeelfietsLogs() {
-  if (deelfietsStore.size > 0) return;
+  if (storeDb.getTotalCount('deelfiets_logs') > 0) return;
 
   const now = new Date();
-  // Seed past 7 days of hourly snapshots so Day, Week, and Month averages & totals are immediately available
   const sampleHours = ['08:00', '11:00', '14:00', '17:00', '20:00'];
+  const seedBatch: DeelfietsLogEntry[] = [];
 
   for (let dayOffset = 6; dayOffset >= 0; dayOffset--) {
     const d = new Date(now.getTime() - dayOffset * 24 * 60 * 60 * 1000);
@@ -1318,7 +1193,6 @@ function ensureInitialDeelfietsLogs() {
         if (hub.isCargoBike) {
           rented = seed >= 5 ? 1 : 0;
         } else {
-          // Afternoon hours see higher bike rental activity
           const factor = hIdx === 2 || hIdx === 3 ? 0.45 : hIdx === 1 ? 0.3 : 0.15;
           rented = Math.min(
             hub.capacity,
@@ -1332,7 +1206,7 @@ function ensureInitialDeelfietsLogs() {
         const id = sanitizeLogId(`${weekInfo.dateStr}_${hourSlot}_${hub.stationId}`);
         const entryDate = new Date(`${weekInfo.dateStr}T${hourSlot}:00`);
 
-        deelfietsStore.set(id, {
+        seedBatch.push({
           id,
           timestamp: isNaN(entryDate.getTime()) ? d.toISOString() : entryDate.toISOString(),
           date: weekInfo.dateStr,
@@ -1356,7 +1230,7 @@ function ensureInitialDeelfietsLogs() {
     });
   }
 
-  saveDeelfietsStore();
+  storeDb.upsertDeelfietsBatch(seedBatch);
 }
 
 async function runLiveDeelfietsScan(): Promise<DeelfietsLocation[]> {
@@ -1393,7 +1267,7 @@ async function runLiveDeelfietsScan(): Promise<DeelfietsLocation[]> {
     );
 
     const updatedLocations: DeelfietsLocation[] = [];
-    let storeChanged = false;
+    const logBatch: DeelfietsLogEntry[] = [];
 
     for (const item of rawList) {
       const lat = Number(item?.coordinates?.lt);
@@ -1449,9 +1323,9 @@ async function runLiveDeelfietsScan(): Promise<DeelfietsLocation[]> {
       updatedLocations.push(locObj);
 
       const logId = sanitizeLogId(`${weekInfo.dateStr}_${hourSlot}_${stationId}`);
-      const existingEntry = deelfietsStore.get(logId);
+      const prevNewRentals = storeDb.getExistingDeelfietsNewRentals(logId);
 
-      deelfietsStore.set(logId, {
+      logBatch.push({
         id: logId,
         timestamp: now.toISOString(),
         date: weekInfo.dateStr,
@@ -1469,16 +1343,15 @@ async function runLiveDeelfietsScan(): Promise<DeelfietsLocation[]> {
         availableBikes: available,
         rentedBikes: rented,
         capacity,
-        newRentals: (existingEntry?.newRentals || 0) + deltaNewRentals,
+        newRentals: prevNewRentals + deltaNewRentals,
       });
-      storeChanged = true;
     }
 
     if (updatedLocations.length > 0) {
       currentDeelfietsLocations = updatedLocations;
     }
-    if (storeChanged) {
-      saveDeelfietsStore();
+    if (logBatch.length > 0) {
+      storeDb.upsertDeelfietsBatch(logBatch);
     }
   } catch (err) {
     console.warn('Deelfiets Nederland live scan warning:', (err as Error).message);
@@ -1488,9 +1361,8 @@ async function runLiveDeelfietsScan(): Promise<DeelfietsLocation[]> {
 }
 
 // -------------------------------------------------------------
-// Live NS OV-fiets Station Steenwijk (swk002) Engine & Persistent Store
+// Live NS OV-fiets Station Steenwijk (swk002) Engine & SQLite Store
 // -------------------------------------------------------------
-const ovfietsStore: Map<string, OvFietsLogEntry> = new Map();
 let currentOvFietsLocation: OvFietsLocation = { ...OFFICIAL_STEENWIJK_OVFIETS };
 let prevOvFietsAvailable: number = OFFICIAL_STEENWIJK_OVFIETS.available;
 
@@ -1503,41 +1375,6 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>');
-}
-
-function loadOvfietsStore() {
-  for (const filePath of [OVFIETS_BACKUP_FILE, OVFIETS_LOG_FILE]) {
-    try {
-      if (fs.existsSync(filePath)) {
-        const raw = fs.readFileSync(filePath, 'utf8');
-        const parsed: OvFietsLogEntry[] = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((entry) => {
-            if (entry && entry.id) {
-              ovfietsStore.set(entry.id, entry);
-            }
-          });
-        }
-      }
-    } catch (e) {
-      console.warn(`Could not load ${path.basename(filePath)}:`, e);
-    }
-  }
-}
-
-function saveOvfietsStore() {
-  try {
-    const arr = Array.from(ovfietsStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
-    const json = JSON.stringify(arr, null, 2);
-    const tmpFile = `${OVFIETS_LOG_FILE}.tmp`;
-    fs.writeFileSync(tmpFile, json, 'utf8');
-    fs.renameSync(tmpFile, OVFIETS_LOG_FILE);
-    fs.writeFileSync(OVFIETS_BACKUP_FILE, json, 'utf8');
-  } catch (e) {
-    console.warn('Could not save ovfietsLogs.json:', e);
-  }
 }
 
 async function runLiveOvFietsScan(): Promise<OvFietsLocation> {
@@ -1599,25 +1436,25 @@ async function runLiveOvFietsScan(): Promise<OvFietsLocation> {
         available < prevOvFietsAvailable ? prevOvFietsAvailable - available : 0;
       prevOvFietsAvailable = available;
 
-      const existingEntry = ovfietsStore.get(logId);
-      ovfietsStore.set(logId, {
-        id: logId,
-        timestamp: now.toISOString(),
-        date: weekInfo.dateStr,
-        hour: hourSlot,
-        yearMonth: weekInfo.yearMonth,
-        isoYear: weekInfo.isoYear,
-        isoWeek: weekInfo.isoWeek,
-        yearWeek: weekInfo.yearWeek,
-        stationCode: 'swk002',
-        name: 'Station Steenwijk',
-        capacity: total,
-        available,
-        rented,
-        newRentals: (existingEntry?.newRentals || 0) + deltaNewRentals,
-      });
-
-      saveOvfietsStore();
+      const prevNewRentals = storeDb.getExistingOvFietsNewRentals(logId);
+      storeDb.upsertOvfietsBatch([
+        {
+          id: logId,
+          timestamp: now.toISOString(),
+          date: weekInfo.dateStr,
+          hour: hourSlot,
+          yearMonth: weekInfo.yearMonth,
+          isoYear: weekInfo.isoYear,
+          isoWeek: weekInfo.isoWeek,
+          yearWeek: weekInfo.yearWeek,
+          stationCode: 'swk002',
+          name: 'Station Steenwijk',
+          capacity: total,
+          available,
+          rented,
+          newRentals: prevNewRentals + deltaNewRentals,
+        },
+      ]);
     }
   } catch (e) {
     console.warn('OV-fiets live fetch warning:', (e as Error).message);
@@ -1668,7 +1505,7 @@ async function runLiveAansluitingenScan() {
 
     const now = new Date();
     const weekInfo = getISOWeekInfo(now);
-    let changed = false;
+    const liveBatch: ConnectionLogEntry[] = [];
 
     // Cross-match buses and trains passing Station Steenwijk
     for (const b of busDepartures) {
@@ -1710,11 +1547,11 @@ async function runLiveAansluitingenScan() {
             `${weekInfo.dateStr}_B2T_${b.lineCode}_${busPlannedTime}_${trainNumber}_${trainPlannedTime}`
           );
 
-          if (!aansluitingenStore.has(id)) {
+          if (!storeDb.hasAansluitingId(id)) {
             const actualBusArr = addMinuteOffset(busPlannedTime, busDelay);
             const actualTrainDep = addMinuteOffset(trainPlannedTime, trainDelayMin);
 
-            aansluitingenStore.set(id, {
+            liveBatch.push({
               id,
               direction: 'bus_naar_trein',
               timestamp: now.toISOString(),
@@ -1747,7 +1584,6 @@ async function runLiveAansluitingenScan() {
               status: busToTrainEval.status,
               notes: busToTrainEval.notes,
             });
-            changed = true;
           }
         }
 
@@ -1766,11 +1602,11 @@ async function runLiveAansluitingenScan() {
             `${weekInfo.dateStr}_T2B_${trainNumber}_${trainPlannedTime}_${b.lineCode}_${busPlannedTime}`
           );
 
-          if (!aansluitingenStore.has(id)) {
+          if (!storeDb.hasAansluitingId(id)) {
             const actualTrainArr = addMinuteOffset(trainPlannedTime, trainDelayMin);
             const actualBusDep = addMinuteOffset(busPlannedTime, busDelay);
 
-            aansluitingenStore.set(id, {
+            liveBatch.push({
               id,
               direction: 'trein_naar_bus',
               timestamp: now.toISOString(),
@@ -1803,14 +1639,13 @@ async function runLiveAansluitingenScan() {
               status: trainToBusEval.status,
               notes: trainToBusEval.notes,
             });
-            changed = true;
           }
         }
       }
     }
 
-    if (changed) {
-      saveAansluitingenStore();
+    if (liveBatch.length > 0) {
+      storeDb.upsertAansluitingenBatch(liveBatch);
     }
   } catch (e) {
     console.warn('runLiveAansluitingenScan warning:', e);
@@ -1818,12 +1653,28 @@ async function runLiveAansluitingenScan() {
 }
 
 async function startServer() {
-  loadPunctualityStore();
+  // One-time automatic migration from legacy JSON stores into SQLite (if SQLite tables are empty)
+  storeDb.migrateLegacyJsonIfEmpty({
+    punctuality: [
+      path.resolve(__dirname, 'src/data/punctualityLogs.backup.json'),
+      path.resolve(__dirname, 'src/data/punctualityLogs.json'),
+    ],
+    aansluitingen: [
+      path.resolve(__dirname, 'src/data/aansluitingenLogs.backup.json'),
+      path.resolve(__dirname, 'src/data/aansluitingenLogs.json'),
+    ],
+    deelfiets: [
+      path.resolve(__dirname, 'src/data/deelfietsLogs.backup.json'),
+      path.resolve(__dirname, 'src/data/deelfietsLogs.json'),
+    ],
+    ovfiets: [
+      path.resolve(__dirname, 'src/data/ovfietsLogs.backup.json'),
+      path.resolve(__dirname, 'src/data/ovfietsLogs.json'),
+    ],
+  });
+
   ensureInitialTodayLogs();
-  loadDeelfietsStore();
   ensureInitialDeelfietsLogs();
-  loadOvfietsStore();
-  loadAansluitingenStore();
   ensureInitialAansluitingenLogs();
 
   const app = express();
@@ -2218,119 +2069,246 @@ async function startServer() {
   });
 
   // -------------------------------------------------------------
-  // 3. Punctuality & Delay Logger API (Persistent + CSV Export)
+  // 3. Punctuality & Delay Logger API (SQLite + Server Pagination + Streaming CSV)
   // -------------------------------------------------------------
-  app.get('/api/punctuality/logs', (_req, res) => {
-    const logs = Array.from(punctualityStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
+  app.get('/api/punctuality/summary', (_req, res) => {
+    const mapSummary = storeDb.getPunctualityMapSummary();
     res.json({
       success: true,
-      count: logs.length,
-      logs,
+      totalCount: mapSummary.totalCount,
+      stopPopupStats: mapSummary.stopPopupStats,
     });
   });
 
-  app.post('/api/punctuality/scan', async (_req, res) => {
+  app.get('/api/punctuality/logs', (req, res) => {
+    const periodType = (req.query.periodType as 'all' | 'month' | 'week') || 'all';
+    const yearMonth = req.query.yearMonth as string | undefined;
+    const yearWeek = req.query.yearWeek as string | undefined;
+    const line = (req.query.line as string) || 'ALL';
+    const searchQuery = (req.query.search as string) || '';
+    const page = Number(req.query.page || 1);
+    const pageSize = Number(req.query.pageSize || 50);
+    const includeRaw = req.query.includeRaw !== 'false';
+
+    const data = storeDb.getPunctualityDashboardData({
+      periodType,
+      yearMonth,
+      yearWeek,
+      line,
+      searchQuery,
+      page,
+      pageSize,
+      includeRaw,
+    });
+
+    res.json({
+      success: true,
+      count: data.totalCount,
+      ...data,
+    });
+  });
+
+  app.post('/api/punctuality/scan', async (req, res) => {
     await runLiveDRGLPunctualityScan();
-    const logs = Array.from(punctualityStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
+    const mapSummary = storeDb.getPunctualityMapSummary();
+    const data = storeDb.getPunctualityDashboardData({
+      periodType: (req.query.periodType as 'all' | 'month' | 'week') || 'all',
+      yearMonth: req.query.yearMonth as string | undefined,
+      yearWeek: req.query.yearWeek as string | undefined,
+      line: (req.query.line as string) || 'ALL',
+      searchQuery: (req.query.search as string) || '',
+      page: Number(req.query.page || 1),
+      pageSize: Number(req.query.pageSize || 50),
+      includeRaw: true,
+    });
     res.json({
       success: true,
-      count: logs.length,
-      logs,
+      count: data.totalCount,
+      stopPopupStats: mapSummary.stopPopupStats,
+      ...data,
     });
   });
 
-  app.get('/api/punctuality/export.csv', (_req, res) => {
-    const logs = Array.from(punctualityStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
-    const csv = exportRawLogsToCSV(logs);
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="steenwijkerland_vertraging_logboek.csv"');
-    res.send(csv);
+  app.get('/api/punctuality/export.csv', async (req, res) => {
+    const exportType = (req.query.type as string) || 'raw';
+    const periodType = (req.query.periodType as 'all' | 'month' | 'week') || 'all';
+    const yearMonth = req.query.yearMonth as string | undefined;
+    const yearWeek = req.query.yearWeek as string | undefined;
+    const line = (req.query.line as string) || 'ALL';
+    const searchQuery = (req.query.search as string) || '';
+
+    const nowInfo = getISOWeekInfo(new Date());
+    const periodLabel =
+      periodType === 'month' && yearMonth
+        ? `Maand_${yearMonth}`
+        : periodType === 'week' && yearWeek
+        ? `Week_${yearWeek}`
+        : `Vanaf_${nowInfo.dateStr}`;
+
+    if (exportType === 'stops') {
+      const data = storeDb.getPunctualityDashboardData({
+        periodType,
+        yearMonth,
+        yearWeek,
+        line,
+        searchQuery,
+        includeRaw: false,
+      });
+      const csv = exportStopStatsToCSV(data.stopStats, periodLabel);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="steenwijkerland_haltes_vertraging_${periodLabel}.csv"`
+      );
+      return res.send(csv);
+    }
+
+    if (exportType === 'lines') {
+      const data = storeDb.getPunctualityDashboardData({
+        periodType,
+        yearMonth,
+        yearWeek,
+        line,
+        searchQuery,
+        includeRaw: false,
+      });
+      const csv = exportLineStatsToCSV(data.lineStats, periodLabel);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="steenwijkerland_lijnen_vertraging_${periodLabel}.csv"`
+      );
+      return res.send(csv);
+    }
+
+    await storeDb.streamPunctualityRawCSV(req, res, {
+      periodType,
+      yearMonth,
+      yearWeek,
+      line,
+      searchQuery,
+    });
   });
 
   // -------------------------------------------------------------
-  // 3B. Deelfiets Nederland API (Steenwijkerland Hubs + Logs + CSV)
+  // 3B. Deelfiets Nederland API (Steenwijkerland Hubs + Rollups + Streaming CSV)
   // -------------------------------------------------------------
-  app.get('/api/deelfiets/locations', (_req, res) => {
-    const logs = Array.from(deelfietsStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
+  app.get('/api/deelfiets/locations', (req, res) => {
+    const data = storeDb.getDeelfietsDashboardData(currentDeelfietsLocations, {
+      day: req.query.day as string | undefined,
+      week: req.query.week as string | undefined,
+      month: req.query.month as string | undefined,
+      mode: (req.query.mode as 'day' | 'week' | 'month') || 'day',
+      town: (req.query.town as string) || 'ALL',
+      search: (req.query.search as string) || '',
+    });
     res.json({
       success: true,
       count: currentDeelfietsLocations.length,
       locations: currentDeelfietsLocations,
-      logs,
+      ...data,
     });
   });
 
-  app.post('/api/deelfiets/scan', async (_req, res) => {
+  app.post('/api/deelfiets/scan', async (req, res) => {
     const locations = await runLiveDeelfietsScan();
-    const logs = Array.from(deelfietsStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
+    const data = storeDb.getDeelfietsDashboardData(locations, {
+      day: req.query.day as string | undefined,
+      week: req.query.week as string | undefined,
+      month: req.query.month as string | undefined,
+      mode: (req.query.mode as 'day' | 'week' | 'month') || 'day',
+      town: (req.query.town as string) || 'ALL',
+      search: (req.query.search as string) || '',
+    });
     res.json({
       success: true,
       count: locations.length,
       locations,
-      logs,
+      ...data,
     });
   });
 
-  app.get('/api/deelfiets/export.csv', (_req, res) => {
-    const logs = Array.from(deelfietsStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
-    const csv = exportRawDeelfietsLogsToCSV(logs);
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="steenwijkerland_deelfietsen_logboek.csv"'
-    );
-    res.send(csv);
+  app.get('/api/deelfiets/export.csv', async (req, res) => {
+    const exportType = (req.query.type as string) || 'raw';
+    if (exportType === 'stats') {
+      const mode = (req.query.mode as 'day' | 'week' | 'month') || 'day';
+      const data = storeDb.getDeelfietsDashboardData(currentDeelfietsLocations, {
+        day: req.query.day as string | undefined,
+        week: req.query.week as string | undefined,
+        month: req.query.month as string | undefined,
+        mode,
+        town: (req.query.town as string) || 'ALL',
+        search: (req.query.search as string) || '',
+      });
+      const periodTag =
+        data.statsList[0]?.periodLabel || getISOWeekInfo(new Date()).dateStr;
+      const csv = exportDeelfietsStatsToCSV(data.statsList);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="steenwijkerland_deelfietsen_statistieken_${periodTag}.csv"`
+      );
+      return res.send(csv);
+    }
+
+    await storeDb.streamDeelfietsRawCSV(req, res);
   });
 
   // -------------------------------------------------------------
-  // 3C. NS OV-fiets Station Steenwijk API (Dedicated swk002 monitor + Logs + CSV)
+  // 3C. NS OV-fiets Station Steenwijk API (Dedicated swk002 monitor + Rollups + Streaming CSV)
   // -------------------------------------------------------------
-  app.get('/api/ovfiets/steenwijk', (_req, res) => {
-    const logs = Array.from(ovfietsStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
+  app.get('/api/ovfiets/steenwijk', (req, res) => {
+    const data = storeDb.getOvFietsDashboardData(currentOvFietsLocation, {
+      day: req.query.day as string | undefined,
+      week: req.query.week as string | undefined,
+      month: req.query.month as string | undefined,
+      page: Number(req.query.page || 1),
+      pageSize: Number(req.query.pageSize || 50),
+      includeRaw: req.query.includeRaw !== 'false',
+    });
     res.json({
       success: true,
       location: currentOvFietsLocation,
-      logs,
+      ...data,
     });
   });
 
-  app.post('/api/ovfiets/scan', async (_req, res) => {
+  app.post('/api/ovfiets/scan', async (req, res) => {
     const location = await runLiveOvFietsScan();
-    const logs = Array.from(ovfietsStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
+    const data = storeDb.getOvFietsDashboardData(location, {
+      day: req.query.day as string | undefined,
+      week: req.query.week as string | undefined,
+      month: req.query.month as string | undefined,
+      page: Number(req.query.page || 1),
+      pageSize: Number(req.query.pageSize || 50),
+      includeRaw: true,
+    });
     res.json({
       success: true,
       location,
-      logs,
+      ...data,
     });
   });
 
-  app.get('/api/ovfiets/export.csv', (_req, res) => {
-    const logs = Array.from(ovfietsStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
-    const csv = exportRawOvFietsLogsToCSV(logs);
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="station_steenwijk_ovfiets_logboek.csv"'
-    );
-    res.send(csv);
+  app.get('/api/ovfiets/export.csv', async (req, res) => {
+    const exportType = (req.query.type as string) || 'raw';
+    if (exportType === 'stats') {
+      const data = storeDb.getOvFietsDashboardData(currentOvFietsLocation, {
+        day: req.query.day as string | undefined,
+        week: req.query.week as string | undefined,
+        month: req.query.month as string | undefined,
+        includeRaw: false,
+      });
+      const csv = exportOvFietsStatsToCSV(data.stats);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename="station_steenwijk_ovfiets_statistieken.csv"'
+      );
+      return res.send(csv);
+    }
+
+    await storeDb.streamOvFietsRawCSV(req, res);
   });
 
   // -------------------------------------------------------------
@@ -2472,46 +2450,81 @@ async function startServer() {
   });
 
   // -------------------------------------------------------------
-  // 7. Bus-Trein Aansluitingen & Overstap API (Station Steenwijk)
+  // 7. Bus-Trein Aansluitingen & Overstap API (SQLite + Rollups + Streaming CSV)
   // -------------------------------------------------------------
-  app.get('/api/aansluitingen/logs', (_req, res) => {
-    const logs = Array.from(aansluitingenStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
-    const summary = aggregateConnectionStats(logs);
+  app.get('/api/aansluitingen/summary', (req, res) => {
+    const period = (req.query.period as 'day' | 'week' | 'month' | 'all') || 'day';
+    const data = storeDb.getAansluitingenDashboardData({
+      period,
+      includeRaw: false,
+    });
     res.json({
       success: true,
-      count: logs.length,
-      logs,
-      summary,
+      count: data.totalCount,
+      summary: data.summary,
+      availableLines: data.availableLines,
     });
   });
 
-  app.post('/api/aansluitingen/scan', async (_req, res) => {
+  app.get('/api/aansluitingen/logs', (req, res) => {
+    const period = (req.query.period as 'day' | 'week' | 'month' | 'all') || 'day';
+    const direction = (req.query.direction as 'all' | 'bus_naar_trein' | 'trein_naar_bus') || 'all';
+    const trainType = (req.query.trainType as 'all' | 'Intercity' | 'Sprinter') || 'all';
+    const line = (req.query.line as string) || 'all';
+    const status = (req.query.status as 'all' | 'gehaald' | 'gemist') || 'all';
+    const search = (req.query.search as string) || '';
+    const page = Number(req.query.page || 1);
+    const pageSize = Number(req.query.pageSize || 50);
+    const includeRaw = req.query.includeRaw !== 'false';
+
+    const data = storeDb.getAansluitingenDashboardData({
+      period,
+      direction,
+      trainType,
+      line,
+      status,
+      search,
+      page,
+      pageSize,
+      includeRaw,
+    });
+
+    res.json({
+      success: true,
+      count: data.totalCount,
+      ...data,
+    });
+  });
+
+  app.post('/api/aansluitingen/scan', async (req, res) => {
     await runLiveAansluitingenScan();
-    const logs = Array.from(aansluitingenStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
-    const summary = aggregateConnectionStats(logs);
+    const data = storeDb.getAansluitingenDashboardData({
+      period: (req.query.period as 'day' | 'week' | 'month' | 'all') || 'day',
+      direction: (req.query.direction as 'all' | 'bus_naar_trein' | 'trein_naar_bus') || 'all',
+      trainType: (req.query.trainType as 'all' | 'Intercity' | 'Sprinter') || 'all',
+      line: (req.query.line as string) || 'all',
+      status: (req.query.status as 'all' | 'gehaald' | 'gemist') || 'all',
+      search: (req.query.search as string) || '',
+      page: Number(req.query.page || 1),
+      pageSize: Number(req.query.pageSize || 50),
+      includeRaw: true,
+    });
     res.json({
       success: true,
-      count: logs.length,
-      logs,
-      summary,
+      count: data.totalCount,
+      ...data,
     });
   });
 
-  app.get('/api/aansluitingen/export.csv', (_req, res) => {
-    const logs = Array.from(aansluitingenStore.values()).sort((a, b) =>
-      b.timestamp.localeCompare(a.timestamp)
-    );
-    const csv = exportRawConnectionsToCSV(logs);
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="station_steenwijk_overstap_aansluitingen.csv"'
-    );
-    res.send(csv);
+  app.get('/api/aansluitingen/export.csv', async (req, res) => {
+    await storeDb.streamAansluitingenCSV(req, res, {
+      period: (req.query.period as 'day' | 'week' | 'month' | 'all') || 'all',
+      direction: (req.query.direction as 'all' | 'bus_naar_trein' | 'trein_naar_bus') || 'all',
+      trainType: (req.query.trainType as 'all' | 'Intercity' | 'Sprinter') || 'all',
+      line: (req.query.line as string) || 'all',
+      status: (req.query.status as 'all' | 'gehaald' | 'gemist') || 'all',
+      search: (req.query.search as string) || '',
+    });
   });
 
   if (!isProduction) {

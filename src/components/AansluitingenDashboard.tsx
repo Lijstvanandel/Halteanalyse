@@ -1,10 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { ConnectionLogEntry, TransferDirection } from '../types/train';
-import {
-  aggregateConnectionStats,
-  filterConnectionLogsByPeriod,
-  exportRawConnectionsToCSV,
-} from '../utils/aansluitingen';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ConnectionLogEntry, ConnectionSummary, TransferDirection } from '../types/train';
 import {
   X,
   Download,
@@ -20,23 +15,59 @@ import {
   Info,
   Calendar,
   ArrowRightLeft,
-  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface AansluitingenDashboardProps {
   isOpen: boolean;
   onClose: () => void;
-  logs: ConnectionLogEntry[];
-  onTriggerLiveScan?: () => void;
-  isScanning?: boolean;
+  onSummaryUpdated?: (summary: ConnectionSummary) => void;
+  refreshNonce?: number;
+}
+
+const EMPTY_SUMMARY: ConnectionSummary = {
+  totalPlanned: 0,
+  transfersMade: 0,
+  transfersMissed: 0,
+  successRate: 100,
+  avgPlannedBufferMin: 0,
+  avgRealizedMarginMin: 0,
+  byDirection: {
+    bus_naar_trein: { total: 0, made: 0, missed: 0, rate: 100, avgPlannedBufferMin: 0, avgRealizedMarginMin: 0 },
+    trein_naar_bus: { total: 0, made: 0, missed: 0, rate: 100, avgPlannedBufferMin: 0, avgRealizedMarginMin: 0 },
+  },
+  byTrainType: {
+    intercity: { total: 0, made: 0, missed: 0, rate: 100, avgPlannedBufferMin: 0, avgRealizedMarginMin: 0 },
+    sprinter: { total: 0, made: 0, missed: 0, rate: 100, avgPlannedBufferMin: 0, avgRealizedMarginMin: 0 },
+  },
+  byDirectionAndTrainType: {
+    bus_naar_trein: {
+      intercity: { total: 0, made: 0, missed: 0, rate: 100, avgPlannedBufferMin: 0, avgRealizedMarginMin: 0 },
+      sprinter: { total: 0, made: 0, missed: 0, rate: 100, avgPlannedBufferMin: 0, avgRealizedMarginMin: 0 },
+    },
+    trein_naar_bus: {
+      intercity: { total: 0, made: 0, missed: 0, rate: 100, avgPlannedBufferMin: 0, avgRealizedMarginMin: 0 },
+      sprinter: { total: 0, made: 0, missed: 0, rate: 100, avgPlannedBufferMin: 0, avgRealizedMarginMin: 0 },
+    },
+  },
+  byLine: {},
+};
+
+function triggerServerCsvDownload(url: string) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', '');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
   isOpen,
   onClose,
-  logs,
-  onTriggerLiveScan,
-  isScanning = false,
+  onSummaryUpdated,
+  refreshNonce = 0,
 }) => {
   const [periodFilter, setPeriodFilter] = useState<'day' | 'week' | 'month' | 'all'>('day');
   const [directionFilter, setDirectionFilter] = useState<'all' | TransferDirection>('all');
@@ -44,82 +75,109 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
   const [selectedLine, setSelectedLine] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'gehaald' | 'gemist'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const pageSize = 50;
 
-  // 1. Period filtering (Day / Week / Month / All)
-  const periodFilteredLogs = useMemo(() => {
-    return filterConnectionLogsByPeriod(logs, periodFilter);
-  }, [logs, periodFilter]);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [filteredTotal, setFilteredTotal] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [availableLines, setAvailableLines] = useState<string[]>([]);
+  const [periodSummary, setPeriodSummary] = useState<ConnectionSummary>(EMPTY_SUMMARY);
+  const [logs, setLogs] = useState<ConnectionLogEntry[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isScanning, setIsScanning] = useState<boolean>(false);
 
-  // 2. High-level KPI summary based on period
-  const periodSummary = useMemo(() => {
-    return aggregateConnectionStats(periodFilteredLogs);
-  }, [periodFilteredLogs]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  // 3. Multi-dimensional filtering for detailed table and line table
-  const finalFilteredLogs = useMemo(() => {
-    return periodFilteredLogs.filter((log) => {
-      const dir: TransferDirection = log.direction || 'bus_naar_trein';
-      if (directionFilter !== 'all' && dir !== directionFilter) return false;
-      if (trainTypeFilter !== 'all' && log.trainType !== trainTypeFilter) return false;
-      if (selectedLine !== 'all' && log.busLine !== selectedLine) return false;
-      if (statusFilter !== 'all' && log.status !== statusFilter) return false;
+  const buildQueryParams = useCallback(
+    (includePaging = true) => {
+      const qs = new URLSearchParams({
+        period: periodFilter,
+        direction: directionFilter,
+        trainType: trainTypeFilter,
+        line: selectedLine,
+        status: statusFilter,
+        search: debouncedSearch,
+      });
+      if (includePaging) {
+        qs.set('page', String(page));
+        qs.set('pageSize', String(pageSize));
+      }
+      return qs.toString();
+    },
+    [periodFilter, directionFilter, trainTypeFilter, selectedLine, statusFilter, debouncedSearch, page]
+  );
 
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesLine = log.busLine.toLowerCase().includes(q);
-        const matchesDest = (log.busDestination || '').toLowerCase().includes(q);
-        const matchesTrain =
-          log.trainNumber.toLowerCase().includes(q) ||
-          (log.trainDestination || '').toLowerCase().includes(q) ||
-          log.trainType.toLowerCase().includes(q);
-        const matchesOperator = (log.busOperator || '').toLowerCase().includes(q);
-        const matchesOrigin = (log.originVehicle || '').toLowerCase().includes(q);
-        const matchesConnecting = (log.connectingVehicle || '').toLowerCase().includes(q);
-        if (
-          !matchesLine &&
-          !matchesDest &&
-          !matchesTrain &&
-          !matchesOperator &&
-          !matchesOrigin &&
-          !matchesConnecting
-        ) {
-          return false;
+  const applyPayload = useCallback((data: any) => {
+    if (!data) return;
+    if (typeof data.totalCount === 'number') setTotalCount(data.totalCount);
+    else if (typeof data.count === 'number') setTotalCount(data.count);
+    if (typeof data.filteredTotal === 'number') setFilteredTotal(data.filteredTotal);
+    if (typeof data.totalPages === 'number') setTotalPages(Math.max(1, data.totalPages));
+    if (typeof data.page === 'number') setPage(data.page);
+    if (Array.isArray(data.availableLines)) setAvailableLines(data.availableLines);
+    if (data.summary) setPeriodSummary(data.summary);
+    if (Array.isArray(data.logs)) setLogs(data.logs);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    setIsLoading(true);
+    fetch(`/api/aansluitingen/logs?${buildQueryParams(true)}`, { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) applyPayload(data);
+      })
+      .catch((err) => {
+        if (err?.name !== 'AbortError') {
+          console.warn('Fout bij ophalen aansluitingen:', err);
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+    return () => controller.abort();
+  }, [isOpen, buildQueryParams, applyPayload, refreshNonce]);
+
+  const handleTriggerLiveScan = async () => {
+    setIsScanning(true);
+    try {
+      const res = await fetch(`/api/aansluitingen/scan?${buildQueryParams(true)}`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        applyPayload(data);
+        if (onSummaryUpdated) {
+          if (periodFilter === 'day' && data.summary) {
+            onSummaryUpdated(data.summary);
+          } else {
+            const sumRes = await fetch('/api/aansluitingen/summary?period=day');
+            if (sumRes.ok) {
+              const sumData = await sumRes.json();
+              if (sumData.summary) onSummaryUpdated(sumData.summary);
+            }
+          }
         }
       }
+    } catch (e) {
+      console.warn('Aansluitingen scan error:', e);
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
-      return true;
-    });
-  }, [periodFilteredLogs, directionFilter, trainTypeFilter, selectedLine, statusFilter, searchQuery]);
-
-  // Unique bus lines present in logs
-  const availableLines = useMemo(() => {
-    const lines = new Set<string>();
-    logs.forEach((l) => {
-      if (l.busLine) lines.add(l.busLine);
-    });
-    return Array.from(lines).sort((a, b) => {
-      const numA = parseInt(a, 10);
-      const numB = parseInt(b, 10);
-      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-      return a.localeCompare(b);
-    });
-  }, [logs]);
-
-  // CSV download handler
+  // Direct streaming CSV download from SQLite cursor (zero browser heap overhead)
   const handleDownloadCSV = () => {
-    const csvContent = exportRawConnectionsToCSV(finalFilteredLogs);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
-      `station_steenwijk_aansluitingen_${directionFilter}_${periodFilter}_${new Date().toISOString().slice(0, 10)}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    triggerServerCsvDownload(`/api/aansluitingen/export.csv?${buildQueryParams(false)}`);
   };
 
   if (!isOpen) return null;
@@ -153,6 +211,9 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                   <span className="px-2 py-0.5 rounded-[3px] bg-[var(--status-blue)]/15 border border-[var(--status-blue)] text-[var(--status-blue)] text-[10px] font-mono font-bold uppercase tracking-wider">
                     IC &amp; Sprinter
                   </span>
+                  <span className="text-[11px] font-mono text-[var(--status-emerald)] ml-1">
+                    · {totalCount.toLocaleString('nl-NL')} opgeslagen records
+                  </span>
                 </div>
               </div>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">
@@ -162,26 +223,24 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {onTriggerLiveScan && (
-              <button
-                onClick={onTriggerLiveScan}
-                disabled={isScanning}
-                className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                title="Voer actuele aansluitingscontrole uit"
-              >
-                <RefreshCw
-                  className={`w-3.5 h-3.5 text-[var(--accent-gold)] ${
-                    isScanning ? 'animate-spin' : ''
-                  }`}
-                />
-                <span className="hidden sm:inline">Hercirculeer</span>
-              </button>
-            )}
+            <button
+              onClick={handleTriggerLiveScan}
+              disabled={isScanning}
+              className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--border-focus)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Voer actuele aansluitingscontrole uit"
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 text-[var(--accent-gold)] ${
+                  isScanning ? 'animate-spin' : ''
+                }`}
+              />
+              <span className="hidden sm:inline">Hercirculeer</span>
+            </button>
 
             <button
               onClick={handleDownloadCSV}
               className="px-2.5 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] text-[#060e0a] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Exporteer actuele dataset als CSV bestand"
+              title="Streamt volledige gefilterde dataset direct als CSV zonder geheugenlimiet"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export CSV</span>
@@ -216,7 +275,10 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
               ).map((p) => (
                 <button
                   key={p.key}
-                  onClick={() => setPeriodFilter(p.key)}
+                  onClick={() => {
+                    setPeriodFilter(p.key);
+                    setPage(1);
+                  }}
                   className={`px-2.5 py-1 rounded-[3px] text-xs font-semibold transition-colors cursor-pointer ${
                     periodFilter === p.key
                       ? 'bg-[var(--accent-gold)] text-[#060e0a]'
@@ -236,7 +298,10 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
               <ArrowRightLeft className="w-3.5 h-3.5 text-[var(--status-blue)]" />
               <select
                 value={directionFilter}
-                onChange={(e) => setDirectionFilter(e.target.value as any)}
+                onChange={(e) => {
+                  setDirectionFilter(e.target.value as 'all' | TransferDirection);
+                  setPage(1);
+                }}
                 className="bg-transparent text-xs text-[var(--text-main)] focus:outline-none cursor-pointer"
               >
                 <option value="all" className="bg-[#0b1a13]">
@@ -256,7 +321,10 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
               <Train className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
               <select
                 value={trainTypeFilter}
-                onChange={(e) => setTrainTypeFilter(e.target.value as any)}
+                onChange={(e) => {
+                  setTrainTypeFilter(e.target.value as 'all' | 'Intercity' | 'Sprinter');
+                  setPage(1);
+                }}
                 className="bg-transparent text-xs text-[var(--text-main)] focus:outline-none cursor-pointer"
               >
                 <option value="all" className="bg-[#0b1a13]">
@@ -276,7 +344,10 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
               <Bus className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <select
                 value={selectedLine}
-                onChange={(e) => setSelectedLine(e.target.value)}
+                onChange={(e) => {
+                  setSelectedLine(e.target.value);
+                  setPage(1);
+                }}
                 className="bg-transparent text-xs text-[var(--text-main)] focus:outline-none cursor-pointer"
               >
                 <option value="all" className="bg-[#0b1a13]">
@@ -295,7 +366,10 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
               <Filter className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value as 'all' | 'gehaald' | 'gemist');
+                  setPage(1);
+                }}
                 className="bg-transparent text-xs text-[var(--text-main)] focus:outline-none cursor-pointer"
               >
                 <option value="all" className="bg-[#0b1a13]">
@@ -335,7 +409,7 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                 <Clock className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
               </div>
               <div className="mt-2 text-2xl font-bold font-mono text-[var(--text-main)]">
-                {periodSummary.totalPlanned}
+                {periodSummary.totalPlanned.toLocaleString('nl-NL')}
               </div>
               <div className="text-[11px] text-[var(--text-dim)] mt-1">
                 Aansluitingsvenster 3–15 min
@@ -349,7 +423,7 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                 <CheckCircle2 className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
               </div>
               <div className="mt-2 text-2xl font-bold font-mono text-[var(--status-emerald)]">
-                {periodSummary.transfersMade}
+                {periodSummary.transfersMade.toLocaleString('nl-NL')}
               </div>
               <div className="text-[11px] text-[var(--text-dim)] mt-1">≥ 3 min overstaptijd</div>
             </div>
@@ -361,7 +435,7 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                 <XCircle className="w-3.5 h-3.5 text-[var(--status-crimson)]" />
               </div>
               <div className="mt-2 text-2xl font-bold font-mono text-[var(--status-crimson)]">
-                {periodSummary.transfersMissed}
+                {periodSummary.transfersMissed.toLocaleString('nl-NL')}
               </div>
               <div className="text-[11px] text-[var(--text-dim)] mt-1">&lt; 3 min overstaptijd</div>
             </div>
@@ -402,7 +476,10 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Box 1: Bus -> Trein */}
             <div
-              onClick={() => setDirectionFilter(directionFilter === 'bus_naar_trein' ? 'all' : 'bus_naar_trein')}
+              onClick={() => {
+                setDirectionFilter(directionFilter === 'bus_naar_trein' ? 'all' : 'bus_naar_trein');
+                setPage(1);
+              }}
               className={`bg-[var(--bg-card)] border rounded-[4px] p-3 transition-colors cursor-pointer ${
                 directionFilter === 'bus_naar_trein'
                   ? 'border-[var(--accent-gold)] bg-[var(--accent-gold)]/10'
@@ -420,11 +497,13 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
               </div>
               <div className="mt-2 flex items-baseline justify-between">
                 <span className="text-lg font-bold font-mono text-[var(--text-main)]">
-                  {periodSummary.byDirection.bus_naar_trein.made}{' '}
-                  <span className="text-xs text-[var(--text-dim)] font-normal">/ {periodSummary.byDirection.bus_naar_trein.total} gehaald</span>
+                  {periodSummary.byDirection.bus_naar_trein.made.toLocaleString('nl-NL')}{' '}
+                  <span className="text-xs text-[var(--text-dim)] font-normal">
+                    / {periodSummary.byDirection.bus_naar_trein.total.toLocaleString('nl-NL')} gehaald
+                  </span>
                 </span>
                 <span className="text-[11px] font-mono text-[var(--status-crimson)]">
-                  {periodSummary.byDirection.bus_naar_trein.missed} gemist
+                  {periodSummary.byDirection.bus_naar_trein.missed.toLocaleString('nl-NL')} gemist
                 </span>
               </div>
               <div className="mt-2 pt-2 border-t border-[var(--border-subtle)] text-[11px] flex justify-between text-[var(--text-dim)] font-mono">
@@ -435,7 +514,10 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
 
             {/* Box 2: Trein -> Bus */}
             <div
-              onClick={() => setDirectionFilter(directionFilter === 'trein_naar_bus' ? 'all' : 'trein_naar_bus')}
+              onClick={() => {
+                setDirectionFilter(directionFilter === 'trein_naar_bus' ? 'all' : 'trein_naar_bus');
+                setPage(1);
+              }}
               className={`bg-[var(--bg-card)] border rounded-[4px] p-3 transition-colors cursor-pointer ${
                 directionFilter === 'trein_naar_bus'
                   ? 'border-[var(--status-blue)] bg-[var(--status-blue)]/10'
@@ -453,11 +535,13 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
               </div>
               <div className="mt-2 flex items-baseline justify-between">
                 <span className="text-lg font-bold font-mono text-[var(--text-main)]">
-                  {periodSummary.byDirection.trein_naar_bus.made}{' '}
-                  <span className="text-xs text-[var(--text-dim)] font-normal">/ {periodSummary.byDirection.trein_naar_bus.total} gehaald</span>
+                  {periodSummary.byDirection.trein_naar_bus.made.toLocaleString('nl-NL')}{' '}
+                  <span className="text-xs text-[var(--text-dim)] font-normal">
+                    / {periodSummary.byDirection.trein_naar_bus.total.toLocaleString('nl-NL')} gehaald
+                  </span>
                 </span>
                 <span className="text-[11px] font-mono text-[var(--status-crimson)]">
-                  {periodSummary.byDirection.trein_naar_bus.missed} gemist
+                  {periodSummary.byDirection.trein_naar_bus.missed.toLocaleString('nl-NL')} gemist
                 </span>
               </div>
               <div className="mt-2 pt-2 border-t border-[var(--border-subtle)] text-[11px] flex justify-between text-[var(--text-dim)] font-mono">
@@ -468,7 +552,10 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
 
             {/* Box 3: Intercity (IC) */}
             <div
-              onClick={() => setTrainTypeFilter(trainTypeFilter === 'Intercity' ? 'all' : 'Intercity')}
+              onClick={() => {
+                setTrainTypeFilter(trainTypeFilter === 'Intercity' ? 'all' : 'Intercity');
+                setPage(1);
+              }}
               className={`bg-[var(--bg-card)] border rounded-[4px] p-3 transition-colors cursor-pointer ${
                 trainTypeFilter === 'Intercity'
                   ? 'border-[#eab308] bg-[#eab308]/10'
@@ -486,11 +573,13 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
               </div>
               <div className="mt-2 flex items-baseline justify-between">
                 <span className="text-lg font-bold font-mono text-[var(--text-main)]">
-                  {periodSummary.byTrainType.intercity.made}{' '}
-                  <span className="text-xs text-[var(--text-dim)] font-normal">/ {periodSummary.byTrainType.intercity.total} gehaald</span>
+                  {periodSummary.byTrainType.intercity.made.toLocaleString('nl-NL')}{' '}
+                  <span className="text-xs text-[var(--text-dim)] font-normal">
+                    / {periodSummary.byTrainType.intercity.total.toLocaleString('nl-NL')} gehaald
+                  </span>
                 </span>
                 <span className="text-[11px] font-mono text-[var(--status-crimson)]">
-                  {periodSummary.byTrainType.intercity.missed} gemist
+                  {periodSummary.byTrainType.intercity.missed.toLocaleString('nl-NL')} gemist
                 </span>
               </div>
               <div className="mt-2 pt-2 border-t border-[var(--border-subtle)] text-[11px] flex justify-between text-[var(--text-dim)] font-mono">
@@ -501,7 +590,10 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
 
             {/* Box 4: Sprinter */}
             <div
-              onClick={() => setTrainTypeFilter(trainTypeFilter === 'Sprinter' ? 'all' : 'Sprinter')}
+              onClick={() => {
+                setTrainTypeFilter(trainTypeFilter === 'Sprinter' ? 'all' : 'Sprinter');
+                setPage(1);
+              }}
               className={`bg-[var(--bg-card)] border rounded-[4px] p-3 transition-colors cursor-pointer ${
                 trainTypeFilter === 'Sprinter'
                   ? 'border-[#0284c7] bg-[#0284c7]/10'
@@ -519,11 +611,13 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
               </div>
               <div className="mt-2 flex items-baseline justify-between">
                 <span className="text-lg font-bold font-mono text-[var(--text-main)]">
-                  {periodSummary.byTrainType.sprinter.made}{' '}
-                  <span className="text-xs text-[var(--text-dim)] font-normal">/ {periodSummary.byTrainType.sprinter.total} gehaald</span>
+                  {periodSummary.byTrainType.sprinter.made.toLocaleString('nl-NL')}{' '}
+                  <span className="text-xs text-[var(--text-dim)] font-normal">
+                    / {periodSummary.byTrainType.sprinter.total.toLocaleString('nl-NL')} gehaald
+                  </span>
                 </span>
                 <span className="text-[11px] font-mono text-[var(--status-crimson)]">
-                  {periodSummary.byTrainType.sprinter.missed} gemist
+                  {periodSummary.byTrainType.sprinter.missed.toLocaleString('nl-NL')} gemist
                 </span>
               </div>
               <div className="mt-2 pt-2 border-t border-[var(--border-subtle)] text-[11px] flex justify-between text-[var(--text-dim)] font-mono">
@@ -584,7 +678,10 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                       return (
                         <tr
                           key={item.line}
-                          onClick={() => setSelectedLine(item.line === selectedLine ? 'all' : item.line)}
+                          onClick={() => {
+                            setSelectedLine(item.line === selectedLine ? 'all' : item.line);
+                            setPage(1);
+                          }}
                           className={`hover:bg-[var(--bg-card-hover)] cursor-pointer transition-colors ${
                             selectedLine === item.line ? 'bg-[var(--bg-elevated)]' : ''
                           }`}
@@ -594,13 +691,13 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                           </td>
                           <td className="py-2 px-3 text-[var(--text-muted)]">{item.operator}</td>
                           <td className="py-2 px-3 text-right font-mono text-[var(--text-main)]">
-                            {item.total}
+                            {item.total.toLocaleString('nl-NL')}
                           </td>
                           <td className="py-2 px-3 text-right font-mono font-bold text-[var(--status-emerald)]">
-                            {item.made}
+                            {item.made.toLocaleString('nl-NL')}
                           </td>
                           <td className="py-2 px-3 text-right font-mono font-bold text-[var(--status-crimson)]">
-                            {item.missed}
+                            {item.missed.toLocaleString('nl-NL')}
                           </td>
                           <td className={`py-2 px-3 text-right font-mono font-bold ${rateColor}`}>
                             {item.rate}%
@@ -638,14 +735,19 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
             </div>
           </div>
 
-          {/* Section 3: Detailed Individual Connection Logs */}
+          {/* Section 3: Detailed Individual Connection Logs (Server-Paginated 50 rows/page) */}
           <div className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[4px] overflow-hidden">
             <div className="px-3.5 py-2.5 bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)] flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <Train className="w-4 h-4 text-[var(--status-blue)]" />
                 <h3 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-wide">
-                  Gedetailleerd Logboek Aansluitingen ({finalFilteredLogs.length} passages getoond)
+                  Gedetailleerd Logboek Aansluitingen ({filteredTotal.toLocaleString('nl-NL')} matches)
                 </h3>
+                {isLoading && (
+                  <span className="text-[11px] font-mono text-[var(--accent-gold)]">
+                    Laden...
+                  </span>
+                )}
               </div>
               <span className="text-[11px] text-[var(--text-dim)]">
                 Inclusief dynamische vertragingcompensatie (vertraagde trein redt bus of vice versa)
@@ -668,14 +770,14 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border-subtle)]/60">
-                  {finalFilteredLogs.length === 0 ? (
+                  {logs.length === 0 ? (
                     <tr>
                       <td colSpan={9} className="py-8 text-center text-xs text-[var(--text-muted)]">
                         Geen ritten gevonden die voldoen aan de geselecteerde filters.
                       </td>
                     </tr>
                   ) : (
-                    finalFilteredLogs.map((log) => {
+                    logs.map((log) => {
                       const isMade = log.status === 'gehaald';
                       const isBusToTrain = (log.direction || 'bus_naar_trein') === 'bus_naar_trein';
                       const isSprinter = (log.trainType || '').toLowerCase().includes('sprinter');
@@ -683,23 +785,27 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                       const originText = isBusToTrain
                         ? `Bus ${log.busLine} (${log.busOperator})`
                         : `${log.trainType} ${log.trainNumber}`;
-                      const originPlanned = isBusToTrain ? (log.busPlannedArrival || log.plannedOriginArrival) : (log.trainPlannedArrival || log.plannedOriginArrival);
-                      const originActual = isBusToTrain ? (log.busActualArrival || log.actualOriginArrival) : (log.trainActualArrival || log.actualOriginArrival);
+                      const originPlanned = isBusToTrain
+                        ? log.busPlannedArrival || log.plannedOriginArrival
+                        : log.trainPlannedArrival || log.plannedOriginArrival;
+                      const originActual = isBusToTrain
+                        ? log.busActualArrival || log.actualOriginArrival
+                        : log.trainActualArrival || log.actualOriginArrival;
                       const originDelay = isBusToTrain ? log.busDelayMinutes : log.trainDelayMinutes;
 
                       const connectingText = isBusToTrain
                         ? `${log.trainType} ${log.trainNumber} (${log.trainPlatform || 'Spoor 1/2'})`
                         : `Bus ${log.busLine} (${log.busOperator})`;
-                      const connectingPlanned = isBusToTrain ? (log.trainPlannedDeparture || log.plannedConnectingDeparture) : (log.busPlannedDeparture || log.plannedConnectingDeparture);
-                      const connectingActual = isBusToTrain ? (log.trainActualDeparture || log.actualConnectingDeparture) : (log.busActualDeparture || log.actualConnectingDeparture);
+                      const connectingPlanned = isBusToTrain
+                        ? log.trainPlannedDeparture || log.plannedConnectingDeparture
+                        : log.busPlannedDeparture || log.plannedConnectingDeparture;
+                      const connectingActual = isBusToTrain
+                        ? log.trainActualDeparture || log.actualConnectingDeparture
+                        : log.busActualDeparture || log.actualConnectingDeparture;
                       const connectingDelay = isBusToTrain ? log.trainDelayMinutes : log.busDelayMinutes;
 
                       return (
-                        <tr
-                          key={log.id}
-                          className="hover:bg-[var(--bg-card-hover)] transition-colors"
-                        >
-                          {/* Datum & Tijd */}
+                        <tr key={log.id} className="hover:bg-[var(--bg-card-hover)] transition-colors">
                           <td className="py-2 px-3 whitespace-nowrap">
                             <div className="font-mono text-[var(--text-main)]">{log.date}</div>
                             <div className="text-[10px] text-[var(--text-dim)]">
@@ -707,7 +813,6 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                             </div>
                           </td>
 
-                          {/* Richting Badge */}
                           <td className="py-2 px-3 whitespace-nowrap">
                             <span
                               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[3px] text-[10px] font-mono font-bold border ${
@@ -730,7 +835,6 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                             </span>
                           </td>
 
-                          {/* Trein Soort & Nummer */}
                           <td className="py-2 px-3 whitespace-nowrap">
                             <div className="flex items-center gap-1.5">
                               <span
@@ -751,7 +855,6 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                             </div>
                           </td>
 
-                          {/* Eerste Deel (Aankomst) */}
                           <td className="py-2 px-3 whitespace-nowrap">
                             <div className="font-bold text-[var(--text-main)]">{originText}</div>
                             <div className="text-[10px] font-mono text-[var(--text-dim)]">
@@ -770,7 +873,6 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                             </div>
                           </td>
 
-                          {/* Tweede Deel (Aansluitend Vertrek) */}
                           <td className="py-2 px-3 whitespace-nowrap">
                             <div className="font-bold text-[var(--text-main)]">{connectingText}</div>
                             <div className="text-[10px] font-mono text-[var(--text-dim)]">
@@ -789,23 +891,18 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                             </div>
                           </td>
 
-                          {/* Geplande overstaptijd */}
                           <td className="py-2 px-3 text-right font-mono text-[var(--text-muted)] whitespace-nowrap">
                             {log.plannedTransferMinutes} min
                           </td>
 
-                          {/* Gerealiseerde overstaptijd */}
                           <td
                             className={`py-2 px-3 text-right font-mono font-bold whitespace-nowrap ${
-                              isMade
-                                ? 'text-[var(--status-emerald)]'
-                                : 'text-[var(--status-crimson)]'
+                              isMade ? 'text-[var(--status-emerald)]' : 'text-[var(--status-crimson)]'
                             }`}
                           >
                             {log.realizedTransferMinutes} min
                           </td>
 
-                          {/* Status Badge */}
                           <td className="py-2 px-3 text-center whitespace-nowrap">
                             <span
                               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[3px] text-[10px] font-bold border ${
@@ -828,7 +925,6 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                             </span>
                           </td>
 
-                          {/* Toelichting */}
                           <td className="py-2 px-3 text-[11px] text-[var(--text-muted)] max-w-[280px]">
                             {log.notes || '—'}
                           </td>
@@ -838,6 +934,35 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Pagination Footer */}
+            <div className="px-3.5 py-2.5 bg-[var(--bg-elevated)] border-t border-[var(--border-subtle)] flex items-center justify-between text-xs">
+              <div className="text-[var(--text-muted)] font-mono">
+                Pagina <strong className="text-[var(--text-main)]">{page}</strong> van{' '}
+                <strong className="text-[var(--text-main)]">{totalPages.toLocaleString('nl-NL')}</strong> ·{' '}
+                {filteredTotal.toLocaleString('nl-NL')} van {totalCount.toLocaleString('nl-NL')} records
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1 || isLoading}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="px-2.5 py-1 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] disabled:opacity-40 disabled:cursor-not-allowed border border-[var(--border-subtle)] text-[var(--text-main)] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Vorige</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={page >= totalPages || isLoading}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="px-2.5 py-1 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] disabled:opacity-40 disabled:cursor-not-allowed border border-[var(--border-subtle)] text-[var(--text-main)] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <span>Volgende</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>

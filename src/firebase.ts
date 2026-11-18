@@ -17,6 +17,7 @@ import {
   updateDoc,
   query,
   where,
+  limit,
   onSnapshot,
   serverTimestamp,
   Unsubscribe,
@@ -210,7 +211,7 @@ export function subscribeUserPunctualityLogs(
   onLogs: (logs: PunctualityLogEntry[]) => void
 ): Unsubscribe {
   const safeOwnerId = sanitizeLogId(uid);
-  const q = query(collection(db, 'punctualityLogs'), where('ownerId', '==', safeOwnerId));
+  const q = query(collection(db, 'punctualityLogs'), where('ownerId', '==', safeOwnerId), limit(100));
 
   return onSnapshot(
     q,

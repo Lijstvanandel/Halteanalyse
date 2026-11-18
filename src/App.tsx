@@ -11,16 +11,16 @@ import { DeelfietsDashboard } from './components/DeelfietsDashboard';
 import { AansluitingenDashboard } from './components/AansluitingenDashboard';
 import { EmbedDataproductModal } from './components/EmbedDataproductModal';
 import { DRGLDeparture, DRGLJourneyData } from './utils/drgl';
-import { PunctualityLogEntry, sanitizeLogId } from './utils/punctuality';
-import { TrainPosition, ConnectionLogEntry, ConnectionSummary } from './types/train';
+import { StopPopupSummary } from './utils/punctuality';
+import { TrainPosition, ConnectionSummary } from './types/train';
 import {
   DeelfietsLocation,
-  DeelfietsLogEntry,
+  DeelfietsPeriodStats,
   STEENWIJKERLAND_DEELFIETS_HUBS,
 } from './utils/deelfiets';
 import {
   OvFietsLocation,
-  OvFietsLogEntry,
+  OvFietsPeriodStats,
   OFFICIAL_STEENWIJK_OVFIETS,
 } from './utils/ovfiets';
 import {
@@ -46,7 +46,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
-const LOCAL_STORAGE_LOGS_KEY = 'swk_punctuality_logs_v1';
+const LEGACY_LOCAL_STORAGE_LOGS_KEY = 'swk_punctuality_logs_v1';
 
 export default function App() {
   const [buses, setBuses] = useState<BusPosition[]>([]);
@@ -87,18 +87,12 @@ export default function App() {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(false);
 
-  // Punctuality & Delay Logger State
-  const [punctualityLogs, setPunctualityLogs] = useState<PunctualityLogEntry[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_LOGS_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  // Punctuality & Delay Logger State (lightweight summary only; raw data stays indexed in SQLite)
+  const [punctualityTotalCount, setPunctualityTotalCount] = useState<number>(0);
+  const [stopPopupStats, setStopPopupStats] = useState<Record<string, StopPopupSummary>>({});
   const [isPunctualityModalOpen, setIsPunctualityModalOpen] = useState<boolean>(false);
   const [punctualityStopFilter, setPunctualityStopFilter] = useState<string>('');
-  const [isScanningPunctuality, setIsScanningPunctuality] = useState<boolean>(false);
+  const [dashboardRefreshNonce, setDashboardRefreshNonce] = useState<number>(0);
 
   // Deelfiets Nederland State (17 locaties binnen Steenwijkerland)
   const [deelfietsLocations, setDeelfietsLocations] = useState<DeelfietsLocation[]>(() =>
@@ -107,27 +101,23 @@ export default function App() {
       lastUpdated: 'Zojuist',
     }))
   );
-  const [deelfietsLogs, setDeelfietsLogs] = useState<DeelfietsLogEntry[]>([]);
+  const [deelfietsPopupStats, setDeelfietsPopupStats] = useState<DeelfietsPeriodStats[]>([]);
   const [showDeelfietsen, setShowDeelfietsen] = useState<boolean>(true);
   const [isDeelfietsModalOpen, setIsDeelfietsModalOpen] = useState<boolean>(false);
   const [deelfietsLocationFilter, setDeelfietsLocationFilter] = useState<string>('');
-  const [isScanningDeelfiets, setIsScanningDeelfiets] = useState<boolean>(false);
   const [deelfietsInitialTab, setDeelfietsInitialTab] = useState<'deelfiets' | 'ovfiets'>('deelfiets');
 
   // NS OV-fiets Station Steenwijk (swk002) - gemeten los van deelfietsennetwerk
   const [ovfietsLocation, setOvfietsLocation] = useState<OvFietsLocation>(OFFICIAL_STEENWIJK_OVFIETS);
-  const [ovfietsLogs, setOvfietsLogs] = useState<OvFietsLogEntry[]>([]);
+  const [ovfietsPopupStats, setOvfietsPopupStats] = useState<OvFietsPeriodStats | null>(null);
   const [showOvfietsen, setShowOvfietsen] = useState<boolean>(true);
-  const [isScanningOvFiets, setIsScanningOvFiets] = useState<boolean>(false);
 
   // NS Trains & Bus-Trein Aansluitingen State
   const [trains, setTrains] = useState<TrainPosition[]>([]);
   const [selectedTrain, setSelectedTrain] = useState<TrainPosition | null>(null);
   const [showTrains, setShowTrains] = useState<boolean>(true);
-  const [aansluitingenLogs, setAansluitingenLogs] = useState<ConnectionLogEntry[]>([]);
   const [aansluitingenSummary, setAansluitingenSummary] = useState<ConnectionSummary | null>(null);
   const [isAansluitingenModalOpen, setIsAansluitingenModalOpen] = useState<boolean>(false);
-  const [isScanningAansluitingen, setIsScanningAansluitingen] = useState<boolean>(false);
 
   const totalAvailableDeelfietsen = useMemo(() => {
     return deelfietsLocations.reduce((acc, loc) => acc + (loc.available || 0), 0);
@@ -170,7 +160,16 @@ export default function App() {
   const [dataSource, setDataSource] = useState<string>('DRGL.nl (live)');
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
-  // Listen to Firebase Auth state and subscribe to Firestore punctualityLogs when signed in
+  // Clear legacy bloated localStorage key once on mount so browser storage stays clean
+  useEffect(() => {
+    try {
+      localStorage.removeItem(LEGACY_LOCAL_STORAGE_LOGS_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Listen to Firebase Auth state and keep bounded Firestore subscription active when signed in
   useEffect(() => {
     let unsubFirestore: (() => void) | null = null;
     const unsubAuth = onAuthStateChanged(auth, (user) => {
@@ -180,22 +179,7 @@ export default function App() {
         unsubFirestore = null;
       }
       if (user && user.emailVerified) {
-        unsubFirestore = subscribeUserPunctualityLogs(user.uid, (cloudLogs) => {
-          if (cloudLogs.length > 0) {
-            setPunctualityLogs((prev) => {
-              const map = new Map<string, PunctualityLogEntry>();
-              prev.forEach((l) => map.set(sanitizeLogId(l.id), l));
-              cloudLogs.forEach((l) => map.set(sanitizeLogId(l.id), l));
-              const merged = Array.from(map.values());
-              try {
-                localStorage.setItem(LOCAL_STORAGE_LOGS_KEY, JSON.stringify(merged));
-              } catch {
-                // ignore
-              }
-              return merged;
-            });
-          }
-        });
+        unsubFirestore = subscribeUserPunctualityLogs(user.uid, () => {});
       }
     });
     return () => {
@@ -211,59 +195,59 @@ export default function App() {
     if (auth.currentUser) {
       setIsCloudSyncing(true);
       try {
-        await syncPunctualityLogsToFirestore(punctualityLogs, 40);
+        const res = await fetch('/api/punctuality/logs?page=1&pageSize=40');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.logs) && data.logs.length > 0) {
+            await syncPunctualityLogsToFirestore(data.logs, 40);
+          }
+        }
       } finally {
         setIsCloudSyncing(false);
       }
     }
-  }, [punctualityLogs]);
+  }, []);
 
-  // Fetch persistent punctuality logs from backend & sync with localStorage
-  const fetchPunctualityLogs = useCallback(async () => {
+  // Fetch compact punctuality summary for TopNavbar & Map stop popups (< 15 KB)
+  const fetchPunctualitySummary = useCallback(async () => {
     try {
-      const res = await fetch('/api/punctuality/logs');
+      const res = await fetch('/api/punctuality/summary');
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.logs)) {
-          setPunctualityLogs(data.logs);
-          try {
-            localStorage.setItem(LOCAL_STORAGE_LOGS_KEY, JSON.stringify(data.logs));
-          } catch {
-            // ignore quota
-          }
+        if (typeof data.totalCount === 'number') {
+          setPunctualityTotalCount(data.totalCount);
+        }
+        if (data.stopPopupStats) {
+          setStopPopupStats(data.stopPopupStats);
         }
       }
     } catch (e) {
-      console.warn('Could not fetch punctuality logs:', e);
+      console.warn('Could not fetch punctuality summary:', e);
     }
   }, []);
 
   const triggerLivePunctualityScan = useCallback(async () => {
-    setIsScanningPunctuality(true);
     try {
-      const res = await fetch('/api/punctuality/scan', { method: 'POST' });
+      const res = await fetch('/api/punctuality/scan?page=1&pageSize=25', { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.logs)) {
-          setPunctualityLogs(data.logs);
-          try {
-            localStorage.setItem(LOCAL_STORAGE_LOGS_KEY, JSON.stringify(data.logs));
-          } catch {
-            // ignore
-          }
-          if (auth.currentUser) {
-            await syncPunctualityLogsToFirestore(data.logs, 25);
-          }
+        if (typeof data.count === 'number') {
+          setPunctualityTotalCount(data.count);
+        }
+        if (data.stopPopupStats) {
+          setStopPopupStats(data.stopPopupStats);
+        }
+        setDashboardRefreshNonce((n) => n + 1);
+        if (auth.currentUser && Array.isArray(data.logs)) {
+          await syncPunctualityLogsToFirestore(data.logs, 25);
         }
       }
     } catch (e) {
       console.warn('Live punctuality scan error:', e);
-    } finally {
-      setIsScanningPunctuality(false);
     }
   }, []);
 
-  // 1b. Fetch Deelfiets Nederland live hubs & persistent logs
+  // 1b. Fetch Deelfiets Nederland live hubs & rollup stats (no raw logs array!)
   const fetchDeelfietsData = useCallback(async () => {
     try {
       const res = await fetch('/api/deelfiets/locations');
@@ -272,8 +256,8 @@ export default function App() {
         if (Array.isArray(data.locations) && data.locations.length > 0) {
           setDeelfietsLocations(data.locations);
         }
-        if (Array.isArray(data.logs)) {
-          setDeelfietsLogs(data.logs);
+        if (Array.isArray(data.allStats)) {
+          setDeelfietsPopupStats(data.allStats);
         }
       }
     } catch (e) {
@@ -281,37 +265,17 @@ export default function App() {
     }
   }, []);
 
-  const triggerLiveDeelfietsScan = useCallback(async () => {
-    setIsScanningDeelfiets(true);
-    try {
-      const res = await fetch('/api/deelfiets/scan', { method: 'POST' });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.locations) && data.locations.length > 0) {
-          setDeelfietsLocations(data.locations);
-        }
-        if (Array.isArray(data.logs)) {
-          setDeelfietsLogs(data.logs);
-        }
-      }
-    } catch (e) {
-      console.warn('Deelfiets live scan error:', e);
-    } finally {
-      setIsScanningDeelfiets(false);
-    }
-  }, []);
-
-  // 1c. Fetch NS OV-fiets Station Steenwijk live data & logs
+  // 1c. Fetch NS OV-fiets Station Steenwijk live data & rollup stats
   const fetchOvFietsData = useCallback(async () => {
     try {
-      const res = await fetch('/api/ovfiets/steenwijk');
+      const res = await fetch('/api/ovfiets/steenwijk?includeRaw=false');
       if (res.ok) {
         const data = await res.json();
         if (data.location) {
           setOvfietsLocation(data.location);
         }
-        if (Array.isArray(data.logs)) {
-          setOvfietsLogs(data.logs);
+        if (data.stats) {
+          setOvfietsPopupStats(data.stats);
         }
       }
     } catch (e) {
@@ -320,7 +284,6 @@ export default function App() {
   }, []);
 
   const triggerLiveOvFietsScan = useCallback(async () => {
-    setIsScanningOvFiets(true);
     try {
       const res = await fetch('/api/ovfiets/scan', { method: 'POST' });
       if (res.ok) {
@@ -328,14 +291,13 @@ export default function App() {
         if (data.location) {
           setOvfietsLocation(data.location);
         }
-        if (Array.isArray(data.logs)) {
-          setOvfietsLogs(data.logs);
+        if (data.stats) {
+          setOvfietsPopupStats(data.stats);
         }
+        setDashboardRefreshNonce((n) => n + 1);
       }
     } catch (e) {
       console.warn('Fout bij live OV-fiets scan:', e);
-    } finally {
-      setIsScanningOvFiets(false);
     }
   }, []);
 
@@ -358,41 +320,33 @@ export default function App() {
     }
   }, [feedMode]);
 
-  // 1e. Fetch Bus-Trein Aansluitingen & Overstappen logs & summary
-  const fetchAansluitingenData = useCallback(async () => {
+  // 1e. Fetch lightweight Bus-Trein Aansluitingen summary (< 5 KB)
+  const fetchAansluitingenSummary = useCallback(async () => {
     try {
-      const res = await fetch('/api/aansluitingen/logs');
+      const res = await fetch('/api/aansluitingen/summary?period=day');
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.logs)) {
-          setAansluitingenLogs(data.logs);
-        }
         if (data.summary) {
           setAansluitingenSummary(data.summary);
         }
       }
     } catch (e) {
-      console.warn('Aansluitingen fetch error:', e);
+      console.warn('Aansluitingen summary fetch error:', e);
     }
   }, []);
 
   const triggerLiveAansluitingenScan = useCallback(async () => {
-    setIsScanningAansluitingen(true);
     try {
-      const res = await fetch('/api/aansluitingen/scan', { method: 'POST' });
+      const res = await fetch('/api/aansluitingen/scan?includeRaw=false', { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.logs)) {
-          setAansluitingenLogs(data.logs);
-        }
         if (data.summary) {
           setAansluitingenSummary(data.summary);
         }
+        setDashboardRefreshNonce((n) => n + 1);
       }
     } catch (e) {
       console.warn('Aansluitingen scan error:', e);
-    } finally {
-      setIsScanningAansluitingen(false);
     }
   }, []);
 
@@ -452,13 +406,13 @@ export default function App() {
     }
   }, [feedMode]);
 
-  // Periodic polling
+  // Periodic lightweight polling (compact summaries only; full logs load paginated on-demand)
   useEffect(() => {
     fetchDepartures(selectedStopCode);
     fetchBusPositions();
     fetchTrains();
-    fetchAansluitingenData();
-    fetchPunctualityLogs();
+    fetchAansluitingenSummary();
+    fetchPunctualitySummary();
     fetchDeelfietsData();
     fetchOvFietsData();
 
@@ -466,8 +420,8 @@ export default function App() {
     const trainInterval = setInterval(fetchTrains, 4000);
     const depInterval = setInterval(() => {
       fetchDepartures(selectedStopCode);
-      fetchPunctualityLogs();
-      fetchAansluitingenData();
+      fetchPunctualitySummary();
+      fetchAansluitingenSummary();
     }, 20000);
     const deelfietsInterval = setInterval(fetchDeelfietsData, 30000);
     const ovfietsInterval = setInterval(fetchOvFietsData, 30000);
@@ -484,8 +438,8 @@ export default function App() {
     fetchDepartures,
     fetchBusPositions,
     fetchTrains,
-    fetchAansluitingenData,
-    fetchPunctualityLogs,
+    fetchAansluitingenSummary,
+    fetchPunctualitySummary,
     fetchDeelfietsData,
     fetchOvFietsData,
   ]);
@@ -598,7 +552,7 @@ export default function App() {
         onOpenEmbedModal={() => setIsEmbedModalOpen(true)}
         deelfietsAvailableCount={totalAvailableDeelfietsen}
         ovfietsAvailableCount={ovfietsLocation.available}
-        loggedCount={punctualityLogs.length}
+        loggedCount={punctualityTotalCount}
         dataSource={dataSource}
         isSyncing={isSyncing}
         onManualRefresh={() => {
@@ -609,7 +563,6 @@ export default function App() {
           fetchDeelfietsData();
           fetchOvFietsData();
           triggerLiveOvFietsScan();
-          fetchAansluitingenData();
           triggerLiveAansluitingenScan();
         }}
         feedMode={feedMode}
@@ -668,9 +621,9 @@ export default function App() {
               });
             }}
             onOpenStopStats={handleOpenStopStats}
-            punctualityLogs={punctualityLogs}
+            stopPopupStats={stopPopupStats}
             deelfietsLocations={deelfietsLocations}
-            deelfietsLogs={deelfietsLogs}
+            deelfietsStatsList={deelfietsPopupStats}
             showDeelfietsen={showDeelfietsen}
             onToggleDeelfietsen={setShowDeelfietsen}
             onOpenDeelfietsStats={(loc) => {
@@ -679,7 +632,7 @@ export default function App() {
               setIsDeelfietsModalOpen(true);
             }}
             ovfietsLocation={ovfietsLocation}
-            ovfietsLogs={ovfietsLogs}
+            ovfietsStats={ovfietsPopupStats}
             showOvfietsen={showOvfietsen}
             onToggleOvfietsen={setShowOvfietsen}
             onOpenOvfietsStats={() => {
@@ -759,15 +712,17 @@ export default function App() {
         <PunctualityDashboard
           isOpen={isPunctualityModalOpen}
           onClose={() => setIsPunctualityModalOpen(false)}
-          logs={punctualityLogs}
           stops={STEENWIJKERLAND_STOPS}
           initialStopFilter={punctualityStopFilter}
-          onTriggerLiveScan={triggerLivePunctualityScan}
-          isScanning={isScanningPunctuality}
+          onDataUpdated={(total, popupStats) => {
+            setPunctualityTotalCount(total);
+            if (popupStats) setStopPopupStats(popupStats);
+          }}
           firebaseUserEmail={firebaseUser?.email || null}
           isCloudSyncing={isCloudSyncing}
           onCloudSync={handleCloudSyncNow}
           onSignOut={signOutFirebase}
+          refreshNonce={dashboardRefreshNonce}
         />
 
         {/* Deelfiets Nederland & NS OV-fiets Station Steenwijk Dashboard Modal */}
@@ -775,24 +730,26 @@ export default function App() {
           isOpen={isDeelfietsModalOpen}
           onClose={() => setIsDeelfietsModalOpen(false)}
           locations={deelfietsLocations}
-          logs={deelfietsLogs}
           initialLocationFilter={deelfietsLocationFilter}
-          onTriggerLiveScan={triggerLiveDeelfietsScan}
-          isScanning={isScanningDeelfiets}
           ovfietsLocation={ovfietsLocation}
-          ovfietsLogs={ovfietsLogs}
-          onTriggerLiveOvFietsScan={triggerLiveOvFietsScan}
-          isScanningOvFiets={isScanningOvFiets}
           initialNetworkTab={deelfietsInitialTab}
+          onDeelfietsUpdated={(locs, allStats) => {
+            setDeelfietsLocations(locs);
+            setDeelfietsPopupStats(allStats);
+          }}
+          onOvFietsUpdated={(loc, stats) => {
+            setOvfietsLocation(loc);
+            setOvfietsPopupStats(stats);
+          }}
+          refreshNonce={dashboardRefreshNonce}
         />
 
         {/* Aansluitingen & Overstap Station Steenwijk Dashboard Modal */}
         <AansluitingenDashboard
           isOpen={isAansluitingenModalOpen}
           onClose={() => setIsAansluitingenModalOpen(false)}
-          logs={aansluitingenLogs}
-          onTriggerLiveScan={triggerLiveAansluitingenScan}
-          isScanning={isScanningAansluitingen}
+          onSummaryUpdated={setAansluitingenSummary}
+          refreshNonce={dashboardRefreshNonce}
         />
 
         {/* Embed Dataproduct Modal (Insluiten in nieuwsberichten) */}
