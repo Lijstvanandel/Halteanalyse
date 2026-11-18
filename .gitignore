@@ -7,4 +7,9 @@ coverage/
 .env*
 !.env.example
 src/data/punctualityLogs*.json
-
+src/data/aansluitingenLogs*.json
+src/data/deelfietsLogs*.json
+src/data/ovfietsLogs*.json
+src/data/steenwijkerland.db
+src/data/steenwijkerland.db-shm
+src/data/steenwijkerland.db-wal

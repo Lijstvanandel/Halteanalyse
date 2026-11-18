@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
@@ -66,6 +67,11 @@ function resolveServerPort(): number {
   }
   const appPort = Number(process.env.APP_PORT);
   if (Number.isFinite(appPort) && appPort > 0) return appPort;
+  const isAiStudioContainer = fs.existsSync('/app/control-plane-api');
+  const envPort = Number(process.env.PORT);
+  if (!isAiStudioContainer && Number.isFinite(envPort) && envPort > 0) {
+    return envPort;
+  }
   return 3000;
 }
 
@@ -2542,53 +2548,97 @@ async function startServer() {
       ensureInitialTodayLogs();
       ensureInitialDeelfietsLogs();
       ensureInitialAansluitingenLogs();
+      storeDb.checkpointWal();
     } catch (err) {
       console.warn('Database init/migration warning:', err);
     }
 
-    setTimeout(() => {
-      fetchLiveOvzoekerVehicles(true).catch(() => {});
-    }, 500);
-    setTimeout(() => {
-      runLiveOvFietsScan().catch(() => {});
-    }, 1500);
-    setTimeout(() => {
-      runLiveDeelfietsScan().catch(() => {});
-    }, 2500);
-    setTimeout(() => {
-      runLiveAansluitingenScan().catch(() => {});
-    }, 3500);
-    setTimeout(() => {
-      runLiveDRGLPunctualityScan().catch(() => {});
-    }, 5000);
+    const timers: Array<ReturnType<typeof setTimeout> | ReturnType<typeof setInterval>> = [];
 
-    setInterval(() => {
+    timers.push(setTimeout(() => {
       fetchLiveOvzoekerVehicles(true).catch(() => {});
-    }, 6000);
-    setInterval(() => {
-      runLiveDRGLPunctualityScan().catch(() => {});
-    }, 60000);
-    setInterval(() => {
-      runLiveDeelfietsScan().catch(() => {});
-    }, 120000);
-    setInterval(() => {
+    }, 500));
+    timers.push(setTimeout(() => {
       runLiveOvFietsScan().catch(() => {});
-    }, 60000);
-    setInterval(() => {
+    }, 1500));
+    timers.push(setTimeout(() => {
+      runLiveDeelfietsScan().catch(() => {});
+    }, 2500));
+    timers.push(setTimeout(() => {
       runLiveAansluitingenScan().catch(() => {});
-    }, 45000);
+    }, 3500));
+    timers.push(setTimeout(() => {
+      runLiveDRGLPunctualityScan().catch(() => {});
+    }, 5000));
+
+    timers.push(setInterval(() => {
+      fetchLiveOvzoekerVehicles(true).catch(() => {});
+    }, 6000));
+    timers.push(setInterval(() => {
+      runLiveDRGLPunctualityScan().catch(() => {});
+    }, 60000));
+    timers.push(setInterval(() => {
+      runLiveDeelfietsScan().catch(() => {});
+    }, 120000));
+    timers.push(setInterval(() => {
+      runLiveOvFietsScan().catch(() => {});
+    }, 60000));
+    timers.push(setInterval(() => {
+      runLiveAansluitingenScan().catch(() => {});
+    }, 45000));
+
+    return timers;
   };
+
+  let activeTimers: Array<ReturnType<typeof setTimeout> | ReturnType<typeof setInterval>> = [];
 
   const srv = app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`DRGL Server gestart op http://0.0.0.0:${PORT}`);
-    startBackgroundTasks().catch((err) => {
-      console.error('Background init error:', err);
-    });
+    startBackgroundTasks()
+      .then((timers) => {
+        activeTimers = timers;
+      })
+      .catch((err) => {
+        console.error('Background init error:', err);
+      });
   });
 
   srv.on('error', (err: any) => {
     console.error(`Server listen error op poort ${PORT}:`, err);
   });
+
+  let shuttingDown = false;
+  const gracefulShutdown = (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`Ontvangen ${signal}, SQLite WAL wordt veilig afgesloten...`);
+    for (const t of activeTimers) {
+      clearTimeout(t as any);
+      clearInterval(t as any);
+    }
+    try {
+      srv.close(() => {
+        try {
+          storeDb.close();
+        } catch {}
+        process.exit(0);
+      });
+      setTimeout(() => {
+        try {
+          storeDb.close();
+        } catch {}
+        process.exit(0);
+      }, 2500).unref();
+    } catch {
+      try {
+        storeDb.close();
+      } catch {}
+      process.exit(0);
+    }
+  };
+
+  process.once('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.once('SIGTERM', () => gracefulShutdown('SIGTERM'));
 }
 
 startServer().catch((err) => {

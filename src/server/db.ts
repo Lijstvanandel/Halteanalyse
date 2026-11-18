@@ -215,7 +215,7 @@ function getPunctualityRollupContrib(
 }
 
 export class SteenwijkerlandDB {
-  public readonly db: DatabaseSync;
+  public db: DatabaseSync;
   public readonly dbPath: string;
 
   // Prepared statements for hot paths
@@ -254,8 +254,361 @@ export class SteenwijkerlandDB {
       fs.mkdirSync(path.dirname(dbPath), { recursive: true });
     }
     this.db = new DatabaseSync(dbPath, { timeout: 5000 });
+    this.verifyAndHealOnStartup();
     this.initPragmasAndSchema();
     this.prepareHotStatements();
+  }
+
+  private isCorruptionError(err: any): boolean {
+    const code = Number(err?.errcode);
+    const msg = String(err?.message || '').toLowerCase();
+    return (
+      code === 11 ||
+      code === 26 ||
+      msg.includes('malformed') ||
+      msg.includes('not a database') ||
+      msg.includes('file is not a database')
+    );
+  }
+
+  private verifyAndHealOnStartup() {
+    if (this.dbPath === ':memory:') return;
+
+    let tables: string[] = [];
+    try {
+      this.db.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;');
+      const rows = this.db
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('punctuality_logs', 'aansluitingen_logs', 'deelfiets_logs', 'ovfiets_logs')"
+        )
+        .all() as Array<{ name: string }>;
+      tables = rows.map((r) => r.name);
+      if (tables.length === 0) return;
+
+      const stat = fs.existsSync(this.dbPath) ? fs.statSync(this.dbPath) : null;
+      // Full quick_check(1) up to 512MB; above 512MB probe covering indexes + FTS for O(1) instant startup
+      if (!stat || stat.size <= 512 * 1024 * 1024) {
+        const qc = this.db.prepare('PRAGMA quick_check(1)').all() as Array<{ quick_check: string }>;
+        if (!qc[0] || qc[0].quick_check !== 'ok') {
+          throw Object.assign(
+            new Error(`SQLite quick_check failed: ${qc[0]?.quick_check || 'unknown'}`),
+            { errcode: 11 }
+          );
+        }
+      }
+
+      for (const tbl of tables) {
+        this.db.prepare(`SELECT COUNT(*) AS c FROM ${tbl}`).get();
+        this.db.prepare(`SELECT id FROM ${tbl} ORDER BY timestamp DESC, id DESC LIMIT 1`).get();
+      }
+      if (tables.includes('punctuality_logs')) {
+        const hasFts = this.db
+          .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='punctuality_fts'")
+          .get();
+        if (hasFts) {
+          this.db.prepare("SELECT COUNT(*) AS c FROM punctuality_fts WHERE punctuality_fts MATCH 'Steenwijk'").get();
+        }
+      }
+      if (tables.includes('aansluitingen_logs')) {
+        const hasFts = this.db
+          .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='aansluitingen_fts'")
+          .get();
+        if (hasFts) {
+          this.db.prepare("SELECT COUNT(*) AS c FROM aansluitingen_fts WHERE aansluitingen_fts MATCH 'Steenwijk'").get();
+        }
+      }
+    } catch (err: any) {
+      if (!this.isCorruptionError(err)) {
+        // Non-corruption schema quirks (e.g. missing FTS before init) can proceed to initPragmasAndSchema
+        return;
+      }
+
+      console.warn('⚠️ Beschadigde SQLite database/WAL gedetecteerd, automatisch herstel gestart:', err?.message || err);
+
+      // Step 1: Try in-place REINDEX + FTS5 rebuild first
+      try {
+        this.db.exec('REINDEX;');
+        try {
+          this.db.exec("INSERT INTO punctuality_fts(punctuality_fts) VALUES('rebuild');");
+        } catch {}
+        try {
+          this.db.exec("INSERT INTO aansluitingen_fts(aansluitingen_fts) VALUES('rebuild');");
+        } catch {}
+        const qc2 = this.db.prepare('PRAGMA quick_check(1)').all() as Array<{ quick_check: string }>;
+        let allHealthy = qc2[0]?.quick_check === 'ok';
+        if (allHealthy) {
+          for (const tbl of tables) {
+            this.db.prepare(`SELECT COUNT(*) AS c FROM ${tbl}`).get();
+          }
+          console.log('✅ SQLite database succesvol in-place hersteld via REINDEX/FTS rebuild.');
+          return;
+        }
+      } catch {
+        // Fall through to full row-rescuing database rebuild
+      }
+
+      // Step 2: Rescue all intact rows from every table into a clean database
+      this.rescueAndRecreateDatabase();
+    }
+  }
+
+  private extractSalvageableRows<T>(
+    tableName: string,
+    countHint: number,
+    mapFn: (row: any) => T
+  ): T[] {
+    const exists = this.db
+      .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?")
+      .get(tableName);
+    if (!exists) return [];
+
+    const results: T[] = [];
+    const seenIds = new Set<string>();
+    let maxRowIdSeen = 0;
+
+    const pushRow = (r: any) => {
+      if (!r || !r.id || seenIds.has(r.id)) return;
+      seenIds.add(r.id);
+      if (typeof r._rowid_ === 'number' && r._rowid_ > maxRowIdSeen) {
+        maxRowIdSeen = r._rowid_;
+      }
+      results.push(mapFn(r));
+    };
+
+    // Fast path: full table cursor
+    let cursorComplete = false;
+    try {
+      const stmt = this.db.prepare(`SELECT rowid AS _rowid_, * FROM ${tableName}`);
+      for (const r of stmt.iterate()) {
+        pushRow(r);
+      }
+      cursorComplete = true;
+    } catch {
+      // Partial corruption hit mid-B-tree; recover remaining healthy rowid blocks
+    }
+
+    if (!cursorComplete) {
+      let maxRowId = maxRowIdSeen;
+      try {
+        const m = this.db.prepare(`SELECT MAX(rowid) AS m FROM ${tableName}`).get() as { m?: number };
+        if (m?.m && m.m > maxRowId) maxRowId = Number(m.m);
+      } catch {
+        maxRowId = Math.max(maxRowIdSeen + 2000, countHint * 2, 5000);
+      }
+      const upperBound = Math.min(Math.max(maxRowId, maxRowIdSeen), 2_000_000);
+
+      const probeRange = (startId: number, endId: number) => {
+        if (startId > endId) return;
+        try {
+          const rows = this.db
+            .prepare(`SELECT rowid AS _rowid_, * FROM ${tableName} WHERE rowid BETWEEN ? AND ?`)
+            .all(startId, endId) as any[];
+          for (const r of rows) pushRow(r);
+        } catch {
+          if (startId === endId) return;
+          if (endId - startId <= 32) {
+            const singleStmt = this.db.prepare(
+              `SELECT rowid AS _rowid_, * FROM ${tableName} WHERE rowid = ?`
+            );
+            for (let id = startId; id <= endId; id++) {
+              try {
+                const r = singleStmt.get(id);
+                if (r) pushRow(r);
+              } catch {
+                // Skip damaged leaf row
+              }
+            }
+          } else {
+            const mid = Math.floor((startId + endId) / 2);
+            probeRange(startId, mid);
+            probeRange(mid + 1, endId);
+          }
+        }
+      };
+
+      const BLOCK = 1000;
+      for (let start = 1; start <= upperBound; start += BLOCK) {
+        probeRange(start, Math.min(upperBound, start + BLOCK - 1));
+      }
+    }
+
+    return results;
+  }
+
+  private rescueAndRecreateDatabase() {
+    let puncHint = 0;
+    let aanslHint = 0;
+    let dfHint = 0;
+    let ovHint = 0;
+    try {
+      const counts = this.db.prepare('SELECT table_name, row_count FROM meta_counts').all() as Array<{
+        table_name: string;
+        row_count: number;
+      }>;
+      for (const c of counts) {
+        if (c.table_name === 'punctuality_logs') puncHint = Number(c.row_count || 0);
+        if (c.table_name === 'aansluitingen_logs') aanslHint = Number(c.row_count || 0);
+        if (c.table_name === 'deelfiets_logs') dfHint = Number(c.row_count || 0);
+        if (c.table_name === 'ovfiets_logs') ovHint = Number(c.row_count || 0);
+      }
+    } catch {}
+
+    const rescuedPunc = this.extractSalvageableRows<PunctualityLogEntry>(
+      'punctuality_logs',
+      puncHint,
+      (r) => ({
+        id: r.id,
+        timestamp: r.timestamp,
+        date: r.date,
+        yearMonth: r.year_month,
+        isoYear: Number(r.iso_year),
+        isoWeek: Number(r.iso_week),
+        yearWeek: r.year_week,
+        stopId: r.stop_id,
+        stopCode: r.stop_code || '',
+        stopName: r.stop_name,
+        town: r.town,
+        line: r.line,
+        operator: r.operator || 'OV',
+        destination: r.destination || '',
+        journeyId: r.journey_id || '',
+        plannedTime: r.planned_time,
+        actualTime: r.actual_time,
+        delayMinutes: Number(r.delay_minutes || 0),
+        status: r.status,
+      })
+    );
+
+    const rescuedAansl = this.extractSalvageableRows<ConnectionLogEntry>(
+      'aansluitingen_logs',
+      aanslHint,
+      (r) =>
+        normalizeConnectionEntry({
+          id: r.id,
+          direction: r.direction,
+          timestamp: r.timestamp,
+          date: r.date,
+          yearMonth: r.year_month,
+          isoYear: Number(r.iso_year),
+          isoWeek: Number(r.iso_week),
+          yearWeek: r.year_week,
+          busLine: r.bus_line,
+          busOperator: r.bus_operator,
+          busDestination: r.bus_destination,
+          busPlannedArrival: r.bus_planned_arrival ?? undefined,
+          busActualArrival: r.bus_actual_arrival ?? undefined,
+          busPlannedDeparture: r.bus_planned_departure ?? undefined,
+          busActualDeparture: r.bus_actual_departure ?? undefined,
+          busDelayMinutes: Number(r.bus_delay_minutes || 0),
+          trainNumber: r.train_number,
+          trainType: r.train_type,
+          trainDestination: r.train_destination,
+          trainOrigin: r.train_origin ?? undefined,
+          trainPlatform: r.train_platform,
+          trainPlannedDeparture: r.train_planned_departure ?? undefined,
+          trainActualDeparture: r.train_actual_departure ?? undefined,
+          trainPlannedArrival: r.train_planned_arrival ?? undefined,
+          trainActualArrival: r.train_actual_arrival ?? undefined,
+          trainDelayMinutes: Number(r.train_delay_minutes || 0),
+          originVehicle: r.origin_vehicle,
+          connectingVehicle: r.connecting_vehicle,
+          plannedOriginArrival: r.planned_origin_arrival,
+          actualOriginArrival: r.actual_origin_arrival,
+          plannedConnectingDeparture: r.planned_connecting_departure,
+          actualConnectingDeparture: r.actual_connecting_departure,
+          plannedTransferMinutes: Number(r.planned_transfer_minutes || 0),
+          realizedTransferMinutes: Number(r.realized_transfer_minutes || 0),
+          status: r.status,
+          notes: r.notes ?? undefined,
+        })
+    );
+
+    const rescuedDf = this.extractSalvageableRows<DeelfietsLogEntry>(
+      'deelfiets_logs',
+      dfHint,
+      (r) => ({
+        id: r.id,
+        timestamp: r.timestamp,
+        date: r.date,
+        hourSlot: r.hour_slot,
+        yearMonth: r.year_month,
+        isoYear: Number(r.iso_year),
+        isoWeek: Number(r.iso_week),
+        yearWeek: r.year_week,
+        stationId: r.station_id,
+        locationName: r.location_name,
+        town: r.town,
+        streetAddress: r.street_address || '',
+        electric: Boolean(r.electric),
+        isCargoBike: Boolean(r.is_cargo_bike),
+        availableBikes: Number(r.available_bikes || 0),
+        rentedBikes: Number(r.rented_bikes || 0),
+        capacity: Number(r.capacity || 0),
+        newRentals: Number(r.new_rentals || 0),
+      })
+    );
+
+    const rescuedOv = this.extractSalvageableRows<OvFietsLogEntry>(
+      'ovfiets_logs',
+      ovHint,
+      (r) => ({
+        id: r.id,
+        timestamp: r.timestamp,
+        date: r.date,
+        hour: r.hour,
+        yearMonth: r.year_month,
+        isoYear: Number(r.iso_year),
+        isoWeek: Number(r.iso_week),
+        yearWeek: r.year_week,
+        stationCode: r.station_code,
+        name: r.name,
+        capacity: Number(r.capacity || 0),
+        available: Number(r.available || 0),
+        rented: Number(r.rented || 0),
+        newRentals: Number(r.new_rentals || 0),
+      })
+    );
+
+    try {
+      this.db.close();
+    } catch {}
+
+    const stamp = Date.now();
+    for (const suffix of ['', '-wal', '-shm']) {
+      const fp = `${this.dbPath}${suffix}`;
+      if (fs.existsSync(fp)) {
+        try {
+          if (suffix === '') {
+            fs.renameSync(fp, `${this.dbPath}.corrupt.${stamp}`);
+          } else {
+            fs.rmSync(fp, { force: true });
+          }
+        } catch {}
+      }
+    }
+
+    this.db = new DatabaseSync(this.dbPath, { timeout: 5000 });
+    this.initPragmasAndSchema();
+    this.prepareHotStatements();
+
+    const CHUNK = 2500;
+    for (let i = 0; i < rescuedPunc.length; i += CHUNK) {
+      this.upsertPunctualityBatch(rescuedPunc.slice(i, i + CHUNK));
+    }
+    for (let i = 0; i < rescuedAansl.length; i += CHUNK) {
+      this.upsertAansluitingenBatch(rescuedAansl.slice(i, i + CHUNK));
+    }
+    for (let i = 0; i < rescuedDf.length; i += CHUNK) {
+      this.upsertDeelfietsBatch(rescuedDf.slice(i, i + CHUNK));
+    }
+    for (let i = 0; i < rescuedOv.length; i += CHUNK) {
+      this.upsertOvfietsBatch(rescuedOv.slice(i, i + CHUNK));
+    }
+
+    this.checkpointWal();
+    console.log(
+      `✅ SQLite database hersteld: ${rescuedPunc.length} stiptheid, ${rescuedAansl.length} aansluitingen, ${rescuedDf.length} deelfiets, ${rescuedOv.length} OV-fiets rijen veiliggesteld.`
+    );
   }
 
   private initPragmasAndSchema() {
@@ -276,6 +629,14 @@ export class SteenwijkerlandDB {
         ('aansluitingen_logs', 0),
         ('deelfiets_logs', 0),
         ('ovfiets_logs', 0);
+
+      CREATE TABLE IF NOT EXISTS meta_migrations (
+        file_path TEXT PRIMARY KEY,
+        file_size INTEGER NOT NULL,
+        mtime_ms REAL NOT NULL,
+        imported_count INTEGER NOT NULL DEFAULT 0,
+        imported_at TEXT NOT NULL
+      );
 
       -- 1. Punctuality Logs
       CREATE TABLE IF NOT EXISTS punctuality_logs (
@@ -1266,117 +1627,79 @@ export class SteenwijkerlandDB {
     const CHUNK = 2500;
     const yieldLoop = () => new Promise<void>((r) => setImmediate(r));
 
-    if (this.getTotalCount('punctuality_logs') === 0) {
-      const map = new Map<string, PunctualityLogEntry>();
-      for (const fp of files.punctuality) {
-        try {
-          if (fs.existsSync(fp)) {
-            const raw = await fs.promises.readFile(fp, 'utf8');
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-              for (const item of parsed) {
-                if (item && item.id) map.set(item.id, item);
-              }
-            }
-          }
-        } catch (err) {
-          console.warn(`Legacy migration warning (${path.basename(fp)}):`, err);
-        }
-      }
-      if (map.size > 0) {
-        const all = Array.from(map.values());
-        let imported = 0;
-        for (let i = 0; i < all.length; i += CHUNK) {
-          imported += this.upsertPunctualityBatch(all.slice(i, i + CHUNK));
-          await yieldLoop();
-        }
-        console.log(`SQLite migratie: ${imported} stiptheidsmetingen geïmporteerd.`);
-      }
-    }
+    const stmtGetMig = this.db.prepare(
+      'SELECT file_size, mtime_ms FROM meta_migrations WHERE file_path = ?'
+    );
+    const stmtSetMig = this.db.prepare(`
+      INSERT INTO meta_migrations (file_path, file_size, mtime_ms, imported_count, imported_at)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT (file_path) DO UPDATE SET
+        file_size = excluded.file_size,
+        mtime_ms = excluded.mtime_ms,
+        imported_count = excluded.imported_count,
+        imported_at = excluded.imported_at
+    `);
 
-    if (this.getTotalCount('aansluitingen_logs') === 0) {
-      const map = new Map<string, ConnectionLogEntry>();
-      for (const fp of files.aansluitingen) {
+    const processCategory = async <T>(
+      label: string,
+      paths: string[],
+      upsertChunk: (chunk: T[]) => number
+    ) => {
+      for (const fp of paths) {
         try {
-          if (fs.existsSync(fp)) {
-            const raw = await fs.promises.readFile(fp, 'utf8');
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-              for (const item of parsed) {
-                if (item && item.id) map.set(item.id, item);
-              }
-            }
-          }
-        } catch (err) {
-          console.warn(`Legacy migration warning (${path.basename(fp)}):`, err);
-        }
-      }
-      if (map.size > 0) {
-        const all = Array.from(map.values());
-        let imported = 0;
-        for (let i = 0; i < all.length; i += CHUNK) {
-          imported += this.upsertAansluitingenBatch(all.slice(i, i + CHUNK));
-          await yieldLoop();
-        }
-        console.log(`SQLite migratie: ${imported} aansluitingsmetingen geïmporteerd.`);
-      }
-    }
+          if (!fs.existsSync(fp)) continue;
+          const stat = await fs.promises.stat(fp);
+          if (stat.size <= 2) continue;
 
-    if (this.getTotalCount('deelfiets_logs') === 0) {
-      const map = new Map<string, DeelfietsLogEntry>();
-      for (const fp of files.deelfiets) {
-        try {
-          if (fs.existsSync(fp)) {
-            const raw = await fs.promises.readFile(fp, 'utf8');
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-              for (const item of parsed) {
-                if (item && item.id) map.set(item.id, item);
-              }
-            }
+          const key = path.resolve(fp);
+          const prev = stmtGetMig.get(key) as { file_size: number; mtime_ms: number } | undefined;
+          if (
+            prev &&
+            prev.file_size === stat.size &&
+            Math.abs(prev.mtime_ms - stat.mtimeMs) < 1
+          ) {
+            continue;
           }
-        } catch (err) {
-          console.warn(`Legacy migration warning (${path.basename(fp)}):`, err);
-        }
-      }
-      if (map.size > 0) {
-        const all = Array.from(map.values());
-        let imported = 0;
-        for (let i = 0; i < all.length; i += CHUNK) {
-          imported += this.upsertDeelfietsBatch(all.slice(i, i + CHUNK));
-          await yieldLoop();
-        }
-        console.log(`SQLite migratie: ${imported} deelfietsmetingen geïmporteerd.`);
-      }
-    }
 
-    if (this.getTotalCount('ovfiets_logs') === 0) {
-      const map = new Map<string, OvFietsLogEntry>();
-      for (const fp of files.ovfiets) {
-        try {
-          if (fs.existsSync(fp)) {
-            const raw = await fs.promises.readFile(fp, 'utf8');
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-              for (const item of parsed) {
-                if (item && item.id) map.set(item.id, item);
-              }
+          const raw = await fs.promises.readFile(fp, 'utf8');
+          const parsed = JSON.parse(raw);
+          let imported = 0;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            for (let i = 0; i < parsed.length; i += CHUNK) {
+              imported += upsertChunk(parsed.slice(i, i + CHUNK));
+              await yieldLoop();
             }
+          }
+          stmtSetMig.run(key, stat.size, stat.mtimeMs, imported, new Date().toISOString());
+          if (imported > 0) {
+            console.log(`SQLite migratie (${path.basename(fp)}): ${imported} ${label} geïmporteerd.`);
           }
         } catch (err) {
           console.warn(`Legacy migration warning (${path.basename(fp)}):`, err);
         }
       }
-      if (map.size > 0) {
-        const all = Array.from(map.values());
-        let imported = 0;
-        for (let i = 0; i < all.length; i += CHUNK) {
-          imported += this.upsertOvfietsBatch(all.slice(i, i + CHUNK));
-          await yieldLoop();
-        }
-        console.log(`SQLite migratie: ${imported} OV-fietsmetingen geïmporteerd.`);
-      }
-    }
+    };
+
+    await processCategory<PunctualityLogEntry>(
+      'stiptheidsmetingen',
+      files.punctuality,
+      (c) => this.upsertPunctualityBatch(c)
+    );
+    await processCategory<ConnectionLogEntry>(
+      'aansluitingsmetingen',
+      files.aansluitingen,
+      (c) => this.upsertAansluitingenBatch(c)
+    );
+    await processCategory<DeelfietsLogEntry>(
+      'deelfietsmetingen',
+      files.deelfiets,
+      (c) => this.upsertDeelfietsBatch(c)
+    );
+    await processCategory<OvFietsLogEntry>(
+      'OV-fietsmetingen',
+      files.ovfiets,
+      (c) => this.upsertOvfietsBatch(c)
+    );
   }
 
   // -------------------------------------------------------------
@@ -3004,7 +3327,14 @@ export class SteenwijkerlandDB {
     );
   }
 
+  public checkpointWal() {
+    try {
+      this.db.exec('PRAGMA wal_checkpoint(TRUNCATE);');
+    } catch {}
+  }
+
   public close() {
+    this.checkpointWal();
     this.db.close();
   }
 }
