@@ -121,8 +121,17 @@ function normalizeConnectionEntry(raw: ConnectionLogEntry): ConnectionLogEntry {
   const dir: TransferDirection = raw.direction || 'bus_naar_trein';
   const trainType: 'Intercity' | 'Sprinter' =
     raw.trainType === 'Sprinter' ? 'Sprinter' : 'Intercity';
+  const fallbackInfo =
+    raw.isoYear == null || raw.isoWeek == null || !raw.date || !raw.yearMonth || !raw.yearWeek
+      ? getISOWeekInfo(raw.timestamp ? new Date(raw.timestamp) : new Date())
+      : null;
   return {
     ...raw,
+    date: raw.date || fallbackInfo!.dateStr,
+    yearMonth: raw.yearMonth || fallbackInfo!.yearMonth,
+    isoYear: raw.isoYear ?? fallbackInfo!.isoYear,
+    isoWeek: raw.isoWeek ?? fallbackInfo!.isoWeek,
+    yearWeek: raw.yearWeek || fallbackInfo!.yearWeek,
     direction: dir,
     trainType,
     busLine: String(raw.busLine || ''),
@@ -322,6 +331,7 @@ export class SteenwijkerlandDB {
         operated_count INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY (date, town, stop_name, line)
       );
+      CREATE INDEX IF NOT EXISTS idx_punc_rollup_date ON punctuality_daily_rollups (date);
       CREATE INDEX IF NOT EXISTS idx_punc_rollup_month ON punctuality_daily_rollups (year_month);
       CREATE INDEX IF NOT EXISTS idx_punc_rollup_week ON punctuality_daily_rollups (year_week);
 
@@ -384,6 +394,10 @@ export class SteenwijkerlandDB {
       CREATE INDEX IF NOT EXISTS idx_aansl_date_ts ON aansluitingen_logs (date, timestamp DESC, id DESC);
       CREATE INDEX IF NOT EXISTS idx_aansl_week_ts ON aansluitingen_logs (year_week, timestamp DESC, id DESC);
       CREATE INDEX IF NOT EXISTS idx_aansl_month_ts ON aansluitingen_logs (year_month, timestamp DESC, id DESC);
+      CREATE INDEX IF NOT EXISTS idx_aansl_dir_ts ON aansluitingen_logs (direction, timestamp DESC, id DESC);
+      CREATE INDEX IF NOT EXISTS idx_aansl_type_ts ON aansluitingen_logs (train_type, timestamp DESC, id DESC);
+      CREATE INDEX IF NOT EXISTS idx_aansl_line_ts ON aansluitingen_logs (bus_line, timestamp DESC, id DESC);
+      CREATE INDEX IF NOT EXISTS idx_aansl_status_ts ON aansluitingen_logs (status, timestamp DESC, id DESC);
       CREATE INDEX IF NOT EXISTS idx_aansl_filters ON aansluitingen_logs (direction, train_type, bus_line, status, timestamp DESC, id DESC);
 
       CREATE VIRTUAL TABLE IF NOT EXISTS aansluitingen_fts USING fts5(
@@ -408,6 +422,7 @@ export class SteenwijkerlandDB {
         sum_realized_min REAL NOT NULL DEFAULT 0,
         PRIMARY KEY (date, direction, train_type, bus_line)
       );
+      CREATE INDEX IF NOT EXISTS idx_aansl_rollup_date ON aansluitingen_daily_rollups (date);
       CREATE INDEX IF NOT EXISTS idx_aansl_rollup_month ON aansluitingen_daily_rollups (year_month);
       CREATE INDEX IF NOT EXISTS idx_aansl_rollup_week ON aansluitingen_daily_rollups (year_week);
 
@@ -461,6 +476,7 @@ export class SteenwijkerlandDB {
         peak_concurrent_rented INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY (station_id, date)
       );
+      CREATE INDEX IF NOT EXISTS idx_df_rollup_date ON deelfiets_daily_rollups (date, station_id);
       CREATE INDEX IF NOT EXISTS idx_df_rollup_week ON deelfiets_daily_rollups (year_week, station_id);
       CREATE INDEX IF NOT EXISTS idx_df_rollup_month ON deelfiets_daily_rollups (year_month, station_id);
 
@@ -496,6 +512,7 @@ export class SteenwijkerlandDB {
         peak_concurrent_rented INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY (station_code, date)
       );
+      CREATE INDEX IF NOT EXISTS idx_ov_rollup_date ON ovfiets_daily_rollups (date, station_code);
       CREATE INDEX IF NOT EXISTS idx_ov_rollup_week ON ovfiets_daily_rollups (year_week, station_code);
       CREATE INDEX IF NOT EXISTS idx_ov_rollup_month ON ovfiets_daily_rollups (year_month, station_code);
     `);
@@ -1240,6 +1257,128 @@ export class SteenwijkerlandDB {
     }
   }
 
+  public async migrateLegacyJsonIfEmptyAsync(files: {
+    punctuality: string[];
+    aansluitingen: string[];
+    deelfiets: string[];
+    ovfiets: string[];
+  }) {
+    const CHUNK = 2500;
+    const yieldLoop = () => new Promise<void>((r) => setImmediate(r));
+
+    if (this.getTotalCount('punctuality_logs') === 0) {
+      const map = new Map<string, PunctualityLogEntry>();
+      for (const fp of files.punctuality) {
+        try {
+          if (fs.existsSync(fp)) {
+            const raw = await fs.promises.readFile(fp, 'utf8');
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              for (const item of parsed) {
+                if (item && item.id) map.set(item.id, item);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn(`Legacy migration warning (${path.basename(fp)}):`, err);
+        }
+      }
+      if (map.size > 0) {
+        const all = Array.from(map.values());
+        let imported = 0;
+        for (let i = 0; i < all.length; i += CHUNK) {
+          imported += this.upsertPunctualityBatch(all.slice(i, i + CHUNK));
+          await yieldLoop();
+        }
+        console.log(`SQLite migratie: ${imported} stiptheidsmetingen geïmporteerd.`);
+      }
+    }
+
+    if (this.getTotalCount('aansluitingen_logs') === 0) {
+      const map = new Map<string, ConnectionLogEntry>();
+      for (const fp of files.aansluitingen) {
+        try {
+          if (fs.existsSync(fp)) {
+            const raw = await fs.promises.readFile(fp, 'utf8');
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              for (const item of parsed) {
+                if (item && item.id) map.set(item.id, item);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn(`Legacy migration warning (${path.basename(fp)}):`, err);
+        }
+      }
+      if (map.size > 0) {
+        const all = Array.from(map.values());
+        let imported = 0;
+        for (let i = 0; i < all.length; i += CHUNK) {
+          imported += this.upsertAansluitingenBatch(all.slice(i, i + CHUNK));
+          await yieldLoop();
+        }
+        console.log(`SQLite migratie: ${imported} aansluitingsmetingen geïmporteerd.`);
+      }
+    }
+
+    if (this.getTotalCount('deelfiets_logs') === 0) {
+      const map = new Map<string, DeelfietsLogEntry>();
+      for (const fp of files.deelfiets) {
+        try {
+          if (fs.existsSync(fp)) {
+            const raw = await fs.promises.readFile(fp, 'utf8');
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              for (const item of parsed) {
+                if (item && item.id) map.set(item.id, item);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn(`Legacy migration warning (${path.basename(fp)}):`, err);
+        }
+      }
+      if (map.size > 0) {
+        const all = Array.from(map.values());
+        let imported = 0;
+        for (let i = 0; i < all.length; i += CHUNK) {
+          imported += this.upsertDeelfietsBatch(all.slice(i, i + CHUNK));
+          await yieldLoop();
+        }
+        console.log(`SQLite migratie: ${imported} deelfietsmetingen geïmporteerd.`);
+      }
+    }
+
+    if (this.getTotalCount('ovfiets_logs') === 0) {
+      const map = new Map<string, OvFietsLogEntry>();
+      for (const fp of files.ovfiets) {
+        try {
+          if (fs.existsSync(fp)) {
+            const raw = await fs.promises.readFile(fp, 'utf8');
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              for (const item of parsed) {
+                if (item && item.id) map.set(item.id, item);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn(`Legacy migration warning (${path.basename(fp)}):`, err);
+        }
+      }
+      if (map.size > 0) {
+        const all = Array.from(map.values());
+        let imported = 0;
+        for (let i = 0; i < all.length; i += CHUNK) {
+          imported += this.upsertOvfietsBatch(all.slice(i, i + CHUNK));
+          await yieldLoop();
+        }
+        console.log(`SQLite migratie: ${imported} OV-fietsmetingen geïmporteerd.`);
+      }
+    }
+  }
+
   // -------------------------------------------------------------
   // 1. Punctuality Analytics & Paginated Queries
   // -------------------------------------------------------------
@@ -1641,14 +1780,18 @@ export class SteenwijkerlandDB {
         const extraCond = whereSql ? whereSql.replace(/^WHERE\s+/i, 'AND ') : '';
         filteredTotal = Number(
           (
-            this.db
-              .prepare(`
-                SELECT COUNT(*) AS cnt
-                FROM punctuality_fts
-                JOIN punctuality_logs p ON p.rowid = punctuality_fts.rowid
-                WHERE punctuality_fts MATCH ? ${extraCond}
-              `)
-              .get(ftsMatch, ...sqlParams) as { cnt: number }
+            (extraCond === ''
+              ? this.db
+                  .prepare('SELECT COUNT(*) AS cnt FROM punctuality_fts WHERE punctuality_fts MATCH ?')
+                  .get(ftsMatch)
+              : this.db
+                  .prepare(`
+                    SELECT COUNT(*) AS cnt
+                    FROM punctuality_fts
+                    JOIN punctuality_logs p ON p.rowid = punctuality_fts.rowid
+                    WHERE punctuality_fts MATCH ? ${extraCond}
+                  `)
+                  .get(ftsMatch, ...sqlParams)) as { cnt: number }
           )?.cnt || 0
         );
         const ftsTotalPages = Math.max(1, Math.ceil(Math.max(1, filteredTotal) / pageSize));
@@ -2029,14 +2172,18 @@ export class SteenwijkerlandDB {
         const extraCond = conds.length > 0 ? `AND ${conds.join(' AND ')}` : '';
         filteredTotal = Number(
           (
-            this.db
-              .prepare(`
-                SELECT COUNT(*) AS cnt
-                FROM aansluitingen_fts
-                JOIN aansluitingen_logs a ON a.rowid = aansluitingen_fts.rowid
-                WHERE aansluitingen_fts MATCH ? ${extraCond}
-              `)
-              .get(ftsMatch, ...sqlParams) as { cnt: number }
+            (extraCond === ''
+              ? this.db
+                  .prepare('SELECT COUNT(*) AS cnt FROM aansluitingen_fts WHERE aansluitingen_fts MATCH ?')
+                  .get(ftsMatch)
+              : this.db
+                  .prepare(`
+                    SELECT COUNT(*) AS cnt
+                    FROM aansluitingen_fts
+                    JOIN aansluitingen_logs a ON a.rowid = aansluitingen_fts.rowid
+                    WHERE aansluitingen_fts MATCH ? ${extraCond}
+                  `)
+                  .get(ftsMatch, ...sqlParams)) as { cnt: number }
           )?.cnt || 0
         );
         const totalPagesFts = Math.max(1, Math.ceil(Math.max(1, filteredTotal) / pageSize));

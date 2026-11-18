@@ -2,7 +2,6 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
-import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import {
@@ -53,7 +52,24 @@ import { SteenwijkerlandDB } from './src/server/db';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isProduction = process.env.NODE_ENV === 'production';
-const PORT = Number(process.env.PORT) || 3000;
+
+function resolveServerPort(): number {
+  const args = process.argv.slice(2);
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--port' && args[i + 1]) {
+      const parsed = Number(args[i + 1]);
+      if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    } else if (args[i].startsWith('--port=')) {
+      const parsed = Number(args[i].slice('--port='.length));
+      if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    }
+  }
+  const appPort = Number(process.env.APP_PORT);
+  if (Number.isFinite(appPort) && appPort > 0) return appPort;
+  return 3000;
+}
+
+const PORT = resolveServerPort();
 
 const DB_FILE = path.resolve(__dirname, 'src/data/steenwijkerland.db');
 const storeDb = new SteenwijkerlandDB(DB_FILE);
@@ -775,11 +791,26 @@ export function isPointInSteenwijkerlandOrCorridor(
 
 const OVZOEKER_VEHICLE_TIMEOUT_MS = 5 * 60 * 1000; // Exact 5-minute timeout from ovzoeker.nl/code.js
 const liveOvzoekerEntityMap: Map<string, any> = new Map();
+let inFlightOvzoekerFetch: Promise<BusPosition[]> | null = null;
 
 async function fetchLiveOvzoekerVehicles(forceRefresh = false): Promise<BusPosition[]> {
-  if (!forceRefresh && Date.now() - cachedOvzoekerVehicles.timestamp < 3000) {
+  if (!forceRefresh && cachedOvzoekerVehicles.timestamp > 0 && Date.now() - cachedOvzoekerVehicles.timestamp < 5000) {
     return cachedOvzoekerVehicles.vehicles;
   }
+  if (inFlightOvzoekerFetch) {
+    return inFlightOvzoekerFetch;
+  }
+  inFlightOvzoekerFetch = (async () => {
+    try {
+      return await _fetchLiveOvzoekerVehiclesImpl();
+    } finally {
+      inFlightOvzoekerFetch = null;
+    }
+  })();
+  return inFlightOvzoekerFetch;
+}
+
+async function _fetchLiveOvzoekerVehiclesImpl(): Promise<BusPosition[]> {
 
   // Full snapshot + targeted regional snapshots covering all of Gemeente Steenwijkerland
   const urls = [
@@ -1653,30 +1684,6 @@ async function runLiveAansluitingenScan() {
 }
 
 async function startServer() {
-  // One-time automatic migration from legacy JSON stores into SQLite (if SQLite tables are empty)
-  storeDb.migrateLegacyJsonIfEmpty({
-    punctuality: [
-      path.resolve(__dirname, 'src/data/punctualityLogs.backup.json'),
-      path.resolve(__dirname, 'src/data/punctualityLogs.json'),
-    ],
-    aansluitingen: [
-      path.resolve(__dirname, 'src/data/aansluitingenLogs.backup.json'),
-      path.resolve(__dirname, 'src/data/aansluitingenLogs.json'),
-    ],
-    deelfiets: [
-      path.resolve(__dirname, 'src/data/deelfietsLogs.backup.json'),
-      path.resolve(__dirname, 'src/data/deelfietsLogs.json'),
-    ],
-    ovfiets: [
-      path.resolve(__dirname, 'src/data/ovfietsLogs.backup.json'),
-      path.resolve(__dirname, 'src/data/ovfietsLogs.json'),
-    ],
-  });
-
-  ensureInitialTodayLogs();
-  ensureInitialDeelfietsLogs();
-  ensureInitialAansluitingenLogs();
-
   const app = express();
   app.use(express.json());
 
@@ -1752,35 +1759,7 @@ async function startServer() {
     activeBuses = stepSteenwijkerlandSimulation(2.5);
   }, 2500);
 
-  // Poll live ovzoeker.nl vehicles every 6 seconds in the background
-  setInterval(() => {
-    fetchLiveOvzoekerVehicles(true).catch(() => {});
-  }, 6000);
-  fetchLiveOvzoekerVehicles(true).catch(() => {});
-
-  // Run active DRGL punctuality logging every 60 seconds
-  setInterval(() => {
-    runLiveDRGLPunctualityScan().catch(() => {});
-  }, 60000);
-  runLiveDRGLPunctualityScan().catch(() => {});
-
-  // Run active Deelfiets Nederland logging every 120 seconds
-  setInterval(() => {
-    runLiveDeelfietsScan().catch(() => {});
-  }, 120000);
-  runLiveDeelfietsScan().catch(() => {});
-
-  // Run active NS OV-fiets Station Steenwijk logging every 60 seconds
-  setInterval(() => {
-    runLiveOvFietsScan().catch(() => {});
-  }, 60000);
-  runLiveOvFietsScan().catch(() => {});
-
-  // Run active Bus-Trein Aansluitingen matching every 45 seconds
-  setInterval(() => {
-    runLiveAansluitingenScan().catch(() => {});
-  }, 45000);
-  runLiveAansluitingenScan().catch(() => {});
+  // Background scans start staggered after HTTP server binds (see startBackgroundTasks)
 
   // -------------------------------------------------------------
   // 1. DRGL Stop Departures API (e.g. NL:S:16301010 for Steenwijk)
@@ -1805,6 +1784,7 @@ async function startServer() {
           'User-Agent': 'DRGL-Steenwijkerland-App/1.0',
           Accept: 'text/html',
         },
+        signal: AbortSignal.timeout(4000),
       });
 
       if (!resp.ok) {
@@ -2380,11 +2360,10 @@ async function startServer() {
   app.get('/api/treinen', async (req, res) => {
     const mode = (req.query.mode as string) || 'live';
     if (mode === 'live') {
-      let trains = cachedOvzoekerTrains.trains;
-      if (trains.length === 0 || Date.now() - cachedOvzoekerTrains.timestamp > 8000) {
-        await fetchLiveOvzoekerVehicles(true).catch(() => {});
-        trains = cachedOvzoekerTrains.trains;
+      if (cachedOvzoekerTrains.timestamp === 0 || Date.now() - cachedOvzoekerTrains.timestamp > 8000) {
+        await fetchLiveOvzoekerVehicles(false).catch(() => {});
       }
+      const trains = cachedOvzoekerTrains.trains;
       // Strictly enforce municipal borders: only trains within Steenwijkerland
       const filteredTrains = trains.filter((t) => isPointInSteenwijkerland(t.lat, t.lng));
       return res.json({
@@ -2540,40 +2519,76 @@ async function startServer() {
     });
   }
 
-  const bindServer = (retried = false) => {
-    const srv = app.listen(Number(PORT), '0.0.0.0', () => {
-      console.log(`DRGL Server gestart op http://0.0.0.0:${PORT}`);
-    });
-    srv.on('error', (err: any) => {
-      if (err && err.code === 'EADDRINUSE' && !retried) {
-        console.warn(`Poort ${PORT} bezet door een verweesd proces; wordt vrijgemaakt...`);
-        try {
-          const out = execSync(
-            `lsof -ti tcp:${PORT} || ss -lptn "sport = :${PORT}" | grep -oP 'pid=\\K[0-9]+' || true`,
-            { encoding: 'utf8' }
-          );
-          const pids = out
-            .split(/\s+/)
-            .map((s) => Number(s.trim()))
-            .filter((n) => n > 0 && n !== process.pid);
-          for (const pid of pids) {
-            try {
-              process.kill(pid, 'SIGKILL');
-            } catch {
-              // ignore
-            }
-          }
-        } catch {
-          // ignore
-        }
-        setTimeout(() => bindServer(true), 800);
-      } else {
-        console.error('Server listen error:', err);
-      }
-    });
+  const startBackgroundTasks = async () => {
+    try {
+      await storeDb.migrateLegacyJsonIfEmptyAsync({
+        punctuality: [
+          path.resolve(__dirname, 'src/data/punctualityLogs.backup.json'),
+          path.resolve(__dirname, 'src/data/punctualityLogs.json'),
+        ],
+        aansluitingen: [
+          path.resolve(__dirname, 'src/data/aansluitingenLogs.backup.json'),
+          path.resolve(__dirname, 'src/data/aansluitingenLogs.json'),
+        ],
+        deelfiets: [
+          path.resolve(__dirname, 'src/data/deelfietsLogs.backup.json'),
+          path.resolve(__dirname, 'src/data/deelfietsLogs.json'),
+        ],
+        ovfiets: [
+          path.resolve(__dirname, 'src/data/ovfietsLogs.backup.json'),
+          path.resolve(__dirname, 'src/data/ovfietsLogs.json'),
+        ],
+      });
+      ensureInitialTodayLogs();
+      ensureInitialDeelfietsLogs();
+      ensureInitialAansluitingenLogs();
+    } catch (err) {
+      console.warn('Database init/migration warning:', err);
+    }
+
+    setTimeout(() => {
+      fetchLiveOvzoekerVehicles(true).catch(() => {});
+    }, 500);
+    setTimeout(() => {
+      runLiveOvFietsScan().catch(() => {});
+    }, 1500);
+    setTimeout(() => {
+      runLiveDeelfietsScan().catch(() => {});
+    }, 2500);
+    setTimeout(() => {
+      runLiveAansluitingenScan().catch(() => {});
+    }, 3500);
+    setTimeout(() => {
+      runLiveDRGLPunctualityScan().catch(() => {});
+    }, 5000);
+
+    setInterval(() => {
+      fetchLiveOvzoekerVehicles(true).catch(() => {});
+    }, 6000);
+    setInterval(() => {
+      runLiveDRGLPunctualityScan().catch(() => {});
+    }, 60000);
+    setInterval(() => {
+      runLiveDeelfietsScan().catch(() => {});
+    }, 120000);
+    setInterval(() => {
+      runLiveOvFietsScan().catch(() => {});
+    }, 60000);
+    setInterval(() => {
+      runLiveAansluitingenScan().catch(() => {});
+    }, 45000);
   };
 
-  bindServer();
+  const srv = app.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`DRGL Server gestart op http://0.0.0.0:${PORT}`);
+    startBackgroundTasks().catch((err) => {
+      console.error('Background init error:', err);
+    });
+  });
+
+  srv.on('error', (err: any) => {
+    console.error(`Server listen error op poort ${PORT}:`, err);
+  });
 }
 
 startServer().catch((err) => {
