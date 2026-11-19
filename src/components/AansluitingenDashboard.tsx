@@ -17,7 +17,9 @@ import {
   ArrowRightLeft,
   ChevronLeft,
   ChevronRight,
+  FileJson,
 } from 'lucide-react';
+import { downloadProtectedExport } from '../utils/oslAuth';
 
 interface AansluitingenDashboardProps {
   isOpen: boolean;
@@ -54,15 +56,6 @@ const EMPTY_SUMMARY: ConnectionSummary = {
   byLine: {},
 };
 
-function triggerServerCsvDownload(url: string) {
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', '');
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
 export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
   isOpen,
   onClose,
@@ -87,6 +80,8 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
   const [logs, setLogs] = useState<ConnectionLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -175,9 +170,35 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
     }
   };
 
-  // Direct streaming CSV download from SQLite cursor (zero browser heap overhead)
-  const handleDownloadCSV = () => {
-    triggerServerCsvDownload(`/api/aansluitingen/export.csv?${buildQueryParams(false)}`);
+  // Direct streaming CSV / JSON download from SQLite cursor (OSL SSO protected)
+  const handleDownloadCSV = async () => {
+    setExportError(null);
+    setIsExporting(true);
+    try {
+      await downloadProtectedExport(
+        `/api/aansluitingen/export.csv?${buildQueryParams(false)}`,
+        { fallbackFilename: 'station_steenwijk_aansluitingen.csv', modal: 'aansluitingen' }
+      );
+    } catch (err: any) {
+      setExportError(err?.message || 'OSL SSO CSV export mislukt.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadJSON = async () => {
+    setExportError(null);
+    setIsExporting(true);
+    try {
+      await downloadProtectedExport(
+        `/api/aansluitingen/export.json?${buildQueryParams(false)}`,
+        { fallbackFilename: 'station_steenwijk_aansluitingen.json', modal: 'aansluitingen' }
+      );
+    } catch (err: any) {
+      setExportError(err?.message || 'OSL SSO JSON export mislukt.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -239,11 +260,22 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
 
             <button
               onClick={handleDownloadCSV}
-              className="px-2.5 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] text-[#060e0a] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Streamt volledige gefilterde dataset direct als CSV zonder geheugenlimiet"
+              disabled={isExporting}
+              className="px-2.5 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] disabled:opacity-60 text-[#060e0a] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Streamt volledige gefilterde dataset direct als CSV via OSL SSO"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export CSV</span>
+            </button>
+
+            <button
+              onClick={handleDownloadJSON}
+              disabled={isExporting}
+              className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] disabled:opacity-60 border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Streamt volledige gefilterde dataset direct als JSON via OSL SSO"
+            >
+              <FileJson className="w-3.5 h-3.5 text-[var(--status-blue)]" />
+              <span>.JSON</span>
             </button>
 
             <button
@@ -255,6 +287,19 @@ export const AansluitingenDashboard: React.FC<AansluitingenDashboardProps> = ({
             </button>
           </div>
         </div>
+
+        {exportError && (
+          <div className="px-4 py-2 bg-[var(--status-crimson)]/15 border-b border-[var(--status-crimson)]/40 text-xs text-[var(--status-crimson)] flex items-center justify-between gap-2 shrink-0">
+            <span>{exportError}</span>
+            <button
+              type="button"
+              onClick={() => setExportError(null)}
+              className="underline cursor-pointer text-[11px]"
+            >
+              Sluiten
+            </button>
+          </div>
+        )}
 
         {/* Filter Toolbar */}
         <div className="px-4 py-2.5 bg-[var(--bg-main)] border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-2.5 shrink-0 text-xs">

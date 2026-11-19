@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BusPosition } from '../types/bus';
+import { OslSession } from '../utils/oslAuth';
 import {
   Search,
   RefreshCw,
@@ -13,6 +14,9 @@ import {
   Map as MapIcon,
   ExternalLink,
   Train,
+  LogIn,
+  LogOut,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface TopNavbarProps {
@@ -39,6 +43,10 @@ interface TopNavbarProps {
   onToggleFeedMode: (mode: 'live' | 'demo') => void;
   statusMessage?: string;
   isEmbed?: boolean;
+  oslSession?: OslSession | null;
+  onOslLogin?: () => void;
+  onOslLogout?: () => void;
+  isOslBusy?: boolean;
 }
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({
@@ -63,6 +71,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   feedMode,
   onToggleFeedMode,
   isEmbed = false,
+  oslSession = null,
+  onOslLogin,
+  onOslLogout,
+  isOslBusy = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -180,6 +192,57 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[var(--accent-gold)]' : ''}`}
             />
           </button>
+
+          {/* OSL SSO Account / Export Auth Status */}
+          {oslSession ? (
+            <div className="flex items-center gap-1 bg-[var(--bg-main)] border border-[var(--border-subtle)] rounded-[4px] px-2 py-0.5 text-[11px] shrink-0">
+              <span
+                title="Ingelogd via Onafhankelijk Steenwijkerland SSO (export:csv & export:json actief)"
+                className="inline-flex items-center shrink-0"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
+              </span>
+              <span
+                className="hidden lg:inline text-[var(--text-main)] font-semibold max-w-[110px] truncate"
+                title={`OSL account: ${
+                  oslSession.user?.name ||
+                  oslSession.user?.username ||
+                  oslSession.user?.email ||
+                  'Ingelogd'
+                }${oslSession.user?.is_member ? ' (Lid)' : ''}`}
+              >
+                {oslSession.user?.name ||
+                  oslSession.user?.username ||
+                  oslSession.user?.email ||
+                  'OSL'}
+              </span>
+              {onOslLogout && (
+                <button
+                  onClick={onOslLogout}
+                  disabled={isOslBusy}
+                  className="ml-0.5 pl-1 border-l border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--status-rose)] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  title="Uitloggen bij Onafhankelijk Steenwijkerland SSO"
+                >
+                  <LogOut className="w-3 h-3" />
+                  <span className="hidden xl:inline">Uitloggen</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            onOslLogin && (
+              <button
+                onClick={onOslLogin}
+                disabled={isOslBusy}
+                className="px-2 py-1 rounded-[4px] bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] text-[var(--text-main)] border border-[var(--border-subtle)] hover:border-[var(--accent-gold)] text-[11px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap disabled:opacity-50"
+                title="Inloggen met Onafhankelijk Steenwijkerland (OSL) SSO voor .CSV & .JSON dataset-exports"
+              >
+                <LogIn className="w-3 h-3 text-[var(--accent-gold)]" />
+                <span className="hidden xs:inline">
+                  {isOslBusy ? 'Verbinden...' : 'OSL Inloggen'}
+                </span>
+              </button>
+            )
+          )}
 
           {/* Embed Button */}
           {onOpenEmbedModal && !isEmbed && (

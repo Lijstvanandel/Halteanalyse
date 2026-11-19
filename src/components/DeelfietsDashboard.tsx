@@ -10,6 +10,7 @@ import {
   OFFICIAL_STEENWIJK_OVFIETS,
 } from '../utils/ovfiets';
 import { getISOWeekInfo } from '../utils/punctuality';
+import { downloadProtectedExport } from '../utils/oslAuth';
 import {
   X,
   Bike,
@@ -26,6 +27,7 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
+  FileJson,
 } from 'lucide-react';
 
 interface DeelfietsSummaryKpi {
@@ -61,15 +63,6 @@ interface DeelfietsDashboardProps {
   refreshNonce?: number;
 }
 
-function triggerServerCsvDownload(url: string) {
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', '');
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
 export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
   isOpen,
   onClose,
@@ -82,6 +75,8 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
   refreshNonce = 0,
 }) => {
   const [networkTab, setNetworkTab] = useState<'deelfiets' | 'ovfiets'>(initialNetworkTab);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialNetworkTab) {
@@ -322,21 +317,69 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
 
   if (!isOpen) return null;
 
-  // CSV Handlers (Direct Server Streaming Downloads)
+  const runProtectedExport = async (
+    url: string,
+    fallbackFilename: string,
+    modalTarget: 'deelfiets' | 'ovfiets'
+  ) => {
+    setExportError(null);
+    setIsExporting(true);
+    try {
+      await downloadProtectedExport(url, { fallbackFilename, modal: modalTarget });
+    } catch (err: any) {
+      setExportError(err?.message || 'OSL SSO export mislukt.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // CSV & JSON Handlers (OSL SSO Protected Streaming Downloads)
   const handleExportDeelfietsStatsCSV = () => {
-    triggerServerCsvDownload(`/api/deelfiets/export.csv?type=stats&${buildDeelfietsQuery()}`);
+    runProtectedExport(
+      `/api/deelfiets/export.csv?type=stats&${buildDeelfietsQuery()}`,
+      'steenwijkerland_deelfietsen_statistieken.csv',
+      'deelfiets'
+    );
   };
 
   const handleExportDeelfietsRawCSV = () => {
-    triggerServerCsvDownload('/api/deelfiets/export.csv?type=raw');
+    runProtectedExport(
+      '/api/deelfiets/export.csv?type=raw',
+      'steenwijkerland_deelfietsen_logboek.csv',
+      'deelfiets'
+    );
+  };
+
+  const handleExportDeelfietsJSON = () => {
+    runProtectedExport(
+      '/api/deelfiets/export.json?type=raw',
+      'steenwijkerland_deelfietsen_logboek.json',
+      'deelfiets'
+    );
   };
 
   const handleExportOvFietsStatsCSV = () => {
-    triggerServerCsvDownload(`/api/ovfiets/export.csv?type=stats&${buildOvQuery(false)}`);
+    runProtectedExport(
+      `/api/ovfiets/export.csv?type=stats&${buildOvQuery(false)}`,
+      'station_steenwijk_ovfiets_statistieken.csv',
+      'ovfiets'
+    );
   };
 
   const handleExportOvFietsRawCSV = () => {
-    triggerServerCsvDownload('/api/ovfiets/export.csv?type=raw');
+    runProtectedExport(
+      '/api/ovfiets/export.csv?type=raw',
+      'station_steenwijk_ovfiets_logboek.csv',
+      'ovfiets'
+    );
+  };
+
+  const handleExportOvFietsJSON = () => {
+    runProtectedExport(
+      '/api/ovfiets/export.json?type=raw',
+      'station_steenwijk_ovfiets_logboek.json',
+      'ovfiets'
+    );
   };
 
   const ovPercentAvailable =
@@ -405,13 +448,14 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
               </button>
             )}
 
-            {/* CSV Export Buttons (Direct Streaming Server Download) */}
+            {/* CSV & JSON Export Buttons (OSL SSO Protected Streaming Downloads) */}
             {networkTab === 'ovfiets' ? (
               <>
                 <button
                   type="button"
                   onClick={handleExportOvFietsStatsCSV}
-                  className="px-3.5 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] text-[#060e0a] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  disabled={isExporting}
+                  className="px-3.5 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] disabled:opacity-60 text-[#060e0a] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
                   <span>Export OV-fiets (.CSV)</span>
@@ -419,11 +463,22 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
                 <button
                   type="button"
                   onClick={handleExportOvFietsRawCSV}
-                  className="hidden sm:flex px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold items-center gap-1.5 transition-colors cursor-pointer"
-                  title="Streamt alle ruwe metingen direct vanaf de server"
+                  disabled={isExporting}
+                  className="hidden sm:flex px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] disabled:opacity-60 border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Streamt alle ruwe metingen direct vanaf de server via OSL SSO"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
                   <span>Alle Metingen (.CSV)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportOvFietsJSON}
+                  disabled={isExporting}
+                  className="hidden sm:flex px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] disabled:opacity-60 border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Exporteer OV-fiets dataset als JSON via OSL SSO"
+                >
+                  <FileJson className="w-3.5 h-3.5 text-[var(--status-blue)]" />
+                  <span>.JSON</span>
                 </button>
               </>
             ) : (
@@ -431,7 +486,8 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
                 <button
                   type="button"
                   onClick={handleExportDeelfietsStatsCSV}
-                  className="px-3.5 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] text-[#060e0a] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  disabled={isExporting}
+                  className="px-3.5 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] disabled:opacity-60 text-[#060e0a] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
                   <span>Export Deelfiets Tabel (.CSV)</span>
@@ -439,11 +495,22 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
                 <button
                   type="button"
                   onClick={handleExportDeelfietsRawCSV}
-                  className="hidden sm:flex px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold items-center gap-1.5 transition-colors cursor-pointer"
-                  title="Streamt alle ruwe metingen direct vanaf de server"
+                  disabled={isExporting}
+                  className="hidden sm:flex px-3 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] disabled:opacity-60 border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Streamt alle ruwe metingen direct vanaf de server via OSL SSO"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-[var(--status-emerald)]" />
                   <span>Alle Metingen (.CSV)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportDeelfietsJSON}
+                  disabled={isExporting}
+                  className="hidden sm:flex px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] disabled:opacity-60 border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Exporteer deelfiets dataset als JSON via OSL SSO"
+                >
+                  <FileJson className="w-3.5 h-3.5 text-[var(--status-blue)]" />
+                  <span>.JSON</span>
                 </button>
               </>
             )}
@@ -458,6 +525,19 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
             </button>
           </div>
         </div>
+
+        {exportError && (
+          <div className="px-5 py-2 bg-[var(--status-crimson)]/15 border-b border-[var(--status-crimson)]/40 text-xs text-[var(--status-crimson)] flex items-center justify-between gap-2 shrink-0">
+            <span>{exportError}</span>
+            <button
+              type="button"
+              onClick={() => setExportError(null)}
+              className="underline cursor-pointer text-[11px]"
+            >
+              Sluiten
+            </button>
+          </div>
+        )}
 
         {/* Network Switcher Subheader (Explicit Separation) */}
         <div className="bg-[var(--bg-main)] border-b border-[var(--border-subtle)] px-5 py-2.5 flex items-center justify-between gap-3 shrink-0">

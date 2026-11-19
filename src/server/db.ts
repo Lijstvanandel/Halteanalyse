@@ -256,6 +256,7 @@ export class SteenwijkerlandDB {
     this.db = new DatabaseSync(dbPath, { timeout: 5000 });
     this.verifyAndHealOnStartup();
     this.initPragmasAndSchema();
+    this.verifyAndHealFtsTables();
     this.prepareHotStatements();
   }
 
@@ -269,6 +270,77 @@ export class SteenwijkerlandDB {
       msg.includes('not a database') ||
       msg.includes('file is not a database')
     );
+  }
+
+  private verifyAndHealFtsTables() {
+    const ftsDefs: Array<{ name: string; createSql: string }> = [
+      {
+        name: 'punctuality_fts',
+        createSql: `
+          CREATE VIRTUAL TABLE IF NOT EXISTS punctuality_fts USING fts5(
+            town, stop_name, line, destination, operator,
+            content='punctuality_logs',
+            content_rowid='rowid',
+            tokenize='unicode61'
+          );
+        `,
+      },
+      {
+        name: 'aansluitingen_fts',
+        createSql: `
+          CREATE VIRTUAL TABLE IF NOT EXISTS aansluitingen_fts USING fts5(
+            bus_line, bus_operator, bus_destination, train_number, train_type, train_destination, origin_vehicle, connecting_vehicle,
+            content='aansluitingen_logs',
+            content_rowid='rowid',
+            tokenize='unicode61'
+          );
+        `,
+      },
+    ];
+
+    for (const fts of ftsDefs) {
+      const exists = this.db
+        .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?")
+        .get(fts.name);
+      if (!exists) continue;
+
+      try {
+        this.db
+          .prepare(`SELECT COUNT(*) AS c FROM ${fts.name} WHERE ${fts.name} MATCH 'Steenwijk'`)
+          .get();
+        // Also test write-prepare to ensure FTS5 shadow config/format is valid for inserts
+        this.db.prepare(`INSERT INTO ${fts.name}(${fts.name}) VALUES('integrity-check')`);
+      } catch (err: any) {
+        console.warn(`⚠️ FTS5 tabel ${fts.name} herstel gestart (${err?.message || err})`);
+        let repaired = false;
+        try {
+          this.db.exec(`INSERT INTO ${fts.name}(${fts.name}) VALUES('rebuild');`);
+          this.db
+            .prepare(`SELECT COUNT(*) AS c FROM ${fts.name} WHERE ${fts.name} MATCH 'Steenwijk'`)
+            .get();
+          repaired = true;
+          console.log(`✅ FTS5 tabel ${fts.name} succesvol hersteld via rebuild.`);
+        } catch {
+          // Drop and recreate FTS5 virtual table + rebuild from base table
+        }
+
+        if (!repaired) {
+          try {
+            this.db.exec(`DROP TABLE IF EXISTS ${fts.name};`);
+            this.db.exec(fts.createSql);
+            this.db.exec(`INSERT INTO ${fts.name}(${fts.name}) VALUES('rebuild');`);
+            repaired = true;
+            console.log(`✅ FTS5 tabel ${fts.name} opnieuw aangemaakt en opgebouwd.`);
+          } catch (recreateErr: any) {
+            console.warn(
+              `⚠️ FTS5 in-place herstel mislukt voor ${fts.name} (${recreateErr?.message || recreateErr}); volledig SQLite herstel gestart.`
+            );
+            this.rescueAndRecreateDatabase();
+            return;
+          }
+        }
+      }
+    }
   }
 
   private verifyAndHealOnStartup() {
@@ -301,25 +373,9 @@ export class SteenwijkerlandDB {
         this.db.prepare(`SELECT COUNT(*) AS c FROM ${tbl}`).get();
         this.db.prepare(`SELECT id FROM ${tbl} ORDER BY timestamp DESC, id DESC LIMIT 1`).get();
       }
-      if (tables.includes('punctuality_logs')) {
-        const hasFts = this.db
-          .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='punctuality_fts'")
-          .get();
-        if (hasFts) {
-          this.db.prepare("SELECT COUNT(*) AS c FROM punctuality_fts WHERE punctuality_fts MATCH 'Steenwijk'").get();
-        }
-      }
-      if (tables.includes('aansluitingen_logs')) {
-        const hasFts = this.db
-          .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='aansluitingen_fts'")
-          .get();
-        if (hasFts) {
-          this.db.prepare("SELECT COUNT(*) AS c FROM aansluitingen_fts WHERE aansluitingen_fts MATCH 'Steenwijk'").get();
-        }
-      }
     } catch (err: any) {
       if (!this.isCorruptionError(err)) {
-        // Non-corruption schema quirks (e.g. missing FTS before init) can proceed to initPragmasAndSchema
+        // Non-corruption schema quirks can proceed to initPragmasAndSchema & verifyAndHealFtsTables
         return;
       }
 
@@ -328,14 +384,9 @@ export class SteenwijkerlandDB {
       // Step 1: Try in-place REINDEX + FTS5 rebuild first
       try {
         this.db.exec('REINDEX;');
-        try {
-          this.db.exec("INSERT INTO punctuality_fts(punctuality_fts) VALUES('rebuild');");
-        } catch {}
-        try {
-          this.db.exec("INSERT INTO aansluitingen_fts(aansluitingen_fts) VALUES('rebuild');");
-        } catch {}
+        this.verifyAndHealFtsTables();
         const qc2 = this.db.prepare('PRAGMA quick_check(1)').all() as Array<{ quick_check: string }>;
-        let allHealthy = qc2[0]?.quick_check === 'ok';
+        const allHealthy = qc2[0]?.quick_check === 'ok';
         if (allHealthy) {
           for (const tbl of tables) {
             this.db.prepare(`SELECT COUNT(*) AS c FROM ${tbl}`).get();
@@ -1661,18 +1712,35 @@ export class SteenwijkerlandDB {
             continue;
           }
 
-          const raw = await fs.promises.readFile(fp, 'utf8');
-          const parsed = JSON.parse(raw);
+          let parsed: any = null;
+          {
+            const raw = await fs.promises.readFile(fp, 'utf8');
+            parsed = JSON.parse(raw);
+          }
+          const items: T[] = Array.isArray(parsed)
+            ? parsed
+            : parsed && Array.isArray(parsed.logs)
+            ? parsed.logs
+            : [];
+          parsed = null;
+
           let imported = 0;
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            for (let i = 0; i < parsed.length; i += CHUNK) {
-              imported += upsertChunk(parsed.slice(i, i + CHUNK));
+          if (items.length > 0) {
+            if (items.length >= 1000) {
+              console.log(
+                `SQLite migratie gestart (${path.basename(fp)}): ${items.length} ${label} verwerken...`
+              );
+            }
+            for (let i = 0; i < items.length; i += CHUNK) {
+              imported += upsertChunk(items.slice(i, i + CHUNK));
               await yieldLoop();
             }
           }
           stmtSetMig.run(key, stat.size, stat.mtimeMs, imported, new Date().toISOString());
-          if (imported > 0) {
-            console.log(`SQLite migratie (${path.basename(fp)}): ${imported} ${label} geïmporteerd.`);
+          if (imported > 0 || items.length >= 1000) {
+            console.log(
+              `SQLite migratie voltooid (${path.basename(fp)}): ${imported} nieuwe ${label} geïmporteerd.`
+            );
           }
         } catch (err) {
           console.warn(`Legacy migration warning (${path.basename(fp)}):`, err);
@@ -3324,6 +3392,323 @@ export class SteenwijkerlandDB {
           l.rented,
           l.new_rentals,
         ].join(';')
+    );
+  }
+
+  private async streamCursorAsJson(
+    req: Request,
+    res: Response,
+    filename: string,
+    stmt: StatementSync,
+    params: (string | number)[],
+    mapRow: (row: any) => Record<string, any>
+  ): Promise<void> {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.flushHeaders();
+
+    let clientClosed = false;
+    const onClose = () => {
+      clientClosed = true;
+    };
+    req.on('close', onClose);
+
+    const writeChunk = async (chunk: string): Promise<boolean> => {
+      if (clientClosed || res.destroyed || res.writableEnded) return false;
+      const canContinue = res.write(chunk, 'utf8');
+      if (!canContinue) {
+        await new Promise<void>((resolve) => {
+          const cleanup = () => {
+            res.off('drain', onDrain);
+            res.off('close', onDone);
+            res.off('error', onDone);
+            resolve();
+          };
+          const onDrain = () => cleanup();
+          const onDone = () => {
+            clientClosed = true;
+            cleanup();
+          };
+          res.once('drain', onDrain);
+          res.once('close', onDone);
+          res.once('error', onDone);
+        });
+      }
+      return !clientClosed;
+    };
+
+    try {
+      const header = `{"exportedAt":"${new Date().toISOString()}","records":[\n`;
+      if (!(await writeChunk(header))) return;
+
+      const BATCH_SIZE = 400;
+      let items: string[] = [];
+      let isFirst = true;
+      let batchCounter = 0;
+
+      for (const row of stmt.iterate(...params)) {
+        if (clientClosed) break;
+        const serialized = JSON.stringify(mapRow(row));
+        items.push((isFirst ? '' : ',\n') + serialized);
+        isFirst = false;
+
+        if (items.length >= BATCH_SIZE) {
+          const chunk = items.join('');
+          items = [];
+          if (!(await writeChunk(chunk))) break;
+          batchCounter++;
+          if (batchCounter % 4 === 0) {
+            await new Promise((r) => setImmediate(r));
+          }
+        }
+      }
+
+      if (!clientClosed && items.length > 0) {
+        await writeChunk(items.join(''));
+      }
+      if (!clientClosed) {
+        await writeChunk('\n]}\n');
+      }
+      if (!clientClosed && !res.writableEnded) {
+        res.end();
+      }
+    } finally {
+      req.off('close', onClose);
+    }
+  }
+
+  public async streamPunctualityRawJSON(
+    req: Request,
+    res: Response,
+    params: PunctualityQueryParams = {}
+  ): Promise<void> {
+    const nowInfo = getISOWeekInfo(new Date());
+    const periodType = params.periodType || 'all';
+    const yearMonth = params.yearMonth || nowInfo.yearMonth;
+    const yearWeek = params.yearWeek || nowInfo.yearWeek;
+    const lineFilter = params.line || 'ALL';
+    const searchQuery = (params.searchQuery || '').trim();
+
+    const periodTag =
+      periodType === 'month'
+        ? `Maand_${yearMonth}`
+        : periodType === 'week'
+        ? `Week_${yearWeek}`
+        : `Vanaf_${nowInfo.dateStr}`;
+
+    const { whereSql, sqlParams, needsFtsJoin, ftsMatch } = this.buildPunctualityWhere(
+      { periodType, yearMonth, yearWeek, line: lineFilter, searchQuery },
+      'p'
+    );
+
+    let stmt: StatementSync;
+    let execParams: (string | number)[];
+    if (needsFtsJoin && ftsMatch) {
+      const extraCond = whereSql ? whereSql.replace(/^WHERE\s+/i, 'AND ') : '';
+      stmt = this.db.prepare(`
+        SELECT p.*
+        FROM punctuality_fts
+        JOIN punctuality_logs p ON p.rowid = punctuality_fts.rowid
+        WHERE punctuality_fts MATCH ? ${extraCond}
+        ORDER BY p.timestamp DESC, p.id DESC
+      `);
+      execParams = [ftsMatch, ...sqlParams];
+    } else {
+      stmt = this.db.prepare(`
+        SELECT p.*
+        FROM punctuality_logs p
+        ${whereSql}
+        ORDER BY p.timestamp DESC, p.id DESC
+      `);
+      execParams = sqlParams;
+    }
+
+    await this.streamCursorAsJson(
+      req,
+      res,
+      `steenwijkerland_vertraging_logboek_${periodTag}.json`,
+      stmt,
+      execParams,
+      (r) => ({
+        id: r.id,
+        timestamp: r.timestamp,
+        date: r.date,
+        yearMonth: r.year_month,
+        yearWeek: r.year_week,
+        town: r.town,
+        stopId: r.stop_id,
+        stopCode: r.stop_code,
+        stopName: r.stop_name,
+        line: r.line,
+        operator: r.operator,
+        destination: r.destination,
+        journeyId: r.journey_id,
+        plannedTime: r.planned_time,
+        actualTime: r.actual_time,
+        delayMinutes: Number(r.delay_minutes || 0),
+        status: r.status,
+      })
+    );
+  }
+
+  public async streamAansluitingenJSON(
+    req: Request,
+    res: Response,
+    params: AansluitingenQueryParams = {}
+  ): Promise<void> {
+    const nowInfo = getISOWeekInfo(new Date());
+    const period = params.period || 'all';
+    const direction = params.direction || 'all';
+    const trainType = params.trainType || 'all';
+    const lineFilter = params.line || 'all';
+    const statusFilter = params.status || 'all';
+    const search = (params.search || '').trim();
+
+    const conds: string[] = [];
+    const sqlParams: (string | number)[] = [];
+    if (period === 'day') {
+      conds.push('a.date = ?');
+      sqlParams.push(nowInfo.dateStr);
+    } else if (period === 'week') {
+      conds.push('a.year_week = ?');
+      sqlParams.push(nowInfo.yearWeek);
+    } else if (period === 'month') {
+      conds.push('a.year_month = ?');
+      sqlParams.push(nowInfo.yearMonth);
+    }
+    if (direction !== 'all') {
+      conds.push('a.direction = ?');
+      sqlParams.push(direction);
+    }
+    if (trainType !== 'all') {
+      conds.push('a.train_type = ?');
+      sqlParams.push(trainType);
+    }
+    if (lineFilter !== 'all') {
+      conds.push('a.bus_line = ?');
+      sqlParams.push(lineFilter);
+    }
+    if (statusFilter !== 'all') {
+      conds.push('a.status = ?');
+      sqlParams.push(statusFilter);
+    }
+
+    const ftsMatch = search ? sanitizeFtsQuery(search) : null;
+    let stmt: StatementSync;
+    let execParams: (string | number)[];
+    if (ftsMatch) {
+      const extraCond = conds.length > 0 ? `AND ${conds.join(' AND ')}` : '';
+      stmt = this.db.prepare(`
+        SELECT a.*
+        FROM aansluitingen_fts
+        JOIN aansluitingen_logs a ON a.rowid = aansluitingen_fts.rowid
+        WHERE aansluitingen_fts MATCH ? ${extraCond}
+        ORDER BY a.timestamp DESC, a.id DESC
+      `);
+      execParams = [ftsMatch, ...sqlParams];
+    } else {
+      const whereSql = conds.length > 0 ? `WHERE ${conds.join(' AND ')}` : '';
+      stmt = this.db.prepare(`
+        SELECT a.*
+        FROM aansluitingen_logs a
+        ${whereSql}
+        ORDER BY a.timestamp DESC, a.id DESC
+      `);
+      execParams = sqlParams;
+    }
+
+    await this.streamCursorAsJson(
+      req,
+      res,
+      `station_steenwijk_aansluitingen_${direction}_${period}_${nowInfo.dateStr}.json`,
+      stmt,
+      execParams,
+      (r) => ({
+        id: r.id,
+        direction: r.direction,
+        timestamp: r.timestamp,
+        date: r.date,
+        yearMonth: r.year_month,
+        yearWeek: r.year_week,
+        busLine: r.bus_line,
+        busOperator: r.bus_operator,
+        busDestination: r.bus_destination,
+        busDelayMinutes: Number(r.bus_delay_minutes || 0),
+        trainNumber: r.train_number,
+        trainType: r.train_type,
+        trainDestination: r.train_destination,
+        trainPlatform: r.train_platform,
+        trainDelayMinutes: Number(r.train_delay_minutes || 0),
+        originVehicle: r.origin_vehicle,
+        connectingVehicle: r.connecting_vehicle,
+        plannedOriginArrival: r.planned_origin_arrival,
+        actualOriginArrival: r.actual_origin_arrival,
+        plannedConnectingDeparture: r.planned_connecting_departure,
+        actualConnectingDeparture: r.actual_connecting_departure,
+        plannedTransferMinutes: Number(r.planned_transfer_minutes || 0),
+        realizedTransferMinutes: Number(r.realized_transfer_minutes || 0),
+        status: r.status,
+        notes: r.notes || '',
+      })
+    );
+  }
+
+  public async streamDeelfietsRawJSON(req: Request, res: Response): Promise<void> {
+    const stmt = this.db.prepare(
+      'SELECT * FROM deelfiets_logs ORDER BY timestamp DESC, id DESC'
+    );
+    await this.streamCursorAsJson(
+      req,
+      res,
+      'steenwijkerland_deelfietsen_logboek.json',
+      stmt,
+      [],
+      (r) => ({
+        id: r.id,
+        timestamp: r.timestamp,
+        date: r.date,
+        hourSlot: r.hour_slot,
+        yearMonth: r.year_month,
+        yearWeek: r.year_week,
+        stationId: r.station_id,
+        town: r.town,
+        locationName: r.location_name,
+        streetAddress: r.street_address,
+        electric: Boolean(r.electric),
+        isCargoBike: Boolean(r.is_cargo_bike),
+        capacity: Number(r.capacity || 0),
+        availableBikes: Number(r.available_bikes || 0),
+        rentedBikes: Number(r.rented_bikes || 0),
+        newRentals: Number(r.new_rentals || 0),
+      })
+    );
+  }
+
+  public async streamOvFietsRawJSON(req: Request, res: Response): Promise<void> {
+    const stmt = this.db.prepare(
+      'SELECT * FROM ovfiets_logs ORDER BY timestamp DESC, id DESC'
+    );
+    await this.streamCursorAsJson(
+      req,
+      res,
+      'station_steenwijk_ovfiets_logboek.json',
+      stmt,
+      [],
+      (r) => ({
+        id: r.id,
+        timestamp: r.timestamp,
+        date: r.date,
+        hour: r.hour,
+        yearMonth: r.year_month,
+        yearWeek: r.year_week,
+        stationCode: r.station_code,
+        name: r.name,
+        capacity: Number(r.capacity || 0),
+        available: Number(r.available || 0),
+        rented: Number(r.rented || 0),
+        newRentals: Number(r.new_rentals || 0),
+      })
     );
   }
 

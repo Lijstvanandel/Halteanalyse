@@ -7,6 +7,7 @@ import {
   StopPopupSummary,
   getISOWeekInfo,
 } from '../utils/punctuality';
+import { downloadProtectedExport } from '../utils/oslAuth';
 import {
   X,
   Download,
@@ -25,6 +26,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  FileJson,
 } from 'lucide-react';
 
 interface PunctualityDashboardProps {
@@ -57,15 +59,6 @@ const DEFAULT_LINES = [
   '18', '20', '26', '70', '71', '76', '146', '171', '214', '217', '270', '524', '675', '679',
 ];
 
-function triggerServerCsvDownload(url: string) {
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', '');
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
 export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
   isOpen,
   onClose,
@@ -89,6 +82,23 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
   const [debouncedSearch, setDebouncedSearch] = useState<string>(initialStopFilter);
   const [page, setPage] = useState<number>(1);
   const pageSize = 50;
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  const handleProtectedExport = useCallback(async (url: string, fallbackFilename: string) => {
+    setExportError(null);
+    setIsExporting(true);
+    try {
+      await downloadProtectedExport(url, {
+        fallbackFilename,
+        modal: 'punctuality',
+      });
+    } catch (err: any) {
+      setExportError(err?.message || 'OSL SSO export mislukt.');
+    } finally {
+      setIsExporting(false);
+    }
+  }, []);
 
   const [totalCount, setTotalCount] = useState<number>(0);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
@@ -419,13 +429,17 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
             </div>
           </div>
 
-          {/* CSV Export Buttons (Direct Streaming Server Download) */}
-          <div className="flex items-center gap-2">
+          {/* CSV & JSON Export Buttons (OSL SSO Protected Streaming Downloads) */}
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() =>
-                triggerServerCsvDownload(`/api/punctuality/export.csv?type=stops&${exportBaseParams}`)
+                handleProtectedExport(
+                  `/api/punctuality/export.csv?type=stops&${exportBaseParams}`,
+                  'steenwijkerland_haltes_vertraging.csv'
+                )
               }
-              className="px-3 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] text-[#060e0a] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              disabled={isExporting}
+              className="px-3 py-1.5 rounded-[4px] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold-bright)] disabled:opacity-60 text-[#060e0a] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export Haltes (.csv)</span>
@@ -433,9 +447,13 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
 
             <button
               onClick={() =>
-                triggerServerCsvDownload(`/api/punctuality/export.csv?type=lines&${exportBaseParams}`)
+                handleProtectedExport(
+                  `/api/punctuality/export.csv?type=lines&${exportBaseParams}`,
+                  'steenwijkerland_lijnen_vertraging.csv'
+                )
               }
-              className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-elevated)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              disabled={isExporting}
+              className="px-3 py-1.5 rounded-[4px] bg-[var(--bg-elevated)] hover:bg-[var(--bg-card-hover)] disabled:opacity-60 border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
               <span>Export Lijnen (.csv)</span>
@@ -443,16 +461,47 @@ export const PunctualityDashboard: React.FC<PunctualityDashboardProps> = ({
 
             <button
               onClick={() =>
-                triggerServerCsvDownload(`/api/punctuality/export.csv?type=raw&${exportBaseParams}`)
+                handleProtectedExport(
+                  `/api/punctuality/export.csv?type=raw&${exportBaseParams}`,
+                  'steenwijkerland_vertraging_logboek.csv'
+                )
               }
-              className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Streamt alle gefilterde individuele rit-passages direct als CSV zonder geheugenlimiet"
+              disabled={isExporting}
+              className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] disabled:opacity-60 border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Streamt alle gefilterde individuele rit-passages direct als CSV via OSL SSO"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
               <span className="hidden md:inline">Alle Logregels (.csv)</span>
             </button>
+
+            <button
+              onClick={() =>
+                handleProtectedExport(
+                  `/api/punctuality/export.json?type=${activeTab}&${exportBaseParams}`,
+                  `steenwijkerland_stiptheid_${activeTab}.json`
+                )
+              }
+              disabled={isExporting}
+              className="px-2.5 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] disabled:opacity-60 border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Exporteer actieve weergave als JSON via OSL SSO"
+            >
+              <FileJson className="w-3.5 h-3.5 text-[var(--status-blue)]" />
+              <span>.JSON</span>
+            </button>
           </div>
         </div>
+        {exportError && (
+          <div className="px-5 py-2 bg-[var(--status-crimson)]/15 border-b border-[var(--status-crimson)]/40 text-xs text-[var(--status-crimson)] flex items-center justify-between gap-2 shrink-0">
+            <span>{exportError}</span>
+            <button
+              type="button"
+              onClick={() => setExportError(null)}
+              className="underline cursor-pointer text-[11px]"
+            >
+              Sluiten
+            </button>
+          </div>
+        )}
 
         {/* Summary KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 px-5 py-3 bg-[var(--bg-card)] border-b border-[var(--border-subtle)] shrink-0 text-xs tabular-nums">

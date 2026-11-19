@@ -26,7 +26,7 @@ export const EmbedDataproductModal: React.FC<EmbedDataproductModalProps> = ({
   const currentOrigin =
     typeof window !== 'undefined'
       ? window.location.origin
-      : 'https://ais-dev-btz3xq4553lxbmqch42qzz-374510427206.europe-west2.run.app';
+      : 'https://mobiliteit.onafhankelijksteenwijkerland.nl';
 
   const embedUrl = `${currentOrigin}/?embed=true`;
 
@@ -93,7 +93,7 @@ export const EmbedDataproductModal: React.FC<EmbedDataproductModalProps> = ({
                 Dataproduct Insluiten in Nieuwsbericht
               </h2>
               <p className="text-xs text-[var(--text-muted)]">
-                Lijst van Andel · Responsive HTML/Iframe embed voor swl.scientiarum.nl en nieuwswebsites
+                Lijst van Andel · Responsive HTML/Iframe embed voor onafhankelijksteenwijkerland.nl en nieuwswebsites
               </p>
             </div>
           </div>
@@ -133,7 +133,7 @@ export const EmbedDataproductModal: React.FC<EmbedDataproductModalProps> = ({
             </div>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
               Dit dataproduct is geoptimaliseerd voor insluiting in artikelen op{' '}
-              <span className="text-[var(--accent-gold-bright)] font-mono">swl.scientiarum.nl</span> en{' '}
+              <span className="text-[var(--accent-gold-bright)] font-mono">onafhankelijksteenwijkerland.nl</span> en{' '}
               <span className="text-[var(--accent-gold-bright)] font-mono">lijstvanandel.nl</span>. Het schaalt automatisch
               mee met mobiel, tablet en desktop en toont onderin altijd de officiële bronvermelding:{' '}
               <strong className="text-[var(--text-main)]">Dataproduct van Lijst van Andel</strong>.

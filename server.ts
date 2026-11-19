@@ -49,6 +49,21 @@ import {
   sanitizeConnectionLogId,
 } from './src/utils/aansluitingen';
 import { SteenwijkerlandDB } from './src/server/db';
+import {
+  OSL_ISSUER,
+  OSL_AUTHORIZE_URL,
+  OSL_LOGOUT_UI_URL,
+  OSL_CLIENT_ID,
+  OSL_DEFAULT_REDIRECT_URI,
+  OSL_SCOPE,
+  getOslJwks,
+  requireOslExportAuth,
+  extractBearerTokenFromRequest,
+  verifyOslBearerToken,
+  exchangeOslToken,
+  fetchOslUserinfo,
+  logoutOslSession,
+} from './src/server/oslAuth';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1691,7 +1706,91 @@ async function runLiveAansluitingenScan() {
 
 async function startServer() {
   const app = express();
+  app.set('trust proxy', 1);
   app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
+
+  // -------------------------------------------------------------
+  // 0. OSL SSO Proxy & Session Endpoints (Issuer: https://onafhankelijksteenwijkerland.nl)
+  // -------------------------------------------------------------
+  app.get('/api/sso/config', (_req, res) => {
+    res.json({
+      issuer: OSL_ISSUER,
+      authorizeEndpoint: OSL_AUTHORIZE_URL,
+      endSessionEndpoint: OSL_LOGOUT_UI_URL,
+      clientId: OSL_CLIENT_ID,
+      defaultRedirectUri: OSL_DEFAULT_REDIRECT_URI,
+      scope: OSL_SCOPE,
+    });
+  });
+
+  app.post('/api/sso/token', async (req, res) => {
+    try {
+      const grantType = String(req.body?.grant_type || 'authorization_code');
+      const payload: Record<string, string> = {
+        grant_type: grantType,
+        client_id: String(req.body?.client_id || OSL_CLIENT_ID),
+      };
+      if (grantType === 'authorization_code') {
+        if (!req.body?.code || !req.body?.code_verifier || !req.body?.redirect_uri) {
+          return res.status(400).json({
+            success: false,
+            error: 'invalid_request',
+            message: 'code, code_verifier en redirect_uri zijn verplicht.',
+          });
+        }
+        payload.code = String(req.body.code);
+        payload.code_verifier = String(req.body.code_verifier);
+        payload.redirect_uri = String(req.body.redirect_uri);
+      } else if (grantType === 'refresh_token') {
+        if (!req.body?.refresh_token) {
+          return res.status(400).json({
+            success: false,
+            error: 'invalid_request',
+            message: 'refresh_token is verplicht.',
+          });
+        }
+        payload.refresh_token = String(req.body.refresh_token);
+      }
+
+      const result = await exchangeOslToken(payload);
+      return res.status(result.status).json(result.data);
+    } catch (err: any) {
+      return res.status(502).json({
+        success: false,
+        error: 'osl_token_exchange_failed',
+        message: err?.message || 'Kon token niet uitwisselen met OSL SSO.',
+      });
+    }
+  });
+
+  app.get('/api/sso/userinfo', async (req, res) => {
+    const token = extractBearerTokenFromRequest(req);
+    if (!token) {
+      return res.status(401).json({ success: false, error: 'OSL_SSO_REQUIRED' });
+    }
+    const claims = await verifyOslBearerToken(token);
+    if (!claims) {
+      return res.status(401).json({ success: false, error: 'OSL_SSO_INVALID_TOKEN' });
+    }
+    const upstream = await fetchOslUserinfo(token).catch(() => null);
+    return res.json({
+      success: true,
+      authenticated: true,
+      user: upstream?.ok && upstream.data ? { ...claims, ...upstream.data } : claims,
+    });
+  });
+
+  app.post('/api/sso/logout', async (req, res) => {
+    try {
+      const token = extractBearerTokenFromRequest(req) || (req.body?.access_token ? String(req.body.access_token) : null);
+      const refreshToken = req.body?.refresh_token ? String(req.body.refresh_token) : null;
+      await logoutOslSession(token, refreshToken);
+    } catch {
+      // Upstream logout best-effort; client clears local session regardless
+    }
+    res.json({ success: true });
+  });
 
   // Serve RRREIS.png, RRREIS-1.png, QBUZZ.png, QBUZZ-1.png from root, public/, or dist/
   app.get(
@@ -2115,7 +2214,7 @@ async function startServer() {
     });
   });
 
-  app.get('/api/punctuality/export.csv', async (req, res) => {
+  app.get('/api/punctuality/export.csv', requireOslExportAuth('export:csv'), async (req, res) => {
     const exportType = (req.query.type as string) || 'raw';
     const periodType = (req.query.periodType as 'all' | 'month' | 'week') || 'all';
     const yearMonth = req.query.yearMonth as string | undefined;
@@ -2176,8 +2275,67 @@ async function startServer() {
     });
   });
 
+  app.get('/api/punctuality/export.json', requireOslExportAuth('export:json'), async (req, res) => {
+    const exportType = (req.query.type as string) || 'raw';
+    const periodType = (req.query.periodType as 'all' | 'month' | 'week') || 'all';
+    const yearMonth = req.query.yearMonth as string | undefined;
+    const yearWeek = req.query.yearWeek as string | undefined;
+    const line = (req.query.line as string) || 'ALL';
+    const searchQuery = (req.query.search as string) || '';
+
+    const nowInfo = getISOWeekInfo(new Date());
+    const periodLabel =
+      periodType === 'month' && yearMonth
+        ? `Maand_${yearMonth}`
+        : periodType === 'week' && yearWeek
+        ? `Week_${yearWeek}`
+        : `Vanaf_${nowInfo.dateStr}`;
+
+    if (exportType === 'stops') {
+      const data = storeDb.getPunctualityDashboardData({
+        periodType,
+        yearMonth,
+        yearWeek,
+        line,
+        searchQuery,
+        includeRaw: false,
+      });
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="steenwijkerland_haltes_vertraging_${periodLabel}.json"`
+      );
+      return res.json({ exportedAt: new Date().toISOString(), periodLabel, records: data.stopStats });
+    }
+
+    if (exportType === 'lines') {
+      const data = storeDb.getPunctualityDashboardData({
+        periodType,
+        yearMonth,
+        yearWeek,
+        line,
+        searchQuery,
+        includeRaw: false,
+      });
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="steenwijkerland_lijnen_vertraging_${periodLabel}.json"`
+      );
+      return res.json({ exportedAt: new Date().toISOString(), periodLabel, records: data.lineStats });
+    }
+
+    await storeDb.streamPunctualityRawJSON(req, res, {
+      periodType,
+      yearMonth,
+      yearWeek,
+      line,
+      searchQuery,
+    });
+  });
+
   // -------------------------------------------------------------
-  // 3B. Deelfiets Nederland API (Steenwijkerland Hubs + Rollups + Streaming CSV)
+  // 3B. Deelfiets Nederland API (Steenwijkerland Hubs + Rollups + Streaming CSV/JSON)
   // -------------------------------------------------------------
   app.get('/api/deelfiets/locations', (req, res) => {
     const data = storeDb.getDeelfietsDashboardData(currentDeelfietsLocations, {
@@ -2214,7 +2372,7 @@ async function startServer() {
     });
   });
 
-  app.get('/api/deelfiets/export.csv', async (req, res) => {
+  app.get('/api/deelfiets/export.csv', requireOslExportAuth('export:csv'), async (req, res) => {
     const exportType = (req.query.type as string) || 'raw';
     if (exportType === 'stats') {
       const mode = (req.query.mode as 'day' | 'week' | 'month') || 'day';
@@ -2240,8 +2398,33 @@ async function startServer() {
     await storeDb.streamDeelfietsRawCSV(req, res);
   });
 
+  app.get('/api/deelfiets/export.json', requireOslExportAuth('export:json'), async (req, res) => {
+    const exportType = (req.query.type as string) || 'raw';
+    if (exportType === 'stats') {
+      const mode = (req.query.mode as 'day' | 'week' | 'month') || 'day';
+      const data = storeDb.getDeelfietsDashboardData(currentDeelfietsLocations, {
+        day: req.query.day as string | undefined,
+        week: req.query.week as string | undefined,
+        month: req.query.month as string | undefined,
+        mode,
+        town: (req.query.town as string) || 'ALL',
+        search: (req.query.search as string) || '',
+      });
+      const periodTag =
+        data.statsList[0]?.periodLabel || getISOWeekInfo(new Date()).dateStr;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="steenwijkerland_deelfietsen_statistieken_${periodTag}.json"`
+      );
+      return res.json({ exportedAt: new Date().toISOString(), periodTag, records: data.statsList });
+    }
+
+    await storeDb.streamDeelfietsRawJSON(req, res);
+  });
+
   // -------------------------------------------------------------
-  // 3C. NS OV-fiets Station Steenwijk API (Dedicated swk002 monitor + Rollups + Streaming CSV)
+  // 3C. NS OV-fiets Station Steenwijk API (Dedicated swk002 monitor + Rollups + Streaming CSV/JSON)
   // -------------------------------------------------------------
   app.get('/api/ovfiets/steenwijk', (req, res) => {
     const data = storeDb.getOvFietsDashboardData(currentOvFietsLocation, {
@@ -2276,7 +2459,7 @@ async function startServer() {
     });
   });
 
-  app.get('/api/ovfiets/export.csv', async (req, res) => {
+  app.get('/api/ovfiets/export.csv', requireOslExportAuth('export:csv'), async (req, res) => {
     const exportType = (req.query.type as string) || 'raw';
     if (exportType === 'stats') {
       const data = storeDb.getOvFietsDashboardData(currentOvFietsLocation, {
@@ -2295,6 +2478,26 @@ async function startServer() {
     }
 
     await storeDb.streamOvFietsRawCSV(req, res);
+  });
+
+  app.get('/api/ovfiets/export.json', requireOslExportAuth('export:json'), async (req, res) => {
+    const exportType = (req.query.type as string) || 'raw';
+    if (exportType === 'stats') {
+      const data = storeDb.getOvFietsDashboardData(currentOvFietsLocation, {
+        day: req.query.day as string | undefined,
+        week: req.query.week as string | undefined,
+        month: req.query.month as string | undefined,
+        includeRaw: false,
+      });
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename="station_steenwijk_ovfiets_statistieken.json"'
+      );
+      return res.json({ exportedAt: new Date().toISOString(), stats: data.stats });
+    }
+
+    await storeDb.streamOvFietsRawJSON(req, res);
   });
 
   // -------------------------------------------------------------
@@ -2501,8 +2704,19 @@ async function startServer() {
     });
   });
 
-  app.get('/api/aansluitingen/export.csv', async (req, res) => {
+  app.get('/api/aansluitingen/export.csv', requireOslExportAuth('export:csv'), async (req, res) => {
     await storeDb.streamAansluitingenCSV(req, res, {
+      period: (req.query.period as 'day' | 'week' | 'month' | 'all') || 'all',
+      direction: (req.query.direction as 'all' | 'bus_naar_trein' | 'trein_naar_bus') || 'all',
+      trainType: (req.query.trainType as 'all' | 'Intercity' | 'Sprinter') || 'all',
+      line: (req.query.line as string) || 'all',
+      status: (req.query.status as 'all' | 'gehaald' | 'gemist') || 'all',
+      search: (req.query.search as string) || '',
+    });
+  });
+
+  app.get('/api/aansluitingen/export.json', requireOslExportAuth('export:json'), async (req, res) => {
+    await storeDb.streamAansluitingenJSON(req, res, {
       period: (req.query.period as 'day' | 'week' | 'month' | 'all') || 'all',
       direction: (req.query.direction as 'all' | 'bus_naar_trein' | 'trein_naar_bus') || 'all',
       trainType: (req.query.trainType as 'all' | 'Intercity' | 'Sprinter') || 'all',
@@ -2526,6 +2740,9 @@ async function startServer() {
   }
 
   const startBackgroundTasks = async () => {
+    // Pre-warm OSL JWKS public key cache for instant offline RS256 verification
+    getOslJwks(false).catch(() => {});
+
     try {
       await storeDb.migrateLegacyJsonIfEmptyAsync({
         punctuality: [
@@ -2604,7 +2821,17 @@ async function startServer() {
   });
 
   srv.on('error', (err: any) => {
-    console.error(`Server listen error op poort ${PORT}:`, err);
+    if (err?.code === 'EADDRINUSE') {
+      console.error(
+        `Server listen error: poort ${PORT} is al in gebruik door een ander/verweesd proces. Ruim het oude proces op (bijv. fuser -k ${PORT}/tcp) en herstart.`
+      );
+    } else {
+      console.error(`Server listen error op poort ${PORT}:`, err);
+    }
+    try {
+      storeDb.close();
+    } catch {}
+    process.exit(1);
   });
 
   let shuttingDown = false;

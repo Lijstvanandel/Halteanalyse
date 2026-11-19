@@ -1,0 +1,486 @@
+ubuntu@vps-77d665f6:/var/www/steenwijkerland-ov$ git pull
+remote: Enumerating objects: 15, done.
+remote: Counting objects: 100% (15/15), done.
+remote: Compressing objects: 100% (7/7), done.
+remote: Total 8 (delta 5), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (8/8), 5.64 KiB | 642.00 KiB/s, done.
+From https://github.com/Lijstvanandel/Halteanalyse
+   304235d..dc42256  main       -> origin/main
+Updating 304235d..dc42256
+error: Your local changes to the following files would be overwritten by merge:
+        src/data/deelfietsLogs.backup.json
+        src/data/deelfietsLogs.json
+        src/data/ovfietsLogs.backup.json
+        src/data/ovfietsLogs.json
+        src/data/steenwijkerland.db-shm
+        src/data/steenwijkerland.db-wal
+Please commit your changes or stash them before you merge.
+Aborting
+ubuntu@vps-77d665f6:/var/www/steenwijkerland-ov$ git stash
+Saved working directory and index state WIP on main: 304235d fix: improve database data normalization and server port resolution
+ubuntu@vps-77d665f6:/var/www/steenwijkerland-ov$ git pull
+Updating 304235d..dc42256
+Fast-forward
+ .gitignore                         |     7 +-
+ server.ts                          |    96 +-
+ src/data/deelfietsLogs.backup.json | 12582 -----------------------------------
+ src/data/deelfietsLogs.json        | 12582 -----------------------------------
+ src/data/ovfietsLogs.backup.json   |  8930 -------------------------
+ src/data/ovfietsLogs.json          |  8930 -------------------------
+ src/data/steenwijkerland.db-shm    |   Bin 32768 -> 0 bytes
+ src/data/steenwijkerland.db-wal    |   Bin 12842072 -> 0 bytes
+ src/server/db.ts                   |   532 +-
+ 9 files changed, 510 insertions(+), 43149 deletions(-)
+ delete mode 100644 src/data/deelfietsLogs.backup.json
+ delete mode 100644 src/data/deelfietsLogs.json
+ delete mode 100644 src/data/ovfietsLogs.backup.json
+ delete mode 100644 src/data/ovfietsLogs.json
+ delete mode 100644 src/data/steenwijkerland.db-shm
+ delete mode 100644 src/data/steenwijkerland.db-wal
+ubuntu@vps-77d665f6:/var/www/steenwijkerland-ov$ cd /var/www/steenwijkerland-ov
+mkdir -p /tmp/ov_backup
+cp -a src/data/* /tmp/ov_backup/
+ls -lh src/data/
+git stash list
+total 201M
+-rw-rw-r-- 1 ubuntu ubuntu  25M Nov 18 13:36 aansluitingenLogs.backup.json
+-rw-r--r-- 1 ubuntu ubuntu  25M Nov 18 13:36 aansluitingenLogs.json
+-rw-rw-r-- 1 ubuntu ubuntu 656K Oct 18 22:57 drglRoutes.json
+-rw-rw-r-- 1 ubuntu ubuntu  76M Nov 18 13:43 punctualityLogs.backup.json
+-rw-r--r-- 1 ubuntu ubuntu  76M Nov 18 13:43 punctualityLogs.json
+-rw-r--r-- 1 ubuntu ubuntu 4.0K Nov 18 13:33 steenwijkerland.db
+-rw-rw-r-- 1 ubuntu ubuntu 4.9K Oct 19 12:57 steenwijkerland.ts
+-rw-rw-r-- 1 ubuntu ubuntu  85K Oct 18 22:57 steenwijkerlandPolygon.json
+-rw-rw-r-- 1 ubuntu ubuntu 129K Oct 18 22:57 steenwijkerlandStops.json
+stash@{0}: WIP on main: 304235d fix: improve database data normalization and server port resolution
+stash@{1}: WIP on main: b65e40a feat: add train connectivity and analysis
+stash@{2}: WIP on main: b65e40a feat: add train connectivity and analysis
+stash@{3}: WIP on main: b65e40a feat: add train connectivity and analysis
+stash@{4}: WIP on main: 34a2624 feat(ui): improve layout responsiveness and mobile view
+stash@{5}: WIP on main: d9c03dd feat: initialize Actuele Busposities Steenwijkerland
+ubuntu@vps-77d665f6:/var/www/steenwijkerland-ov$ # Bewaar altijd /tmp/ov_backup! Verwijder de eerder door git pull toegevoegde losse shm/wal-bestanden:
+rm -f src/data/steenwijkerland.db-shm src/data/steenwijkerland.db-wal
+
+git pull origin main
+From https://github.com/Lijstvanandel/Halteanalyse
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+ubuntu@vps-77d665f6:/var/www/steenwijkerland-ov$ # Haal de gestashte deelfietsLogs terug (gebruik stash@{1} als daar je nieuwste data in staat):
+git checkout stash@{0} -- src/data/deelfietsLogs.json src/data/deelfietsLogs.backup.json
+
+# Vergelijk bestandsgroottes tussen je back-up en src/data/:
+ls -lh /tmp/ov_backup/*Logs*.json src/data/*Logs*.json
+-rw-rw-r-- 1 ubuntu ubuntu  25M Nov 18 13:36 /tmp/ov_backup/aansluitingenLogs.backup.json
+-rw-r--r-- 1 ubuntu ubuntu  25M Nov 18 13:36 /tmp/ov_backup/aansluitingenLogs.json
+-rw-rw-r-- 1 ubuntu ubuntu  76M Nov 18 13:43 /tmp/ov_backup/punctualityLogs.backup.json
+-rw-r--r-- 1 ubuntu ubuntu  76M Nov 18 13:43 /tmp/ov_backup/punctualityLogs.json
+-rw-rw-r-- 1 ubuntu ubuntu  25M Nov 18 13:36 src/data/aansluitingenLogs.backup.json
+-rw-r--r-- 1 ubuntu ubuntu  25M Nov 18 13:36 src/data/aansluitingenLogs.json
+-rw-rw-r-- 1 ubuntu ubuntu 358K Nov 18 13:43 src/data/deelfietsLogs.backup.json
+-rw-rw-r-- 1 ubuntu ubuntu 358K Nov 18 13:43 src/data/deelfietsLogs.json
+-rw-rw-r-- 1 ubuntu ubuntu  76M Nov 18 13:43 src/data/punctualityLogs.backup.json
+-rw-r--r-- 1 ubuntu ubuntu  76M Nov 18 13:43 src/data/punctualityLogs.json
+ubuntu@vps-77d665f6:/var/www/steenwijkerland-ov$ cp /tmp/ov_backup/*Logs*.json src/data/
+ubuntu@vps-77d665f6:/var/www/steenwijkerland-ov$ npm install
+npm run build
+pm2 restart steenwijkerland-ov --update-env
+pm2 logs steenwijkerland-ov --lines 80
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @typescript-eslint/parser@8.71.2
+npm warn Found: typescript@7.0.2
+npm warn node_modules/typescript
+npm warn   dev typescript@"^7.0.2" from the root project
+npm warn   1 more (ts-api-utils)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/parser@8.71.2
+npm warn node_modules/@typescript-eslint/parser
+npm warn   @typescript-eslint/parser@"8.71.2" from @typescript-eslint/rule-tester@8.71.2
+npm warn   node_modules/@typescript-eslint/rule-tester
+npm warn
+npm warn Conflicting peer dependency: typescript@6.0.3
+npm warn node_modules/typescript
+npm warn   peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/parser@8.71.2
+npm warn   node_modules/@typescript-eslint/parser
+npm warn     @typescript-eslint/parser@"8.71.2" from @typescript-eslint/rule-tester@8.71.2
+npm warn     node_modules/@typescript-eslint/rule-tester
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @typescript-eslint/project-service@8.71.2
+npm warn Found: typescript@7.0.2
+npm warn node_modules/typescript
+npm warn   dev typescript@"^7.0.2" from the root project
+npm warn   1 more (ts-api-utils)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/project-service@8.71.2
+npm warn node_modules/@typescript-eslint/project-service
+npm warn   @typescript-eslint/project-service@"8.71.2" from @typescript-eslint/typescript-estree@8.71.2
+npm warn   node_modules/@typescript-eslint/typescript-estree
+npm warn
+npm warn Conflicting peer dependency: typescript@6.0.3
+npm warn node_modules/typescript
+npm warn   peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/project-service@8.71.2
+npm warn   node_modules/@typescript-eslint/project-service
+npm warn     @typescript-eslint/project-service@"8.71.2" from @typescript-eslint/typescript-estree@8.71.2
+npm warn     node_modules/@typescript-eslint/typescript-estree
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @typescript-eslint/rule-tester@8.71.2
+npm warn Found: typescript@7.0.2
+npm warn node_modules/typescript
+npm warn   dev typescript@"^7.0.2" from the root project
+npm warn   1 more (ts-api-utils)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/rule-tester@8.71.2
+npm warn node_modules/@typescript-eslint/rule-tester
+npm warn   @typescript-eslint/rule-tester@"^8.57.2" from @firebase/eslint-plugin-security-rules@0.0.2
+npm warn   node_modules/@firebase/eslint-plugin-security-rules
+npm warn
+npm warn Conflicting peer dependency: typescript@6.0.3
+npm warn node_modules/typescript
+npm warn   peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/rule-tester@8.71.2
+npm warn   node_modules/@typescript-eslint/rule-tester
+npm warn     @typescript-eslint/rule-tester@"^8.57.2" from @firebase/eslint-plugin-security-rules@0.0.2
+npm warn     node_modules/@firebase/eslint-plugin-security-rules
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @typescript-eslint/tsconfig-utils@8.71.2
+npm warn Found: typescript@7.0.2
+npm warn node_modules/typescript
+npm warn   dev typescript@"^7.0.2" from the root project
+npm warn   1 more (ts-api-utils)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/tsconfig-utils@8.71.2
+npm warn node_modules/@typescript-eslint/tsconfig-utils
+npm warn   @typescript-eslint/tsconfig-utils@"^8.71.2" from @typescript-eslint/project-service@8.71.2
+npm warn   node_modules/@typescript-eslint/project-service
+npm warn   1 more (@typescript-eslint/typescript-estree)
+npm warn
+npm warn Conflicting peer dependency: typescript@6.0.3
+npm warn node_modules/typescript
+npm warn   peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/tsconfig-utils@8.71.2
+npm warn   node_modules/@typescript-eslint/tsconfig-utils
+npm warn     @typescript-eslint/tsconfig-utils@"^8.71.2" from @typescript-eslint/project-service@8.71.2
+npm warn     node_modules/@typescript-eslint/project-service
+npm warn     1 more (@typescript-eslint/typescript-estree)
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @typescript-eslint/typescript-estree@8.71.2
+npm warn Found: typescript@7.0.2
+npm warn node_modules/typescript
+npm warn   dev typescript@"^7.0.2" from the root project
+npm warn   1 more (ts-api-utils)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/typescript-estree@8.71.2
+npm warn node_modules/@typescript-eslint/typescript-estree
+npm warn   @typescript-eslint/typescript-estree@"8.71.2" from @typescript-eslint/parser@8.71.2
+npm warn   node_modules/@typescript-eslint/parser
+npm warn   2 more (@typescript-eslint/rule-tester, @typescript-eslint/utils)
+npm warn
+npm warn Conflicting peer dependency: typescript@6.0.3
+npm warn node_modules/typescript
+npm warn   peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/typescript-estree@8.71.2
+npm warn   node_modules/@typescript-eslint/typescript-estree
+npm warn     @typescript-eslint/typescript-estree@"8.71.2" from @typescript-eslint/parser@8.71.2
+npm warn     node_modules/@typescript-eslint/parser
+npm warn     2 more (@typescript-eslint/rule-tester, @typescript-eslint/utils)
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @typescript-eslint/utils@8.71.2
+npm warn Found: typescript@7.0.2
+npm warn node_modules/typescript
+npm warn   dev typescript@"^7.0.2" from the root project
+npm warn   1 more (ts-api-utils)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/utils@8.71.2
+npm warn node_modules/@typescript-eslint/utils
+npm warn   @typescript-eslint/utils@"8.71.2" from @typescript-eslint/rule-tester@8.71.2
+npm warn   node_modules/@typescript-eslint/rule-tester
+npm warn
+npm warn Conflicting peer dependency: typescript@6.0.3
+npm warn node_modules/typescript
+npm warn   peer typescript@">=4.8.4 <6.1.0" from @typescript-eslint/utils@8.71.2
+npm warn   node_modules/@typescript-eslint/utils
+npm warn     @typescript-eslint/utils@"8.71.2" from @typescript-eslint/rule-tester@8.71.2
+npm warn     node_modules/@typescript-eslint/rule-tester
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@firebase/ai@3.0.0',
+npm warn EBADENGINE   required: { node: '>=24.12.0' },
+npm warn EBADENGINE   current: { node: 'v22.23.3', npm: '10.9.9' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@firebase/app@0.16.3',
+npm warn EBADENGINE   required: { node: '>=24.12.0' },
+npm warn EBADENGINE   current: { node: 'v22.23.3', npm: '10.9.9' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@firebase/app-compat@0.5.19',
+npm warn EBADENGINE   required: { node: '>=24.12.0' },
+npm warn EBADENGINE   current: { node: 'v22.23.3', npm: '10.9.9' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@firebase/auth@1.13.7',
+npm warn EBADENGINE   required: { node: '>=24.12.0' },
+npm warn EBADENGINE   current: { node: 'v22.23.3', npm: '10.9.9' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@firebase/auth-compat@0.6.12',
+npm warn EBADENGINE   required: { node: '>=24.12.0' },
+npm warn EBADENGINE   current: { node: 'v22.23.3', npm: '10.9.9' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@firebase/firestore@4.18.0',
+npm warn EBADENGINE   required: { node: '>=24.12.0' },
+npm warn EBADENGINE   current: { node: 'v22.23.3', npm: '10.9.9' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@firebase/firestore-compat@0.4.15',
+npm warn EBADENGINE   required: { node: '>=24.12.0' },
+npm warn EBADENGINE   current: { node: 'v22.23.3', npm: '10.9.9' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@firebase/storage@0.14.6',
+npm warn EBADENGINE   required: { node: '>=24.12.0' },
+npm warn EBADENGINE   current: { node: 'v22.23.3', npm: '10.9.9' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@firebase/storage-compat@0.4.6',
+npm warn EBADENGINE   required: { node: '>=24.12.0' },
+npm warn EBADENGINE   current: { node: 'v22.23.3', npm: '10.9.9' }
+npm warn EBADENGINE }
+
+added 4 packages, removed 2 packages, changed 2 packages, and audited 354 packages in 40s
+
+66 packages are looking for funding
+  run `npm fund` for details
+
+17 vulnerabilities (6 moderate, 11 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+> react-example@0.0.0 build
+> vite build
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vite.config.ts:11:27). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+vite v8.3.4 building client environment for production...
+✓ 1700 modules transformed.
+computing gzip size...
+dist/index.html                     1.60 kB │ gzip:   0.70 kB
+dist/assets/index-CvKLLq_7.css     41.11 kB │ gzip:   7.91 kB
+dist/assets/index-COY3Pw10.js   1,615.08 kB │ gzip: 444.52 kB
+
+✓ built in 3.67s
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[PLUGIN_TIMINGS] JavaScript callbacks ran for 3.1s of this 3.7s build (84%).
+The slowest callbacks, timed inside each callback (the wait before a callback starts is excluded, the time it awaits is included):
+  - plugin @tailwindcss/vite:generate:build transform (81%, 3.0s, 1 call)
+Additional callback time came from callbacks under 1s.
+See https://rolldown.rs/reference/InputOptions.checks#bundlertimings for more details.
+
+[PM2] Applying action restartProcessId on app [steenwijkerland-ov](ids: [ 8 ])
+[PM2] [steenwijkerland-ov](8) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 11 │ bekendmakingen-st… │ cluster  │ 0    │ online    │ 0%       │ 72.2mb   │
+│ 17 │ cambiar            │ fork     │ 17   │ online    │ 0%       │ 131.7mb  │
+│ 10 │ fietsveiligheid-s… │ fork     │ 3    │ online    │ 0%       │ 77.9mb   │
+│ 2  │ lijst-van-andel    │ fork     │ 8    │ online    │ 0%       │ 61.0mb   │
+│ 16 │ marsinfratechniek  │ fork     │ 0    │ online    │ 0%       │ 76.3mb   │
+│ 9  │ ongevallen-steenw… │ cluster  │ 0    │ online    │ 0%       │ 72.5mb   │
+│ 8  │ steenwijkerland-ov │ fork     │ 301… │ online    │ 0%       │ 23.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+host metrics | cpu: 35.2% | ram usage: 33.7% | ens3: ⇓ 0.192mb/s ⇑ 0.006mb/s
+[TAILING] Tailing last 80 lines for [steenwijkerland-ov] process (change the va…
+/home/ubuntu/.pm2/logs/steenwijkerland-ov-out.log last 80 lines:
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+8|steenwij | DRGL Server gestart op http://0.0.0.0:3080
+
+/home/ubuntu/.pm2/logs/steenwijkerland-ov-error.log last 80 lines:
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | Poort 3080 bezet door een verweesd proces; wordt vrijgemaakt...
+8|steenwij | (node:161342) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+8|steenwij | (Use `node --trace-warnings ...` to show where the warning was created)
+8|steenwij | Server listen error op poort 3000: Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+8|steenwij |     at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+8|steenwij |     at listenInCluster (node:net:1998:12)
+8|steenwij |     at node:net:2207:7
+8|steenwij |     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+8|steenwij |   code: 'EADDRINUSE',
+8|steenwij |   errno: -98,
+8|steenwij |   syscall: 'listen',
+8|steenwij |   address: '0.0.0.0',
+8|steenwij |   port: 3000
+8|steenwij | }
+8|steenwij | (node:161464) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+8|steenwij | (Use `node --trace-warnings ...` to show where the warning was created)
+8|steenwij | Server listen error op poort 3000: Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+8|steenwij |     at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+8|steenwij |     at listenInCluster (node:net:1998:12)
+8|steenwij |     at node:net:2207:7
+8|steenwij |     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+8|steenwij |   code: 'EADDRINUSE',
+8|steenwij |   errno: -98,
+8|steenwij |   syscall: 'listen',
+8|steenwij |   address: '0.0.0.0',
+8|steenwij |   port: 3000
+8|steenwij | }
+
+8|steenwijkerland-ov  | (node:161837) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+8|steenwijkerland-ov  | (Use `node --trace-warnings ...` to show where the warning was created)
+8|steenwijkerland-ov  | Server listen error op poort 3080: Error: listen EADDRINUSE: address already in use 0.0.0.0:3080
+8|steenwijkerland-ov  |     at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+8|steenwijkerland-ov  |     at listenInCluster (node:net:1998:12)
+8|steenwijkerland-ov  |     at node:net:2207:7
+8|steenwijkerland-ov  |     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+8|steenwijkerland-ov  |   code: 'EADDRINUSE',
+8|steenwijkerland-ov  |   errno: -98,
+8|steenwijkerland-ov  |   syscall: 'listen',
+8|steenwijkerland-ov  |   address: '0.0.0.0',
+8|steenwijkerland-ov  |   port: 3080
+8|steenwijkerland-ov  | }
+
+^C
+ubuntu@vps-77d665f6:/var/www/steenwijkerland-ov$

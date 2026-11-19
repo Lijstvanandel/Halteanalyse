@@ -39,11 +39,22 @@ import {
   User,
 } from './firebase';
 import {
+  OslSession,
+  subscribeOslSession,
+  handleOslRedirectCallbackOnBoot,
+  downloadProtectedExport,
+  startOslLogin,
+  logoutOsl,
+} from './utils/oslAuth';
+import {
   Moon,
   Sparkles,
   Code2,
   Maximize2,
   ExternalLink,
+  AlertTriangle,
+  ShieldCheck,
+  X,
 } from 'lucide-react';
 
 const LEGACY_LOCAL_STORAGE_LOGS_KEY = 'swk_punctuality_logs_v1';
@@ -125,6 +136,14 @@ export default function App() {
 
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState<boolean>(false);
 
+  // OSL SSO Auth & Auto-Resume Export State
+  const [oslSession, setOslSession] = useState<OslSession | null>(null);
+  const [isOslBusy, setIsOslBusy] = useState<boolean>(false);
+  const [ssoFeedback, setSsoFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+
   const isEmbed = useMemo(() => {
     if (typeof window === 'undefined') return false;
     const params = new URLSearchParams(window.location.search);
@@ -166,6 +185,112 @@ export default function App() {
       localStorage.removeItem(LEGACY_LOCAL_STORAGE_LOGS_KEY);
     } catch {
       // ignore
+    }
+  }, []);
+
+  // Subscribe to OSL SSO session & process standalone /sso/callback redirects on boot
+  useEffect(() => {
+    const unsub = subscribeOslSession(setOslSession);
+    let cancelled = false;
+
+    handleOslRedirectCallbackOnBoot().then(async (result) => {
+      if (cancelled || !result.handled) return;
+
+      if (result.error) {
+        setSsoFeedback({ type: 'error', message: result.error });
+        return;
+      }
+
+      if (result.pendingExport) {
+        const { url, fallbackFilename, modal } = result.pendingExport;
+        if (modal === 'punctuality') {
+          setIsPunctualityModalOpen(true);
+        } else if (modal === 'deelfiets') {
+          setDeelfietsInitialTab('deelfiets');
+          setIsDeelfietsModalOpen(true);
+        } else if (modal === 'ovfiets') {
+          setDeelfietsInitialTab('ovfiets');
+          setIsDeelfietsModalOpen(true);
+        } else if (modal === 'aansluitingen') {
+          setIsAansluitingenModalOpen(true);
+        }
+
+        setSsoFeedback({
+          type: 'success',
+          message: 'Ingelogd via OSL SSO — export wordt direct gestart...',
+        });
+
+        try {
+          await downloadProtectedExport(url, { fallbackFilename, modal });
+          if (!cancelled) {
+            setTimeout(() => {
+              setSsoFeedback((prev) => (prev?.type === 'success' ? null : prev));
+            }, 4500);
+          }
+        } catch (err: any) {
+          if (!cancelled) {
+            setSsoFeedback({
+              type: 'error',
+              message: err?.message || 'Automatische export na OSL SSO login mislukt.',
+            });
+          }
+        }
+      } else {
+        setSsoFeedback({
+          type: 'success',
+          message: 'Succesvol ingelogd via Onafhankelijk Steenwijkerland SSO.',
+        });
+        setTimeout(() => {
+          setSsoFeedback((prev) => (prev?.type === 'success' ? null : prev));
+        }, 4000);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsub();
+    };
+  }, []);
+
+  const handleOslLogin = useCallback(async () => {
+    setIsOslBusy(true);
+    setSsoFeedback(null);
+    try {
+      const session = await startOslLogin();
+      if (session) {
+        setSsoFeedback({
+          type: 'success',
+          message: `Ingelogd als ${
+            session.user?.name || session.user?.username || session.user?.email || 'OSL gebruiker'
+          }.`,
+        });
+        setTimeout(() => {
+          setSsoFeedback((prev) => (prev?.type === 'success' ? null : prev));
+        }, 4000);
+      }
+    } catch (err: any) {
+      setSsoFeedback({
+        type: 'error',
+        message: err?.message || 'Inloggen via OSL SSO mislukt.',
+      });
+    } finally {
+      setIsOslBusy(false);
+    }
+  }, []);
+
+  const handleOslLogout = useCallback(async () => {
+    setIsOslBusy(true);
+    try {
+      await logoutOsl(false);
+      setSsoFeedback({
+        type: 'success',
+        message: 'Uitgelogd bij Onafhankelijk Steenwijkerland SSO.',
+      });
+      setTimeout(() => {
+        setSsoFeedback((prev) => (prev?.type === 'success' ? null : prev));
+      }, 3500);
+    } finally {
+      setIsOslBusy(false);
     }
   }, []);
 
@@ -569,10 +694,41 @@ export default function App() {
         onToggleFeedMode={(mode) => setFeedMode(mode)}
         statusMessage={statusMessage}
         isEmbed={isEmbed}
+        oslSession={oslSession}
+        onOslLogin={handleOslLogin}
+        onOslLogout={handleOslLogout}
+        isOslBusy={isOslBusy}
       />
 
       {/* Main Viewport */}
       <main className="flex-1 relative flex w-full overflow-hidden bg-[var(--bg-main)]">
+        {/* OSL SSO Inline Toast / Feedback Banner */}
+        {ssoFeedback && (
+          <div
+            role="status"
+            className={`fixed top-14 right-3 z-[2200] max-w-sm px-3 py-2 rounded-[5px] border shadow-2xl flex items-start gap-2 text-xs ${
+              ssoFeedback.type === 'error'
+                ? 'bg-[var(--bg-elevated)] border-[var(--status-rose)] text-[var(--status-rose)]'
+                : 'bg-[var(--bg-elevated)] border-[var(--status-emerald)] text-[var(--status-emerald)]'
+            }`}
+          >
+            {ssoFeedback.type === 'error' ? (
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            ) : (
+              <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
+            )}
+            <span className="flex-1 text-[var(--text-main)] leading-snug">
+              {ssoFeedback.message}
+            </span>
+            <button
+              onClick={() => setSsoFeedback(null)}
+              className="text-[var(--text-muted)] hover:text-[var(--text-main)] shrink-0 cursor-pointer"
+              aria-label="Sluit melding"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
         {/* Mobile/Iframe Backdrop when Departure Board is open */}
         {showDepartureBoard && (
           <div
