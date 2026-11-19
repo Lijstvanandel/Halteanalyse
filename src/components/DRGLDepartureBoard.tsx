@@ -197,7 +197,7 @@ export const DRGLDepartureBoard: React.FC<DRGLDepartureBoardProps> = ({
 
       {/* Dataproduct Footer */}
       <div className="p-2.5 bg-[var(--bg-main)] border-t border-[var(--border-subtle)] text-[11px] text-[var(--text-dim)] flex items-center justify-between select-none tabular-nums">
-        <span className="font-semibold text-[var(--accent-gold)]">Dataproduct van Lijst van Andel</span>
+        <span className="font-semibold text-[var(--accent-gold)]">Dataproduct van Onafhankelijk Steenwijkerland</span>
         <span className="font-mono text-[var(--text-muted)] tabular-nums">{departures.length} ritten</span>
       </div>
     </div>

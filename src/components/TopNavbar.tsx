@@ -93,7 +93,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     <header className="bg-[var(--bg-card)] border-b border-[var(--border-subtle)] z-30 select-none shrink-0 flex flex-col">
       {/* Top Row: Brand, Search & Global Actions */}
       <div className="h-11 px-2.5 md:px-4 flex items-center justify-between gap-2 border-b border-[var(--border-subtle)]/70">
-        {/* Zone 1: Brand title (Lijst van Andel Dataproduct) */}
+        {/* Zone 1: Brand title (Mobiliteit - Onafhankelijk Steenwijkerland) */}
         <div className="flex items-center gap-2.5 min-w-0 shrink-0">
           <a
             href="/"
@@ -101,20 +101,22 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             rel={isEmbed ? 'noopener noreferrer' : undefined}
             className="flex items-center gap-2 text-[var(--text-main)] transition-opacity group min-w-0"
           >
-            <div className="w-7 h-7 rounded-[4px] bg-[var(--accent-gold)] border border-[var(--accent-gold-bright)] flex items-center justify-center shrink-0">
-              <span className="text-[11px] font-extrabold text-[#060e0a] tracking-tight">LA</span>
-            </div>
+            <img
+              src="/8842e9c9-2918-4e36-affe-c6a849fb0f0e.webp"
+              alt="Onafhankelijk Steenwijkerland logo"
+              className="w-7 h-7 rounded-[4px] object-contain bg-[var(--bg-main)] border border-[var(--border-subtle)] shrink-0"
+            />
             <div className="flex flex-col leading-tight min-w-0">
               <div className="flex items-baseline gap-1.5">
                 <span className="text-xs sm:text-sm font-bold tracking-tight text-[var(--text-main)] whitespace-nowrap">
-                  Lijst van Andel
+                  Mobiliteit
                 </span>
                 <span className="text-[11px] text-[var(--accent-gold)] font-semibold hidden xs:inline whitespace-nowrap">
-                  Steenwijkerland
+                  Onafhankelijk Steenwijkerland
                 </span>
               </div>
               <span className="text-[10px] text-[var(--text-muted)] hidden md:inline truncate">
-                Dataproduct · Actuele Busposities, Vertrektijden &amp; Deelfietsen
+                Dataproduct van Onafhankelijk Steenwijkerland · OV, Treinen &amp; Deelfietsen
               </span>
             </div>
           </a>

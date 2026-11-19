@@ -1806,8 +1806,22 @@ async function startServer() {
       '/NS.png',
       '/ns.png',
       '/bicycle_parking_open.png',
+      '/8842e9c9-2918-4e36-affe-c6a849fb0f0e.webp',
     ],
     (req, res, next) => {
+      if (req.path.includes('8842e9c9-2918-4e36-affe-c6a849fb0f0e.webp')) {
+        const candidates = [
+          path.resolve(__dirname, 'public', '8842e9c9-2918-4e36-affe-c6a849fb0f0e.webp'),
+          path.resolve(__dirname, '8842e9c9-2918-4e36-affe-c6a849fb0f0e.webp'),
+          path.resolve(__dirname, 'dist', '8842e9c9-2918-4e36-affe-c6a849fb0f0e.webp'),
+        ];
+        for (const candidate of candidates) {
+          if (fs.existsSync(candidate)) {
+            res.setHeader('Content-Type', 'image/webp');
+            return res.sendFile(candidate);
+          }
+        }
+      }
       if (req.path.toUpperCase().includes('NS.PNG')) {
         const candidates = [
           path.resolve(__dirname, 'public', 'NS.png'),
@@ -2517,7 +2531,7 @@ async function startServer() {
       const geojson = toBuspositiesGeoJSON(filteredLive);
       return res.json({
         ...geojson,
-        source: 'Live Voertuigposities (OVzoeker & DRGL) • Dataproduct van Lijst van Andel',
+        source: 'Live Voertuigposities (OVzoeker & DRGL) • Dataproduct van Onafhankelijk Steenwijkerland',
         mode: 'live',
         timestamp: new Date().toISOString(),
         buses: filteredLive,
@@ -2538,7 +2552,7 @@ async function startServer() {
 
     return res.json({
       ...geojson,
-      source: 'Dienstregeling Voorbeeld • Dataproduct van Lijst van Andel',
+      source: 'Dienstregeling Voorbeeld • Dataproduct van Onafhankelijk Steenwijkerland',
       mode: 'demo',
       timestamp: new Date().toISOString(),
       buses: resultBuses,

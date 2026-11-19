@@ -1247,7 +1247,7 @@ export const DeelfietsDashboard: React.FC<DeelfietsDashboardProps> = ({
         {/* Modal Footer */}
         <div className="px-5 py-2.5 bg-[var(--bg-elevated)] border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-muted)] shrink-0">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[var(--accent-gold-bright)]">Dataproduct van Lijst van Andel</span>
+            <span className="font-bold text-[var(--accent-gold-bright)]">Dataproduct van Onafhankelijk Steenwijkerland</span>
             <span className="hidden sm:inline text-[var(--text-dim)]">·</span>
             <span className="hidden sm:inline">
               {networkTab === 'ovfiets'

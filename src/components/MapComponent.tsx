@@ -89,9 +89,9 @@ type TileLayerKey = 'osm' | 'opentopo' | 'satellite';
 
 const TILE_LAYERS: Record<TileLayerKey, { name: string; url: string; attribution: string; maxZoom: number }> = {
   osm: {
-    name: 'OpenStreetMap (Lijst van Andel)',
+    name: 'OpenStreetMap (Onafhankelijk Steenwijkerland)',
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Dataproduct van Lijst van Andel',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Dataproduct van Onafhankelijk Steenwijkerland',
     maxZoom: 19,
   },
   opentopo: {

@@ -915,17 +915,19 @@ export default function App() {
         />
       </main>
 
-      {/* Persistent Dataproduct Footer: Dataproduct van Lijst van Andel */}
+      {/* Persistent Dataproduct Footer: Dataproduct van Onafhankelijk Steenwijkerland */}
       <footer className="h-7 bg-[var(--bg-card)] border-t border-[var(--border-subtle)] px-3 md:px-5 flex items-center justify-between text-xs text-[var(--text-muted)] z-30 shrink-0 select-none">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-4 h-4 rounded-[3px] bg-[var(--accent-gold)] text-[#060e0a] font-extrabold text-[9px] flex items-center justify-center shrink-0">
-            LA
-          </div>
+          <img
+            src="/8842e9c9-2918-4e36-affe-c6a849fb0f0e.webp"
+            alt="Onafhankelijk Steenwijkerland"
+            className="w-4 h-4 rounded-[3px] object-contain shrink-0"
+          />
           <span className="font-bold text-[var(--accent-gold-bright)] tracking-tight whitespace-nowrap">
-            Dataproduct van Lijst van Andel
+            Dataproduct van Onafhankelijk Steenwijkerland
           </span>
           <span className="text-[var(--text-dim)] hidden md:inline truncate text-[11px]">
-            · Realtime actuele busposities &amp; deelfietslocaties in Gemeente Steenwijkerland
+            · Mobiliteit - Onafhankelijk Steenwijkerland
           </span>
         </div>
 

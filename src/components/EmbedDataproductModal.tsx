@@ -33,12 +33,10 @@ export const EmbedDataproductModal: React.FC<EmbedDataproductModalProps> = ({
   const iframeSnippet = `<div style="margin:2rem 0;border-radius:5px;border:1px solid #1b3829;background:#0b1a13;overflow:hidden;font-family:'Inter',-apple-system,sans-serif;font-variant-numeric:tabular-nums;">
   <div style="background:#162f23;border-bottom:1px solid #1b3829;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
     <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-      <div style="width:28px;height:28px;border-radius:4px;background:#f59e0b;color:#060e0a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;">
-        LA
-      </div>
+      <img src="${currentOrigin}/8842e9c9-2918-4e36-affe-c6a849fb0f0e.webp" alt="Onafhankelijk Steenwijkerland" style="width:28px;height:28px;border-radius:4px;object-fit:contain;background:#060e0a;" />
       <div style="min-width:0;">
-        <h4 style="margin:0;font-size:13px;font-weight:700;color:#f5f6f4;">Actuele Busposities &amp; Deelfietsen Steenwijkerland</h4>
-        <p style="margin:0;font-size:11px;color:#9bb0a4;">Dataproduct van Lijst van Andel</p>
+        <h4 style="margin:0;font-size:13px;font-weight:700;color:#f5f6f4;">Mobiliteit - Onafhankelijk Steenwijkerland</h4>
+        <p style="margin:0;font-size:11px;color:#9bb0a4;">Dataproduct van Onafhankelijk Steenwijkerland</p>
       </div>
     </div>
     <a href="${embedUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-size:12px;font-weight:700;border-radius:4px;background:#f59e0b;color:#060e0a;text-decoration:none;">
@@ -50,20 +48,20 @@ export const EmbedDataproductModal: React.FC<EmbedDataproductModalProps> = ({
     width="100%"
     height="${selectedHeight}"
     style="border:0;width:100%;height:${selectedHeight}px;display:block;"
-    title="Actuele Busposities &amp; Deelfietsen Steenwijkerland — Dataproduct van Lijst van Andel"
+    title="Mobiliteit - Onafhankelijk Steenwijkerland — Dataproduct van Onafhankelijk Steenwijkerland"
     loading="lazy"
     allow="geolocation"
     allowfullscreen
   ></iframe>
   <div style="background:#060e0a;border-top:1px solid #1b3829;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#60756a;">
-    <span style="font-weight:600;color:#f59e0b;">Dataproduct van Lijst van Andel</span>
+    <span style="font-weight:600;color:#f59e0b;">Dataproduct van Onafhankelijk Steenwijkerland</span>
     <span>Realtime OV-data Gemeente Steenwijkerland</span>
   </div>
 </div>`;
 
   const simpleIframeSnippet = `<iframe src="${embedUrl}" width="100%" height="${selectedHeight}" style="border:${
     includeBorder ? '1px solid #1b3829' : '0'
-  }; border-radius:5px; overflow:hidden;" title="Actuele Busposities Steenwijkerland — Dataproduct van Lijst van Andel" allow="geolocation" allowfullscreen></iframe>`;
+  }; border-radius:5px; overflow:hidden;" title="Mobiliteit - Onafhankelijk Steenwijkerland — Dataproduct van Onafhankelijk Steenwijkerland" allow="geolocation" allowfullscreen></iframe>`;
 
   const handleCopy = (text: string) => {
     if (navigator.clipboard) {
@@ -93,7 +91,7 @@ export const EmbedDataproductModal: React.FC<EmbedDataproductModalProps> = ({
                 Dataproduct Insluiten in Nieuwsbericht
               </h2>
               <p className="text-xs text-[var(--text-muted)]">
-                Lijst van Andel · Responsive HTML/Iframe embed voor onafhankelijksteenwijkerland.nl en nieuwswebsites
+                Onafhankelijk Steenwijkerland · Responsive HTML/Iframe embed voor onafhankelijksteenwijkerland.nl en nieuwswebsites
               </p>
             </div>
           </div>
@@ -134,9 +132,9 @@ export const EmbedDataproductModal: React.FC<EmbedDataproductModalProps> = ({
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
               Dit dataproduct is geoptimaliseerd voor insluiting in artikelen op{' '}
               <span className="text-[var(--accent-gold-bright)] font-mono">onafhankelijksteenwijkerland.nl</span> en{' '}
-              <span className="text-[var(--accent-gold-bright)] font-mono">lijstvanandel.nl</span>. Het schaalt automatisch
+              <span className="text-[var(--accent-gold-bright)] font-mono">mobiliteit.onafhankelijksteenwijkerland.nl</span>. Het schaalt automatisch
               mee met mobiel, tablet en desktop en toont onderin altijd de officiële bronvermelding:{' '}
-              <strong className="text-[var(--text-main)]">Dataproduct van Lijst van Andel</strong>.
+              <strong className="text-[var(--text-main)]">Dataproduct van Onafhankelijk Steenwijkerland</strong>.
             </p>
           </div>
 
@@ -199,7 +197,7 @@ export const EmbedDataproductModal: React.FC<EmbedDataproductModalProps> = ({
 
         {/* Footer */}
         <div className="px-5 py-3 bg-[var(--bg-main)] border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-dim)] shrink-0">
-          <span>Dataproduct van Lijst van Andel · Steenwijkerland</span>
+          <span>Dataproduct van Onafhankelijk Steenwijkerland · Steenwijkerland</span>
           <button
             onClick={onClose}
             className="px-4 py-1.5 rounded-[4px] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] font-medium cursor-pointer transition-colors"
